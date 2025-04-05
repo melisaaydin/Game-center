@@ -11,7 +11,6 @@ const verifyToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, secretKey);
-        console.log("Decoded Token in verifyToken:", decoded); // Payload'ı logla
         req.user = decoded;  // decoded bilgileri req.user içine atıyoruz
         next();
     } catch (err) {

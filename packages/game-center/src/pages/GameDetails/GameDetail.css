@@ -112,7 +112,7 @@
 
 
 .section-title {
-    color: rgba(0, 0, 0, 0.6) !important;
+    color: var(--text-color) !important;
     text-transform: initial !important;
     margin-bottom: 10px;
 }

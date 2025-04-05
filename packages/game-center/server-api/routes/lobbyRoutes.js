@@ -9,6 +9,8 @@ const {
     joinLobby,
     leaveLobby,
     getLobbyPlayers,
+    getLobbyMessages,
+    sendLobbyMessage
 } = require("../controllers/lobbyController");
 const verifyToken = require("../middleware/verifyToken");
 
@@ -20,4 +22,6 @@ router.delete("/:id", verifyToken, deleteLobby);
 router.get("/:lobbyId/players", getLobbyPlayers);
 router.post("/:id/join", verifyToken, joinLobby);
 router.post("/:id/leave", verifyToken, leaveLobby);
+router.get("/:id/messages", verifyToken, getLobbyMessages);
+router.post("/:id/message", verifyToken, sendLobbyMessage);
 module.exports = router;

@@ -1,13 +1,26 @@
 import React, { useEffect } from "react";
 import { Box, Typography, List, ListItem, ListItemText, IconButton } from "@mui/material";
-import { Lock, Event, ContentCopy } from "@mui/icons-material";
+import { Lock, Event, ContentCopy, Delete } from "@mui/icons-material";
+import { useUser } from "../context/UserContext";
 
-function LobbyList({ lobbies, eventLobbies, activeLobbies, pastLobbies, getTimeDisplay, onCopyLink }) {
+function LobbyList({
+    lobbies,
+    eventLobbies,
+    activeLobbies,
+    pastLobbies,
+    getTimeDisplay,
+    onCopyLink,
+    onDeleteLobby,
+    fetchLobbies,
+}) {
+    const { user } = useUser();
+
     useEffect(() => {
         const interval = setInterval(() => { }, 1000);
         return () => clearInterval(interval);
     }, []);
-
+    console.log("Current User ID:", user?.id);
+    console.log("Lobbies:", lobbies);
     return (
         <Box>
             {eventLobbies.length > 0 && (
@@ -30,6 +43,11 @@ function LobbyList({ lobbies, eventLobbies, activeLobbies, pastLobbies, getTimeD
                                 <IconButton onClick={() => onCopyLink(lobby.id)}>
                                     <ContentCopy fontSize="small" />
                                 </IconButton>
+                                {lobby.created_by === String(user?.id) && (
+                                    <IconButton onClick={() => onDeleteLobby(lobby.id)}>
+                                        <Delete fontSize="small" />
+                                    </IconButton>
+                                )}
                             </ListItem>
                         ))}
                     </List>
@@ -51,6 +69,11 @@ function LobbyList({ lobbies, eventLobbies, activeLobbies, pastLobbies, getTimeD
                             <IconButton onClick={() => onCopyLink(lobby.id)}>
                                 <ContentCopy fontSize="small" />
                             </IconButton>
+                            {lobby.created_by === String(user?.id) && (
+                                <IconButton onClick={() => onDeleteLobby(lobby.id)}>
+                                    <Delete fontSize="small" />
+                                </IconButton>
+                            )}
                         </ListItem>
                     ))
                 ) : (
@@ -75,6 +98,11 @@ function LobbyList({ lobbies, eventLobbies, activeLobbies, pastLobbies, getTimeD
                                 <IconButton onClick={() => onCopyLink(lobby.id)}>
                                     <ContentCopy fontSize="small" />
                                 </IconButton>
+                                {lobby.created_by === String(user?.id) && (
+                                    <IconButton onClick={() => onDeleteLobby(lobby.id)}>
+                                        <Delete fontSize="small" />
+                                    </IconButton>
+                                )}
                             </ListItem>
                         ))}
                     </List>

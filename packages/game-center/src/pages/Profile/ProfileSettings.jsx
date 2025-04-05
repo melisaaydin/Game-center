@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Button, TextField, CircularProgress, Avatar, IconButton, InputAdornment } from "@mui/material";
+import {
+    Button,
+    TextField,
+    CircularProgress,
+    Avatar,
+    IconButton,
+    InputAdornment,
+    Snackbar,
+    Alert,
+} from "@mui/material";
 import axios from "axios";
 import "./ProfileSetting.css";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { useTheme } from '@mui/material/styles';
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { useTheme } from "@mui/material/styles";
 import { useContext } from "react";
 import { ColorModeContext } from "../../context/ThemeContext";
 
@@ -26,6 +35,9 @@ function ProfileSettings() {
     const [errorMessage, setErrorMessage] = useState("");
     const [updateLoading, setUpdateLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
     useEffect(() => {
         if (loading) return;
@@ -62,6 +74,9 @@ function ProfileSettings() {
         event.preventDefault();
         if (newPassword && newPassword !== confirmNewPassword) {
             setErrorMessage("Yeni şifreler eşleşmiyor!");
+            setSnackbarMessage("Yeni şifreler eşleşmiyor!");
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
             return;
         }
 
@@ -84,16 +99,21 @@ function ProfileSettings() {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            setUser(prev => ({
+            setUser((prev) => ({
                 ...prev,
                 name: response.data.user.name,
                 email: response.data.user.email,
                 avatar_url: response.data.user.avatar_url,
             }));
-            alert("Profil başarıyla güncellendi!");
-            navigate("/");
+            setSnackbarMessage("Profil başarıyla güncellendi!");
+            setSnackbarSeverity("success");
+            setSnackbarOpen(true);
+            setTimeout(() => navigate("/"), 2000); // 2 saniye sonra yönlendirme
         } catch (error) {
             setErrorMessage("Güncelleme sırasında hata oluştu: " + (error.response?.data?.message || error.message));
+            setSnackbarMessage("Profil güncellenemedi: " + (error.response?.data?.message || error.message));
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
         } finally {
             setUpdateLoading(false);
         }
@@ -101,10 +121,15 @@ function ProfileSettings() {
 
     const handleClickShowPassword = () => setShowPassword(!showPassword);
 
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === "clickaway") return;
+        setSnackbarOpen(false);
+    };
+
     if (loading) return <div>Loading...</div>;
 
     return (
-        <div className={`profile-container ${mode === 'dark' ? 'profile-dark' : 'profile-light'}`}>
+        <div className={`profile-container ${mode === "dark" ? "profile-dark" : "profile-light"}`}>
             <div className="form-container">
                 <div className="form-title">
                     <span>Profile Settings</span>
@@ -262,6 +287,26 @@ function ProfileSettings() {
                     )}
                 </form>
             </div>
+
+            {/* Snackbar Bildirimi */}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: "top", horizontal: "left" }}
+            >
+                <Alert
+                    onClose={handleSnackbarClose}
+                    severity={snackbarSeverity}
+                    sx={{
+                        width: "100%",
+                        color: mode === "dark" ? "#fff" : "#000", // Tema moduna göre yazı rengi
+                        bgcolor: mode === "dark" ? "grey.800" : undefined, // Koyu modda arka plan
+                    }}
+                >
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </div>
     );
 }

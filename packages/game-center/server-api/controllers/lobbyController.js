@@ -16,14 +16,12 @@ const createLobbie = async (req, res) => {
     }
 
     try {
-        // Kullanıcının zaten bir lobisi var mı kontrol et
         const userLobbyCheck = await db.query("SELECT id FROM lobby_players WHERE user_id = $1", [userId]);
         if (userLobbyCheck.rows.length > 0) {
             console.log("Kullanıcı zaten bir lobiye sahip:", userId);
             return res.status(400).json({ success: false, message: "You are already in a lobby!" });
         }
 
-        // Şifreyi hashle
         let hashedPassword = null;
         if (password) {
             try {
@@ -35,7 +33,6 @@ const createLobbie = async (req, res) => {
             }
         }
 
-        // Lobi oluşturma sorgusu
         const query = `
             INSERT INTO lobbies (name, is_event, start_time, end_time, password, game_id, max_players, current_players, created_by, lobby_status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, 'active', NOW(), NOW()) RETURNING *;
@@ -48,15 +45,12 @@ const createLobbie = async (req, res) => {
         const newLobby = result.rows[0];
         console.log("Yeni lobi oluşturuldu:", newLobby);
 
-        // Lobi sahibini lobby_players tablosuna ekle
         const addOwnerQuery = `
             INSERT INTO lobby_players (lobby_id, user_id, is_ready)
             VALUES ($1, $2, TRUE) RETURNING *;
         `;
         await db.query(addOwnerQuery, [newLobby.id, userId]);
         console.log("Lobi sahibi eklendi:", userId);
-
-        // current_players sayısını güncelle
         await db.query("UPDATE lobbies SET current_players = 1 WHERE id = $1", [newLobby.id]);
 
         res.status(201).json({ success: true, message: "Lobi oluşturuldu.", lobby: newLobby });
@@ -88,7 +82,7 @@ const getLobbies = async (req, res) => {
         const now = new Date();
         const updatedLobbies = await Promise.all(
             lobbies.map(async (lobby) => {
-                // Etkinlik lobileri için end_time kontrolü
+
                 if (lobby.is_event && lobby.end_time && lobby.lobby_status === "active") {
                     const endTime = new Date(lobby.end_time);
                     if (endTime <= now) {
@@ -96,7 +90,7 @@ const getLobbies = async (req, res) => {
                         return { ...lobby, lobby_status: "closed" };
                     }
                 }
-                // Normal lobiler için 8 saat kontrolü
+
                 if (!lobby.is_event && lobby.lobby_status === "active") {
                     const createdBy = await db.query(
                         "SELECT lp.id FROM lobby_players lp WHERE lp.user_id = $1 AND lp.lobby_id = $2",
@@ -133,15 +127,18 @@ const getLobby = async (req, res) => {
     }
 
     try {
-        // Lobi bilgilerini al
-        const result = await db.query("SELECT * FROM lobbies WHERE id = $1", [id]);
+        const result = await db.query(
+            `SELECT l.*, u.name AS created_by_name 
+             FROM lobbies l 
+             LEFT JOIN users u ON l.created_by = u.id 
+             WHERE l.id = $1`,
+            [id]
+        );
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Lobi bulunamadı" });
         }
 
-        const lobby = result.rows[0]; // `lobby` değişkenini tanımla
-
-        // Oyuncuları al
+        const lobby = result.rows[0];
         const playersResult = await db.query(
             `SELECT u.id, u.name, u.avatar_url, lp.is_ready
              FROM lobby_players lp
@@ -151,10 +148,8 @@ const getLobby = async (req, res) => {
         );
         const players = playersResult.rows;
 
-        // Lobi objesine players alanını ekle
         const lobbyWithPlayers = { ...lobby, players };
 
-        // Tek bir yanıt gönder
         res.json(lobbyWithPlayers);
     } catch (error) {
         console.error("Lobi alınırken hata oluştu:", error);
@@ -187,20 +182,29 @@ const updateLobbie = async (req, res) => {
 };
 
 const deleteLobby = async (req, res) => {
-    const { id } = req.params; // lobbyId yerine id kullanıyoruz
-
+    const { id } = req.params;
+    const userId = req.user.userId;
     try {
-        await db.query("UPDATE users SET lobby_id = NULL WHERE lobby_id = $1", [id]);
-        const result = await db.query("DELETE FROM lobbies WHERE id = $1 RETURNING *", [id]);
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({ success: false, message: "Lobi bulunamadı!" });
+        const lobbyResult = await db.query(
+            "SELECT * FROM lobbies WHERE id = $1 AND created_by = $2",
+            [id, userId]
+        );
+        if (lobbyResult.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Bu lobiyi silme yetkiniz yok veya lobi bulunamadı!",
+            });
         }
 
-        res.json({ success: true, message: "Lobi silindi ve kullanıcılar güncellendi." });
+        await db.query("DELETE FROM lobby_players WHERE lobby_id = $1", [id]);
+        await db.query("DELETE FROM lobby_messages WHERE lobby_id = $1", [id]);
+        await db.query("DELETE FROM lobbies WHERE id = $1", [id]);
+
+        res.status(200).json({ success: true, message: "Lobi başarıyla silindi!" });
     } catch (err) {
         console.error("Lobi silme hatası:", err);
-        res.status(500).json({ success: false, message: "Lobi silinirken hata oluştu." });
+        res.status(500).json({ success: false, message: "Lobi silinemedi!" });
     }
 };
 
@@ -229,7 +233,6 @@ const joinLobby = async (req, res) => {
     }
 
     try {
-        // Lobi bilgilerini al
         const lobbyResult = await db.query("SELECT * FROM lobbies WHERE id = $1", [id]);
         if (lobbyResult.rows.length === 0) {
             return res.status(404).json({ success: false, message: "Lobi bulunamadı." });
@@ -237,7 +240,11 @@ const joinLobby = async (req, res) => {
 
         const lobby = lobbyResult.rows[0];
 
-        // Şifreyi kontrol et
+        const userCheck = await db.query("SELECT * FROM lobby_players WHERE lobby_id = $1 AND user_id = $2", [id, userId]);
+        if (userCheck.rows.length > 0) {
+            return res.status(200).json({ success: true, message: "Zaten bu lobidesiniz.", alreadyJoined: true });
+        }
+
         if (lobby.password && !password) {
             return res.status(400).json({ success: false, message: "Şifre gerekli." });
         }
@@ -245,24 +252,15 @@ const joinLobby = async (req, res) => {
             return res.status(401).json({ success: false, message: "Şifre yanlış." });
         }
 
-        // Lobi dolu mu kontrol et
         if (lobby.current_players >= lobby.max_players) {
             return res.status(400).json({ success: false, message: "Lobi dolu." });
         }
 
-        // Kullanıcı zaten lobide mi kontrol et
-        const userCheck = await db.query("SELECT * FROM lobby_players WHERE lobby_id = $1 AND user_id = $2", [id, userId]);
-        if (userCheck.rows.length > 0) {
-            return res.status(400).json({ success: false, message: "Zaten bu lobidesiniz." });
-        }
-
-        // Kullanıcıyı lobby_players tablosuna ekle
         await db.query(
             "INSERT INTO lobby_players (lobby_id, user_id, is_ready) VALUES ($1, $2, FALSE)",
             [id, userId]
         );
 
-        // current_players sayısını güncelle
         await db.query(
             "UPDATE lobbies SET current_players = current_players + 1 WHERE id = $1",
             [id]
@@ -283,7 +281,7 @@ const leaveLobby = async (req, res) => {
     }
 
     try {
-        // Kullanıcıyı lobby_players tablosundan sil
+
         const result = await db.query(
             "DELETE FROM lobby_players WHERE lobby_id = $1 AND user_id = $2 RETURNING *",
             [id, userId]
@@ -293,13 +291,11 @@ const leaveLobby = async (req, res) => {
             return res.status(400).json({ success: false, message: "Bu lobide değilsiniz." });
         }
 
-        // current_players sayısını güncelle
         await db.query(
             "UPDATE lobbies SET current_players = current_players - 1 WHERE id = $1",
             [id]
         );
 
-        // Eğer lobi sahibi ayrılıyorsa ve lobi boşsa, lobiyi kapat
         const lobbyResult = await db.query("SELECT * FROM lobbies WHERE id = $1", [id]);
         const lobby = lobbyResult.rows[0];
         if (lobby.created_by === parseInt(userId) && lobby.current_players <= 1) {
@@ -312,4 +308,42 @@ const leaveLobby = async (req, res) => {
         res.status(500).json({ success: false, message: "Lobiden ayrılamadınız." });
     }
 };
-module.exports = { createLobbie, getLobbies, updateLobbie, deleteLobby, getLobby, getLobbyPlayers, joinLobby, leaveLobby };
+const getLobbyMessages = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await db.query(
+            `SELECT lm.id, lm.message, lm.created_at, u.name AS user_name
+             FROM lobby_messages lm
+             JOIN users u ON lm.user_id = u.id
+             WHERE lm.lobby_id = $1
+             ORDER BY lm.created_at ASC`,
+            [id]
+        );
+        res.status(200).json({ success: true, messages: result.rows });
+    } catch (err) {
+        console.error("Chat mesajları alınamadı:", err);
+        res.status(500).json({ success: false, message: "Mesajlar alınamadı." });
+    }
+};
+const sendLobbyMessage = async (req, res) => {
+    const { id } = req.params;
+    const { userId, message } = req.body;
+
+    if (!userId || !message) {
+        return res.status(400).json({ success: false, message: "userId ve mesaj gerekli!" });
+    }
+
+    try {
+        await db.query(
+            "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
+            [id, userId, message]
+        );
+        res.status(200).json({ success: true, message: "Mesaj gönderildi." });
+    } catch (err) {
+        console.error("Mesaj gönderme hatası:", err);
+        res.status(500).json({ success: false, message: "Mesaj gönderilemedi." });
+    }
+};
+
+module.exports = { createLobbie, getLobbies, updateLobbie, deleteLobby, getLobby, getLobbyPlayers, joinLobby, leaveLobby, getLobbyMessages, sendLobbyMessage };

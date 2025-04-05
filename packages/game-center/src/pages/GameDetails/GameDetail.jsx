@@ -10,24 +10,25 @@ import {
     Grid,
     Snackbar,
     Alert,
-    Button
+    Button,
 } from "@mui/material";
 import { Info, Group, Add, History, PlayArrow, Settings } from "@mui/icons-material";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "@mui/material/styles";
-import { ColorModeContext } from "../../context/ThemeContext"; // Tema bağlamını ekliyoruz
+import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../CreateLobby";
 import LobbyList from "../LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
+
 function GameDetail() {
     const { gameId } = useParams();
     const { user, loading } = useUser();
     const navigate = useNavigate();
     const theme = useTheme();
-    const { mode } = useContext(ColorModeContext); // Tema modunu al
+    const { mode } = useContext(ColorModeContext);
     const [activeTab, setActiveTab] = useState(0);
     const [game, setGame] = useState(null);
     const [lobbies, setLobbies] = useState([]);
@@ -36,7 +37,6 @@ function GameDetail() {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const { getTimeDisplay, eventLobbies, activeLobbies, pastLobbies } = useLobbyUtils(lobbies);
-
 
     useEffect(() => {
         if (!gameId) {
@@ -65,7 +65,7 @@ function GameDetail() {
         };
         fetchGame();
         const interval = setInterval(() => {
-            setLobbies((prevLobbies) => [...prevLobbies]); // State'i yenileyerek render tetiklenir
+            setLobbies((prevLobbies) => [...prevLobbies]);
         }, 1000);
 
         return () => clearInterval(interval);
@@ -79,7 +79,6 @@ function GameDetail() {
                 setLobbies(res.data.lobbies || []);
                 const total = (res.data.lobbies || []).reduce((sum, lobby) => sum + (lobby.current_players || 0), 0);
                 setTotalPlayers(total);
-
             } else {
                 setLobbies([]);
                 console.error("Lobiler alınamadı:", res.data.message);
@@ -99,11 +98,33 @@ function GameDetail() {
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue);
     };
+
     const handleSnackbarClose = (event, reason) => {
         if (reason === "clickaway") return;
         setSnackbarOpen(false);
-    }
-
+    };
+    const handleDeleteLobby = async (lobbyId) => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.delete(`http://localhost:8081/lobbies/${lobbyId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.data.success) {
+                fetchLobbies();
+                setSnackbarMessage("Lobi başarıyla silindi!");
+                setSnackbarSeverity("success");
+                setSnackbarOpen(true);
+            } else {
+                setSnackbarMessage(res.data.message);
+                setSnackbarSeverity("error");
+                setSnackbarOpen(true);
+            }
+        } catch (err) {
+            setSnackbarMessage("Lobi silinemedi!");
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
+        }
+    };
     if (loading) return <div className="loading">Yükleniyor...</div>;
     if (!user) {
         navigate("/login");
@@ -111,58 +132,17 @@ function GameDetail() {
     }
     if (!gameId) return <div className="error">Oyun ID'si eksik! Lütfen bir oyun seçin.</div>;
     if (!game) return <div className="loading">Oyun yükleniyor...</div>;
+
     return (
-        <Box className={`game-detail-container ${mode === 'dark' ? 'g-detail-dark-theme' : 'g-detail-light-theme'}`}>
+        <Box className={`game-detail-container ${mode === "dark" ? "g-detail-dark-theme" : "g-detail-light-theme"}`}>
             <Box sx={{ justifyContent: "center", alignItems: "center", display: "flex" }}>
                 <Tabs value={activeTab} onChange={handleTabChange} className="game-tabs">
-                    <Tab
-                        disableRipple
-                        disableTouchRipple
-                        label="Overview"
-                        icon={<Info />}
-                        className="game-tab"
-                        sx={{ textTransform: "initial" }}
-                    />
-                    <Tab
-                        disableRipple
-                        disableTouchRipple
-                        label="Create Lobby"
-                        icon={<Add />}
-                        className="game-tab"
-                        sx={{ textTransform: "initial" }}
-                    />
-                    <Tab
-                        disableRipple
-                        disableTouchRipple
-                        label="Lobbies"
-                        icon={<Group />}
-                        className="game-tab"
-                        sx={{ textTransform: "initial" }}
-                    />
-                    <Tab
-                        disableRipple
-                        disableTouchRipple
-                        label="Game History"
-                        icon={<History />}
-                        className="game-tab"
-                        sx={{ textTransform: "initial" }}
-                    />
-                    <Tab
-                        disableRipple
-                        disableTouchRipple
-                        label="How to Play"
-                        icon={<PlayArrow />}
-                        className="game-tab"
-                        sx={{ textTransform: "initial" }}
-                    />
-                    <Tab
-                        disableRipple
-                        disableTouchRipple
-                        label="Settings"
-                        icon={<Settings />}
-                        className="game-tab"
-                        sx={{ textTransform: "initial" }}
-                    />
+                    <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
+                    <Tab label="Create Lobby" icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
+                    <Tab label="Lobbies" icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
+                    <Tab label="Game History" icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
+                    <Tab label="How to Play" icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
+                    <Tab label="Settings" icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
                 </Tabs>
             </Box>
 
@@ -186,30 +166,38 @@ function GameDetail() {
                                         )}
                                     </Box>
                                 )}
-                                {activeTab === 1 &&
-                                    <CreateLobby gameId={gameId}
+                                {activeTab === 1 && (
+                                    <CreateLobby
+                                        gameId={gameId}
                                         onLobbyCreated={() => {
                                             fetchLobbies();
                                             setSnackbarMessage("Lobby created successfully!");
                                             setSnackbarSeverity("success");
                                             setSnackbarOpen(true);
                                         }}
-                                    />}
-                                {activeTab === 2 && <LobbyList
-                                    gameId={gameId}
-                                    lobbies={lobbies}
-                                    fetchLobbies={fetchLobbies}
-                                    eventLobbies={eventLobbies}
-                                    activeLobbies={activeLobbies}
-                                    pastLobbies={pastLobbies}
-                                    getTimeDisplay={getTimeDisplay}
-                                    onCopyLink={(lobbyId) => {
-                                        const link = `${window.location.origin}/lobbies/${lobbyId}`;
-                                        navigator.clipboard.writeText(link);
-                                        setSnackbarMessage("Lobi bağlantısı kopyalandı!");
-                                        setSnackbarSeverity("success");
-                                        setSnackbarOpen(true);
-                                    }} />}
+                                    />
+                                )}
+                                {activeTab === 2 && (
+                                    <LobbyList
+                                        gameId={gameId}
+                                        lobbies={lobbies}
+                                        fetchLobbies={fetchLobbies}
+                                        eventLobbies={eventLobbies}
+                                        activeLobbies={activeLobbies}
+                                        pastLobbies={pastLobbies}
+                                        getTimeDisplay={getTimeDisplay}
+                                        onCopyLink={(lobbyId) => {
+                                            const link = `${window.location.origin}/lobbies/${lobbyId}`;
+                                            navigator.clipboard.writeText(link);
+                                            setSnackbarMessage("Lobby link copied!");
+                                            setSnackbarSeverity("success");
+                                            setSnackbarOpen(true);
+                                        }}
+                                        onDeleteLobby={(lobbyId) => {
+                                            handleDeleteLobby(lobbyId);
+                                        }}
+                                    />
+                                )}
                                 {activeTab === 3 && (
                                     <Box>
                                         <Typography variant="h5" className="section-title">
@@ -261,28 +249,36 @@ function GameDetail() {
                         </Card>
                         <Card className="game-card sidebar-card">
                             <CardContent>
-                                <Typography variant="h6" className="section-title">Quick Actions</Typography>
-
+                                <Typography variant="h6" className="section-title"
+                                >Quick Actions</Typography>
                                 <Button variant="contained" fullWidth sx={{ mb: 1 }} onClick={() => setActiveTab(1)}>
                                     Lobi Oluştur
                                 </Button>
                                 <Button variant="outlined" fullWidth onClick={() => setActiveTab(2)}>
                                     Lobileri Gör
                                 </Button>
-
-
                             </CardContent>
                         </Card>
                     </Grid>
                 </Grid>
             </Fade>
+
+            {/* Snackbar'ı düzeltilmiş hali */}
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={3000}
                 onClose={handleSnackbarClose}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
-                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "30%" }}>
+                <Alert
+                    onClose={handleSnackbarClose}
+                    severity={snackbarSeverity}
+                    sx={{
+                        width: "100%",
+                        color: mode === "dark" ? "#fff" : "#000", // Yazı rengini tema moduna göre ayarla
+                        bgcolor: mode === "dark" ? "grey.800" : undefined, // Arka planı koyu modda gri yap
+                    }}
+                >
                     {snackbarMessage}
                 </Alert>
             </Snackbar>

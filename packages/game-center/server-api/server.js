@@ -3,8 +3,7 @@ const cors = require("cors");
 const app = express();
 const http = require("http");
 const { Server } = require("socket.io");
-const multer = require("multer");
-const fs = require("fs");
+const db = require("./models/db");
 require("dotenv").config();
 
 
@@ -17,12 +16,11 @@ const io = new Server(server, {
 });
 
 
-// Middleware
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// Routes
+
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/games", require("./routes/gameRoutes"));
 app.use("/users", require("./routes/userRoute"));
@@ -35,7 +33,6 @@ app.get('/', (req, res) => {
 
 const closeExpiredLobbies = async () => {
     try {
-        //for event lobbies
         const eventLobbiesResult = await db.query(`
             UPDATE lobbies 
             SET status = 'closed' 
@@ -44,7 +41,6 @@ const closeExpiredLobbies = async () => {
         
         `);
         console.log(`${eventLobbiesResult.rowCount} lobby closed.`);
-        //for normal lobbies
         const normalLobbiesResult = await db.query(`
             UPDATE lobbies 
             SET status = 'closed' 
@@ -60,12 +56,13 @@ const closeExpiredLobbies = async () => {
 };
 setInterval(closeExpiredLobbies, 10 * 60 * 1000);
 
-// WebSocket
+
 io.on("connection", (socket) => {
     console.log("New connection:", socket.id);
 
     socket.on("set_username", (username) => {
         socket.username = username;
+        console.log(`Username set: ${username} for socket ${socket.id}`);
     });
 
     socket.on("sendMessage", (content) => {
@@ -75,24 +72,55 @@ io.on("connection", (socket) => {
             timestamp: new Date().toISOString(),
         });
     });
+    socket.on("join_lobby", async ({ lobbyId, userId, silent }) => {
+        socket.join(lobbyId);
+        console.log(`${socket.username || userId} joined lobby ${lobbyId}`);
 
-    socket.on("join_room", (roomId) => {
-        socket.join(roomId);
+        if (!silent) {
+            const joinMessage = {
+                user: "System",
+                content: `${socket.username || "Bir kullanıcı"} lobiye katıldı!`,
+                timestamp: new Date().toISOString(),
+            };
+            await db.query(
+                "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
+                [lobbyId, userId || null, joinMessage.content]
+            );
+            io.to(lobbyId).emit("receive_message", joinMessage);
+        }
     });
 
-    socket.on("send_message", ({ room_id, content }) => {
-        io.to(room_id).emit("receive_message", {
-            username: socket.username || "Anonim",
+
+    socket.on("send_message", async ({ lobbyId, userId, content }) => {
+        const message = {
+            user: socket.username || "Anonim",
             content,
             timestamp: new Date().toISOString(),
-        });
+        };
+        try {
+            await db.query(
+                "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
+                [lobbyId, userId, content]
+            );
+            io.to(lobbyId).emit("receive_message", message);
+            console.log(`Message sent to lobby ${lobbyId}: ${content}`);
+        } catch (err) {
+            console.error("Error saving message:", err);
+        }
     });
     socket.on("leave_lobby", async ({ lobbyId, userId }) => {
-        const lobby = await db.query("SELECT * FROM lobbies WHERE id = $1 AND created_by = $2", [lobbyId, userId]);
-        if (lobby.rows.length > 0) {
-            await db.query("UPDATE lobbies SET last_active = NOW() WHERE id = $1", [lobbyId]);
-            console.log(`Kullanıcı ${userId}, lobi ${lobbyId}'den ayrıldı.`);
-        }
+        socket.leave(lobbyId);
+        console.log(`${socket.username || userId} left lobby ${lobbyId}`);
+        const leaveMessage = {
+            user: "System",
+            content: `${socket.username || "Bir kullanıcı"} lobiden ayrıldı!`,
+            timestamp: new Date().toISOString(),
+        };
+        await db.query(
+            "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
+            [lobbyId, userId || null, leaveMessage.content]
+        );
+        io.to(lobbyId).emit("receive_message", leaveMessage);
     });
     socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.username || socket.id}`);

@@ -262,7 +262,11 @@ function LobbySection() {
                 onClose={handleSnackbarClose}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
-                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "30%" }}>
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{
+                    width: "100%", // Esnek genişlik
+                    color: mode === "dark" ? "#fff" : "#000", // Tema moduna göre yazı rengi
+                    bgcolor: mode === "dark" ? "grey.800" : undefined, // Koyu modda arka plan
+                }}>
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
