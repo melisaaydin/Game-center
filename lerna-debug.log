@@ -1,0 +1,22 @@
+0 silly argv {
+0 silly argv   _: [ 'run' ],
+0 silly argv   bail: false,
+0 silly argv   concurrency: 1,
+0 silly argv   lernaVersion: '8.2.0',
+0 silly argv   '$0': 'node_modules\\lerna\\dist\\cli.js',
+0 silly argv   script: 'test'
+0 silly argv }
+1 notice cli v8.2.0
+2 verbose packageConfigs Resolving packages based on package.json "workspaces" configuration.
+3 verbose rootPath C:\Users\melis\TOYOTA
+4 error Error: [readCachedProjectGraph] ERROR: No cached ProjectGraph is available.
+4 error
+4 error If you are leveraging \`readCachedProjectGraph()\` directly then you will need to refactor your usage to first ensure that
+4 error the ProjectGraph is created by calling \`await createProjectGraphAsync()\` somewhere before attempting to read the data.
+4 error
+4 error If you encounter this error as part of running standard \`nx\` commands then please open an issue on https://github.com/nrwl/nx
+4 error     at readCachedProjectGraph (C:\Users\melis\TOYOTA\node_modules\nx\src\project-graph\project-graph.js:44:15)
+4 error     at readCachedGraphAndHydrateFileMap (C:\Users\melis\TOYOTA\node_modules\nx\src\project-graph\project-graph.js:172:19)
+4 error     at createProjectGraphAndSourceMapsAsync (C:\Users\melis\TOYOTA\node_modules\nx\src\project-graph\project-graph.js:248:37)
+4 error     at async createProjectGraphAsync (C:\Users\melis\TOYOTA\node_modules\nx\src\project-graph\project-graph.js:219:39)
+4 error     at async detectProjects (C:\Users\melis\TOYOTA\node_modules\lerna\dist\index.js:3000:25)

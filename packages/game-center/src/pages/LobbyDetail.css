@@ -1,0 +1,36 @@
+.lobby-details-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.lobby-header {
+    margin-bottom: 20px;
+}
+
+.lobby-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.lobby-players {
+    margin-bottom: 20px;
+}
+
+.lobby-chat {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.chat-messages {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.chat-input {
+    display: flex;
+    gap: 10px;
+}

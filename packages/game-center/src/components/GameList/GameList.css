@@ -1,0 +1,42 @@
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+    justify-content: center;
+
+}
+
+.img-div {
+    cursor: pointer;
+    text-align: center;
+    background: none;
+    padding: 0;
+    box-shadow: none;
+    transition: transform 0.3s ease;
+}
+
+.img-div:hover {
+    transform: scale(1.05);
+}
+
+.img-div img {
+    border-radius: 20px;
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background-color: transparent !important;
+    border-radius: 12px;
+    width: 160px;
+}
+
+.section-title {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.gamelist-div {
+    padding: 0 40px;
+    margin-top: 200px;
+    /* Removed margin-top: 200px to let it align naturally in the flex container */
+}

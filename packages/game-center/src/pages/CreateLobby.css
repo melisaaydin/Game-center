@@ -1,0 +1,37 @@
+.text-property {
+    color: rgb(88, 18, 29) !important;
+    width: 150px !important;
+    /* Genişlik küçültüldü */
+}
+
+.create-lobby-container {
+    width: 500px !important;
+}
+
+.MuiInputLabel-root {
+    color: rgba(0, 0, 0, 0.7) !important;
+    /* Varsayılan label rengi */
+}
+
+.Mui-focused .MuiInputLabel-root {
+    color: rgb(88, 18, 29) !important;
+    /* Odaklandığında label rengi */
+}
+
+.MuiInputBase-root.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: rgb(88, 18, 29) !important;
+    border-bottom: none;
+}
+
+.lobby-switch {
+    color: rgb(88, 18, 29) !important;
+    /* Switch rengi */
+}
+
+.lobby-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    /* Daha fazla boşluk */
+
+}

@@ -1,0 +1,68 @@
+:root {
+    --background-color: #fafafa;
+    --text-color: #2d2d2def;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --primary-color: rgb(169, 29, 52);
+    --secondary-color: pink;
+    --button-bg: rgb(169, 29, 52);
+    --button-text: #ffffff;
+    --button-hover-bg: #ffffff;
+    --button-hover-text: rgb(169, 29, 52);
+}
+
+.profile-dark {
+    --background-color: #1e1e1eac;
+    --text-color: #fff;
+    --shadow-color: rgba(255, 255, 255, 0.1);
+    --primary-color: rgb(169, 29, 52);
+    --secondary-color: pink;
+    --button-bg: rgb(169, 29, 52);
+    --button-text: #ffffff;
+    --button-hover-bg: #fff;
+    --button-hover-text: rgb(169, 29, 52);
+}
+
+.profile-light {
+    --background-color: #fafafa;
+    --text-color: #2d2d2d;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --primary-color: rgb(169, 29, 52);
+    --secondary-color: pink;
+    --button-bg: rgb(169, 29, 52);
+    --button-text: #ffffff;
+    --button-hover-bg: #ffffff;
+    --button-hover-text: rgb(169, 29, 52);
+}
+
+.home-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--background-color);
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    padding: 20px;
+    gap: 20px;
+    margin-left: 70px;
+    /* Matches SideBar width to prevent overlap */
+    margin-top: 70px;
+    /* Matches navbar height to prevent overlap */
+}
+
+.game-center-container {
+    flex: 2;
+    min-width: 0;
+
+}
+
+.lobby-right-container {
+    flex: 1;
+    max-width: 300px;
+    background-color: var(--background-color);
+    border-radius: 16px;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    padding: 20px;
+    justify-content: flex-end;
+}
