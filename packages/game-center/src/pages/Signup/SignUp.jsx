@@ -5,7 +5,7 @@ import axios from 'axios';
 import AuthLayout from '../../layouts/AuthLayout';
 import { TextField, Button, Link as MuiLink, IconButton, InputAdornment } from '@mui/material';
 import SocialConnect from '../../components/SocialConnect/SocialConnect';
-import Visibility from '@mui/icons-material/Visibility'; // Göz simgesi
+import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import './SignUp.css'
 function SignUp() {

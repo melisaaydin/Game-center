@@ -11,7 +11,7 @@ const GameList = () => {
         axios
             .get("http://localhost:8081/games")
             .then((res) => {
-                console.log("Oyunlar:", res.data); // Gelen veriyi kontrol et
+                console.log("Oyunlar:", res.data);
                 setGames(res.data);
             })
             .catch((err) => {
@@ -27,7 +27,7 @@ const GameList = () => {
                     <div
                         key={game.id}
                         className="game-card-game-list"
-                        onClick={() => navigate(`/games/${game.id}`)} // "/games/" olarak düzeltildi
+                        onClick={() => navigate(`/games/${game.id}`)}
                     >
                         <div className="ticket-wrapper">
                             <div className="img-div">

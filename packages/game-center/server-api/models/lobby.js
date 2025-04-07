@@ -23,7 +23,7 @@ const Lobbie = sequelize.define('Lobby', {
         type: DataTypes.STRING
     }
 }, {
-    tableName: 'lobbies', // Veritabanındaki tablo adı
+    tableName: 'lobbies',
     timestamps: false
 });
 

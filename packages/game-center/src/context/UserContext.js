@@ -19,7 +19,7 @@ export const UserProvider = ({ children }) => {
                 return;
             }
             console.log("Fetching user data for ID:", userId);
-            const res = await axios.get(`http://localhost:8081/users/user/${userId}`, { // profile yerine users/user endpoint'i
+            const res = await axios.get(`http://localhost:8081/users/user/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             console.log("Fetched user data:", res.data);
@@ -30,7 +30,7 @@ export const UserProvider = ({ children }) => {
                 id: res.data.id,
                 name: res.data.name,
                 email: res.data.email,
-                avatar_url: res.data.avatar_url, // avatar_url dahil ediliyor
+                avatar_url: res.data.avatar_url,
             });
         } catch (err) {
             console.error("Kullanıcı bilgisi alınamadı:", err.response?.data || err.message);
@@ -47,7 +47,7 @@ export const UserProvider = ({ children }) => {
                 try {
                     const decodedToken = jwtDecode(token);
                     console.log("Decoded token:", decodedToken);
-                    await fetchUserData(token, decodedToken.userId); // Tam veriyi çek
+                    await fetchUserData(token, decodedToken.userId);
                 } catch (err) {
                     console.error("Token decoding failed:", err);
                     localStorage.removeItem("token");
@@ -69,7 +69,7 @@ export const UserProvider = ({ children }) => {
         try {
             const decoded = jwtDecode(token);
             console.log("Login - Decoded token:", decoded);
-            await fetchUserData(token, decoded.userId); // Girişte tam veriyi çek
+            await fetchUserData(token, decoded.userId);
         } catch (err) {
             console.error("Login token decoding failed:", err);
             localStorage.removeItem("token");

@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MdLogout, MdLogin, MdSettings } from "react-icons/md";
 import Cup from '../../assets/cup.png';
 import Coin from '../../assets/star.png';
+import Settings from '../../assets/settings.png';
 import { useTheme } from '@mui/material/styles';
 import Friends from '../../assets/friendship.png'
 import { MdGames } from "react-icons/md";
@@ -31,7 +32,6 @@ function SideBar() {
         return <div>Loading...</div>;
     }
 
-    console.log("SideBar user:", user); // Kullanıcı verilerini kontrol et
 
     const handleAvatarClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -50,7 +50,6 @@ function SideBar() {
     const handleProfileSettings = () => {
         if (user?.id) {
             navigate(`/users/user/${user.id}`);
-            console.log("Navigating to profile settings for user:", user.id);
 
         } else {
             console.error("User ID bulunamadı!");
@@ -80,6 +79,10 @@ function SideBar() {
                             <Link className='link' to="/" style={{ color: theme.palette.text.primary }}>
                                 <img src={Friends} alt="" className='image' />
                                 <span className='span'>Friends</span>
+                            </Link>
+                            <Link className='link' to="/" style={{ color: theme.palette.text.primary }}>
+                                <img src={Settings} alt="" className='image' />
+                                <span className='span'>Settings</span>
                             </Link>
                         </div>
                         <div className='down'>

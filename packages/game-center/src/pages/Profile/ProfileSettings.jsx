@@ -108,7 +108,7 @@ function ProfileSettings() {
             setSnackbarMessage("Profil başarıyla güncellendi!");
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
-            setTimeout(() => navigate("/"), 2000); // 2 saniye sonra yönlendirme
+            setTimeout(() => navigate("/"), 2000);
         } catch (error) {
             setErrorMessage("Güncelleme sırasında hata oluştu: " + (error.response?.data?.message || error.message));
             setSnackbarMessage("Profil güncellenemedi: " + (error.response?.data?.message || error.message));
@@ -287,8 +287,6 @@ function ProfileSettings() {
                     )}
                 </form>
             </div>
-
-            {/* Snackbar Bildirimi */}
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={3000}
@@ -300,8 +298,8 @@ function ProfileSettings() {
                     severity={snackbarSeverity}
                     sx={{
                         width: "100%",
-                        color: mode === "dark" ? "#fff" : "#000", // Tema moduna göre yazı rengi
-                        bgcolor: mode === "dark" ? "grey.800" : undefined, // Koyu modda arka plan
+                        color: mode === "dark" ? "#fff" : "#000",
+                        bgcolor: mode === "dark" ? "grey.800" : undefined,
                     }}
                 >
                     {snackbarMessage}

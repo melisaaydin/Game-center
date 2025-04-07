@@ -18,13 +18,12 @@ export const AuthProvider = ({ children }) => {
             axios.get("http://localhost:8081/api/auth"
             )
                 .then(response => {
-                    // Eğer token geçerliyse, kullanıcının bilgilerini al
                     setUser(response.data.user);
                 })
-                .catch(() => navigate('/login'))  // Geçersiz token veya başka bir hata durumunda login sayfasına yönlendir
-                .finally(() => setLoading(false));  // Yükleme durumu sonlandırılır
+                .catch(() => navigate('/login'))
+                .finally(() => setLoading(false));
         } else {
-            setLoading(false);  // Token yoksa yükleme durumu sonlandırılır
+            setLoading(false);
         }
     }, [navigate]);
     const login = (email, password) => {

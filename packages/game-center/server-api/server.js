@@ -125,6 +125,13 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.username || socket.id}`);
     });
+    socket.on("lobby_updated", (updatedLobby) => {
+        setLobby(updatedLobby);
+        if (user) {
+            const playerCheck = updatedLobby.players.some((p) => p.id === user.id);
+            setIsJoined(playerCheck);
+        }
+    });
 });
 
 const PORT = 8081;

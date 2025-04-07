@@ -9,8 +9,8 @@ import AuthLayout from "../../layouts/AuthLayout";
 import { Link } from 'react-router-dom';
 import './Login.css';
 import SocialConnect from '../../components/SocialConnect/SocialConnect';
-import { jwtDecode } from "jwt-decode"; // jwt-decode paketini yükledik
-import Visibility from '@mui/icons-material/Visibility'; // Göz simgesi
+import { jwtDecode } from "jwt-decode";
+import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 
 const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
@@ -35,7 +35,6 @@ function Login() {
                 login({ email: decoded.email, avatar: decoded.avatar }, token);
                 navigate("/");
             } catch (err) {
-                console.error("Token decoding failed:", err);
                 localStorage.removeItem("token");
             }
         }
@@ -86,14 +85,12 @@ function Login() {
 
                 const token = res.data.token;
                 localStorage.setItem("token", token);
-                console.log("Token saved to localStorage:", token);
+
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
                 const decoded = jwtDecode(token);
-                console.log("Login successful, token:", token);
-                console.log("Decoded user info:", decoded);
 
-                // Login işlemi sonrası user bilgilerini context'e kaydet
+
                 login({ email: decoded.email, avatar: decoded.avatar, id: decoded.userId }, token);
 
                 navigate("/");

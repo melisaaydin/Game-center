@@ -69,12 +69,12 @@ function LobbySection() {
         fetchLobbies();
         fetchGames();
 
-        // Geri sayım için her saniye güncelleme
+
         const interval = setInterval(() => {
-            setLobbies((prevLobbies) => [...prevLobbies]); // State'i yenileyerek render tetiklenir
+            setLobbies((prevLobbies) => [...prevLobbies]);
         }, 1000);
 
-        return () => clearInterval(interval); // Cleanup
+        return () => clearInterval(interval);
     }, []);
 
     const handleCreateLobby = () => {
@@ -112,7 +112,6 @@ function LobbySection() {
 
     return (
         <Box className="lobby-section">
-            {/* Etkinlik Lobileri */}
             {eventLobbies.length > 0 && (
                 <>
                     <Typography variant="h6" className="lobby-section-title">
@@ -142,8 +141,6 @@ function LobbySection() {
                     </List>
                 </>
             )}
-
-            {/* Aktif Lobiler */}
             <Typography variant="h6" className="lobby-section-title" sx={{ mt: eventLobbies.length > 0 ? 3 : 0 }}>
                 Active Lobbies
             </Typography>
@@ -175,8 +172,6 @@ function LobbySection() {
                     <Typography className="no-lobbies">No active lobbies yet.</Typography>
                 )}
             </List>
-
-            {/* Geçmiş Etkinlik Lobileri */}
             {pastLobbies.length > 0 && (
                 <>
                     <Typography variant="h6" className="lobby-section-title" sx={{ mt: 3 }}>
@@ -202,7 +197,6 @@ function LobbySection() {
                 </>
             )}
 
-            {/* Dummy Eklemeler */}
             <Box className="dummy-section" sx={{ mt: 3 }}>
                 <Typography variant="h6" className="dummy-title">
                     Chat
@@ -216,7 +210,6 @@ function LobbySection() {
                 <Typography className="dummy-text">Wins: 0 | Losses: 0</Typography>
             </Box>
 
-            {/* Lobi Oluşturma Dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                 <DialogTitle>Create a New Lobby</DialogTitle>
                 <DialogContent>
@@ -254,8 +247,6 @@ function LobbySection() {
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
                 </DialogActions>
             </Dialog>
-
-            {/* Snackbar Bildirimi */}
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={3000}
@@ -263,9 +254,9 @@ function LobbySection() {
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
                 <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{
-                    width: "100%", // Esnek genişlik
-                    color: mode === "dark" ? "#fff" : "#000", // Tema moduna göre yazı rengi
-                    bgcolor: mode === "dark" ? "grey.800" : undefined, // Koyu modda arka plan
+                    width: "100%",
+                    color: mode === "dark" ? "#fff" : "#000",
+                    bgcolor: mode === "dark" ? "grey.800" : undefined,
                 }}>
                     {snackbarMessage}
                 </Alert>

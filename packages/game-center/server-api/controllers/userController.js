@@ -11,7 +11,7 @@ const getAllUsers = async (req, res) => {
         res.status(500).json({ success: false, message: "Kullanıcılar alınamadı" });
     }
 };
-// Kullanıcı bilgilerini getirme
+
 const getUserById = async (req, res) => {
     const userId = req.params.id;
     try {
@@ -19,30 +19,24 @@ const getUserById = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Kullanıcı bulunamadı" });
         }
-        console.log("Dönen kullanıcı verisi:", result.rows[0]);
-        res.json(result.rows[0]);  // Bu satır sadece kullanıcı bulunduğunda çalışmalı
+        res.json(result.rows[0]);
     } catch (err) {
-        console.error("Kullanıcı getirme hatası:", err);
         res.status(500).json({ message: "Kullanıcı bilgisi alınamadı" });
     }
 };
 
-
-// Profil bilgilerini alma
 const getUserProfile = async (req, res) => {
     try {
-        console.log("User ID from token:", req.user.userId);
+
         const userId = req.user.userId;
         const result = await db.query("SELECT id, name, email, avatar_url FROM users WHERE id = $1", [userId]);
 
         if (result.rows.length === 0) {
-            console.log("No user found for ID:", userId);
             return res.status(404).json({ success: false, message: "User not found" });
         }
-        console.log("Returning user profile:", result.rows[0]);
+
         res.json({ success: true, user: result.rows[0] });
     } catch (err) {
-        console.error("Profile fetch error:", err);
         res.status(500).json({ success: false, message: "Failed to retrieve profile." });
     }
 };
@@ -50,11 +44,6 @@ const getUserProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     const userId = req.user.userId;
     const { name, email, oldPassword, newPassword } = req.body; const avatar_url = req.file ? req.file.filename : null;
-    console.log("Dosya bilgisi:", req.file);
-
-
-    console.log("Gelen update isteği:", req.body);
-    console.log("Yüklenen dosya:", req.file);
 
     if (!name || !email) {
         return res.status(400).json({ success: false, message: "Ad ve e-posta gereklidir!" });
@@ -96,7 +85,6 @@ const updateProfile = async (req, res) => {
 
         res.json({ success: true, message: "Profil güncellendi", user: result.rows[0] });
     } catch (err) {
-        console.error("Profil güncelleme hatası:", err);
         res.status(500).json({ success: false, message: "Veritabanı hatası" });
     }
 };

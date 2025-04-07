@@ -23,7 +23,6 @@
     width: 100% !important;
     box-shadow: 2px 0 5px var(--shadow-color);
     background-color: var(--background-color) !important;
-    /* Dinamik arka plan */
     color: var(--text-color);
     top: 0;
     left: 0;
@@ -95,7 +94,6 @@
     display: flex;
     gap: 4px;
     height: 34px;
-
     border-radius: 20px;
 }
 
@@ -132,7 +130,6 @@
 @media (prefers-color-scheme: dark) {
     .headerSearch input::-webkit-input-placeholder {
         color: rgba(255, 255, 255, 0.5);
-        /* Koyu tema için */
     }
 }
 
@@ -208,7 +205,6 @@
     display: flex;
     background: var(--background-color);
     height: 34px;
-
     width: 147px;
 }
 
@@ -238,10 +234,8 @@
     border-radius: 20px;
     border: none;
     border: 1px solid var(--secondary-color);
-    /* Tema ile uyumlu */
     color: var(--text-color);
     background: var(--secondary-color);
-    /* Tema ile uyumlu */
     font-size: 13px;
     padding: 5px 9px;
     margin-left: 15px;
@@ -252,7 +246,6 @@
     border-radius: 50%;
     display: inline-flex;
     border: 3px solid var(--secondary-color);
-    /* Tema ile uyumlu */
     background: var(--secondary-color);
     justify-content: center;
     align-items: center;
@@ -288,9 +281,7 @@
 
 .sideBar .down {
     position: absolute;
-    /* Sayfanın sabit kısmına göre konumlandır */
     bottom: 20px;
-    /* Daha yukarı almak için artırabilirsin */
 }
 
 .sideBar .icon {
@@ -305,7 +296,6 @@
     align-items: center;
     text-decoration: none;
     color: var(--text-color);
-    /* Dinamik renk */
     font-size: 10px !important;
 
 }

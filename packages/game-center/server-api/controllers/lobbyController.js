@@ -4,21 +4,21 @@ const bcrypt = require("bcrypt");
 const createLobbie = async (req, res) => {
     const { name, is_event, start_time, end_time, password, game_id, max_players } = req.body;
     const userId = req.user ? req.user.userId : req.body.userId;
-    console.log("createLobbie isteği alındı:", { name, is_event, start_time, end_time, password, game_id, max_players, userId });
+
 
     if (!userId || isNaN(userId)) {
         return res.status(400).json({ success: false, message: "Geçerli bir userId gerekli!" });
     }
 
     if (!name || !game_id || !max_players) {
-        console.log("Eksik alanlar:", { name, game_id, max_players });
+
         return res.status(400).json({ success: false, message: "Lobi adı, oyun ID'si ve maksimum oyuncu sayısı zorunludur!" });
     }
 
     try {
         const userLobbyCheck = await db.query("SELECT id FROM lobby_players WHERE user_id = $1", [userId]);
         if (userLobbyCheck.rows.length > 0) {
-            console.log("Kullanıcı zaten bir lobiye sahip:", userId);
+
             return res.status(400).json({ success: false, message: "You are already in a lobby!" });
         }
 
@@ -26,9 +26,8 @@ const createLobbie = async (req, res) => {
         if (password) {
             try {
                 hashedPassword = await bcrypt.hash(password, 10);
-                console.log("Şifre hash'lendi:", hashedPassword);
+
             } catch (bcryptErr) {
-                console.error("Şifre hash'leme hatası:", bcryptErr);
                 return res.status(500).json({ success: false, message: "Şifre hash'leme sırasında hata oluştu." });
             }
         }
@@ -39,23 +38,21 @@ const createLobbie = async (req, res) => {
         `;
         const values = [name, is_event, start_time || null, end_time || null, hashedPassword, game_id, max_players, userId];
 
-        console.log("Lobi oluşturma sorgusu çalıştırılıyor:", query, values);
 
         const result = await db.query(query, values);
         const newLobby = result.rows[0];
-        console.log("Yeni lobi oluşturuldu:", newLobby);
+
 
         const addOwnerQuery = `
             INSERT INTO lobby_players (lobby_id, user_id, is_ready)
             VALUES ($1, $2, TRUE) RETURNING *;
         `;
         await db.query(addOwnerQuery, [newLobby.id, userId]);
-        console.log("Lobi sahibi eklendi:", userId);
         await db.query("UPDATE lobbies SET current_players = 1 WHERE id = $1", [newLobby.id]);
 
         res.status(201).json({ success: true, message: "Lobi oluşturuldu.", lobby: newLobby });
     } catch (err) {
-        console.error("Lobi oluşturma hatası:", err);
+
         res.status(500).json({ success: false, message: "Lobi oluşturulurken hata oluştu: " + err.message });
     }
 };
@@ -116,7 +113,6 @@ const getLobbies = async (req, res) => {
 
         res.status(200).json({ success: true, lobbies: filteredLobbies });
     } catch (err) {
-        console.error("Lobiler alınamadı:", err);
         res.status(500).json({ success: false, message: "Lobiler alınamadı" });
     }
 };
@@ -152,7 +148,6 @@ const getLobby = async (req, res) => {
 
         res.json(lobbyWithPlayers);
     } catch (error) {
-        console.error("Lobi alınırken hata oluştu:", error);
         res.status(500).json({ message: "Sunucu hatası", error: error.message });
     }
 };
@@ -176,7 +171,6 @@ const updateLobbie = async (req, res) => {
             res.status(404).json({ message: "Lobi bulunamadı" });
         }
     } catch (err) {
-        console.error("Lobi güncelleme hatası:", err);
         res.status(500).json({ message: "Lobi güncellenemedi" });
     }
 };
@@ -203,7 +197,6 @@ const deleteLobby = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Lobi başarıyla silindi!" });
     } catch (err) {
-        console.error("Lobi silme hatası:", err);
         res.status(500).json({ success: false, message: "Lobi silinemedi!" });
     }
 };
@@ -304,25 +297,23 @@ const leaveLobby = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Lobiden ayrıldınız." });
     } catch (err) {
-        console.error("Lobiden ayrılma hatası:", err);
         res.status(500).json({ success: false, message: "Lobiden ayrılamadınız." });
     }
 };
 const getLobbyMessages = async (req, res) => {
     const { id } = req.params;
-
     try {
         const result = await db.query(
-            `SELECT lm.id, lm.message, lm.created_at, u.name AS user_name
+            `SELECT lm.id, lm.message AS content, lm.created_at, u.name AS user
              FROM lobby_messages lm
-             JOIN users u ON lm.user_id = u.id
+             LEFT JOIN users u ON lm.user_id = u.id
              WHERE lm.lobby_id = $1
              ORDER BY lm.created_at ASC`,
             [id]
         );
         res.status(200).json({ success: true, messages: result.rows });
     } catch (err) {
-        console.error("Chat mesajları alınamadı:", err);
+
         res.status(500).json({ success: false, message: "Mesajlar alınamadı." });
     }
 };

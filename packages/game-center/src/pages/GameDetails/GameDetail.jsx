@@ -262,8 +262,6 @@ function GameDetail() {
                     </Grid>
                 </Grid>
             </Fade>
-
-            {/* Snackbar'ı düzeltilmiş hali */}
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={3000}
@@ -275,8 +273,8 @@ function GameDetail() {
                     severity={snackbarSeverity}
                     sx={{
                         width: "100%",
-                        color: mode === "dark" ? "#fff" : "#000", // Yazı rengini tema moduna göre ayarla
-                        bgcolor: mode === "dark" ? "grey.800" : undefined, // Arka planı koyu modda gri yap
+                        color: mode === "dark" ? "#fff" : "#000",
+                        bgcolor: mode === "dark" ? "grey.800" : undefined,
                     }}
                 >
                     {snackbarMessage}

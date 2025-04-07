@@ -77,7 +77,7 @@ const LobbyDetails = () => {
                 const messagesRes = await axios.get(`http://localhost:8081/lobbies/${id}/messages`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setChatMessages(messagesRes.data.messages.map((m) => ({ user: m.user_name, message: m.message })));
+                setChatMessages(messagesRes.data.messages);
                 setLoading(false);
             } catch (err) {
                 setError("Lobi yüklenirken bir hata oluştu: " + (err.response?.data?.message || err.message));
@@ -104,7 +104,7 @@ const LobbyDetails = () => {
         socket.on("connect", handleSocketConnect);
 
         socket.on("receive_message", (message) => {
-            setChatMessages((prevMessages) => [...prevMessages, { user: message.user, message: message.content }]);
+            setChatMessages((prevMessages) => [...prevMessages, { user: message.user, content: message.content }]);
         });
 
         socket.on("disconnect", () => {
@@ -172,10 +172,7 @@ const LobbyDetails = () => {
             }
             setIsJoined(true);
             socket.emit("join_lobby", { lobbyId: id, userId: user.id });
-            const lobbyRes = await axios.get(`http://localhost:8081/lobbies/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setLobby(lobbyRes.data);
+            setLobby((prev) => ({ ...prev, current_players: prev.current_players + 1 }));
             setSnackbarMessage("Lobiye katıldınız!");
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
@@ -378,7 +375,7 @@ const LobbyDetails = () => {
                                         borderRadius: 1,
                                     }}
                                 >
-                                    <strong>{msg.user}:</strong> {msg.message}
+                                    <strong>{msg.user}:</strong> {msg.content}
                                 </Typography>
                             ))}
                         </Box>

@@ -37,6 +37,5 @@
 
 .gamelist-div {
     padding: 0 40px;
-    margin-top: 200px;
-    /* Removed margin-top: 200px to let it align naturally in the flex container */
+
 }

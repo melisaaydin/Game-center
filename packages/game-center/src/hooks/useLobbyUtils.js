@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 const useLobbyUtils = (lobbies, refreshInterval = 1000) => {
-    // Tarih ve geri sayım hesaplama fonksiyonu
     const getTimeDisplay = (startTime) => {
         const now = new Date();
         const start = new Date(startTime);
@@ -19,7 +18,6 @@ const useLobbyUtils = (lobbies, refreshInterval = 1000) => {
         }
     };
 
-    // Lobi filtreleme
     const now = new Date();
     const eventLobbies = lobbies
         .filter((lobby) => lobby.is_event && new Date(lobby.end_time) > now)
@@ -29,7 +27,6 @@ const useLobbyUtils = (lobbies, refreshInterval = 1000) => {
         .filter((lobby) => !lobby.is_event);
     const pastLobbies = lobbies.filter((lobby) => lobby.is_event && new Date(lobby.end_time) <= now);
 
-    // Geri sayım için state yenileme (isteğe bağlı)
 
 
     return { getTimeDisplay, eventLobbies, activeLobbies, pastLobbies };
