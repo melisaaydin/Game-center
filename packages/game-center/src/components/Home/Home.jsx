@@ -6,7 +6,7 @@ import LobbySection from '../LobbySection/LobbySection';
 import { ColorModeContext } from "../../context/ThemeContext";
 import { useTheme } from "@mui/material/styles";
 import { useMediaQuery } from "@mui/material";
-import FeaturedCards from '../FeaturedGames/FeaturedGames';
+import Slides from '../Slides/Slides';
 
 const Home = () => {
     const { mode } = useContext(ColorModeContext);
@@ -18,7 +18,7 @@ const Home = () => {
             <SideBar />
             <div className="main-content">
                 <div className="game-center-container">
-                    <FeaturedCards />
+                    <Slides />
                     <GameList />
                 </div>
                 <div className="lobby-right-container">
