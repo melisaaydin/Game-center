@@ -1,10 +1,50 @@
+/* app.css */
+
+/* Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&family=Dosis:wght@200..800&display=swap');
+
+/* CSS Değişkenleri */
+:root {
+  --background-color: #fafafa;
+  --background-color-secondary: #f5f5f5;
+
+  --paper-color: #ffffff;
+  --text-color: #2d2d2d;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --primary-color: rgb(86, 18, 29);
+  --accent-color: rgb(169, 29, 52);
+  --secondary-color: pink;
+  --button-bg: rgb(86, 18, 29);
+  --button-text: #ffffff;
+  --button-hover-bg: #ffffff;
+  --button-hover-text: rgb(86, 18, 29);
+  --subtext-color: rgba(44, 13, 18, 0.71);
+}
+
+[data-theme="dark"] {
+  --background-color: rgb(29, 30, 32);
+  --background-color-secondary: rgb(40, 42, 46);
+  --paper-color: rgb(29, 30, 32);
+  --text-color: #fff;
+  --text-secondary: #b0b0b0;
+  --shadow-color: rgba(255, 255, 255, 0.1);
+  --primary-color: rgb(225, 50, 75);
+  --accent-color: rgb(169, 29, 52);
+  --secondary-color: pink;
+  --button-bg: rgb(225, 50, 75);
+  --button-text: #ffffff;
+  --button-hover-bg: #ffffff;
+  --button-hover-text: rgb(225, 50, 75);
+}
+
 html,
 body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: white;
+  background-color: var(--background-color);
   font-family: 'Poppins', sans-serif !important;
   overflow-x: hidden;
 }
@@ -12,21 +52,142 @@ body {
 * {
   margin: 0;
   padding: 0;
+  text-transform: initial;
 }
 
 .card-shadow {
   width: 100%;
   max-width: 400px;
   padding: 20px;
-  box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.2);
-  background-color: #fff;
+  box-shadow: 4px 4px 20px var(--shadow-color);
+  background-color: var(--background-color);
   border-radius: 8px;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&family=Dosis:wght@200..800&display=swap');
+.profile-container,
+.lobby-details-container,
+.game-detail-container,
+.navbar-up,
+.sideBar {
+  background-color: var(--background-color);
+}
+
+.form-container {
+  max-width: 400px;
+  width: 100%;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px var(--shadow-color);
+  background-color: var(--background-color);
+}
+
+.game-card,
+.lobby-card {
+  background: var(--background-color) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+[data-theme="dark"] .game-card,
+[data-theme="dark"] .lobby-card {
+  background: var(--background-color) !important;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.form-title,
+.error-message {
+  color: var(--primary-color);
+}
+
+.section-title,
+.section-text,
+.lobby-header-title {
+  color: var(--text-color) !important;
+}
+
+.articleOnSocialnetwork,
+.hr-text {
+  font-weight: 400;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-secondary);
+  font-size: 17px;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px var(--shadow-color);
+}
+
+.text-property {
+  margin-bottom: 15px;
+}
+
+.text-property input {
+  color: var(--text-color) !important;
+}
+
+.text-property label {
+  color: var(--secondary-color);
+}
+
+.form .title {
+  font-weight: bold;
+  color: var(--primary-color);
+  align-items: center;
+  font-size: 30px;
+  display: flex;
+  justify-content: center;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+
+}
+
+.form {
+  max-width: 400px;
+  width: 100%;
+  border: 1rem;
+  box-shadow: 10px 10px 15px rgba(200, 54, 132, 0.7), 15px 15px 25px rgba(255, 20, 147, 0.5);
+  transition: box-shadow 0.6s ease-in-out;
+
+}
+
+.form:hover {
+  box-shadow: 10px 10px 15px rgba(255, 20, 147, 0.9), 15px 15px 25px rgba(255, 20, 147, 0.7);
+
+}
 
 .MuiButton-root {
   font-family: 'Poppins', sans-serif !important;
+  text-transform: none;
+  border-radius: 20px;
+  color: var(--button-text);
+  background-color: var(--button-bg);
+}
+
+.MuiButton-root:hover {
+  background-color: var(--button-hover-bg);
+  color: var(--button-hover-text);
+}
+
+.nav-btn.MuiButton-root:hover {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+}
+
+.nav-btn.active.MuiButton-root:hover {
+  color: var(--primary-color) !important;
+}
+
+.custom-file-label {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border: none;
+  box-shadow: 2px 1px 0 var(--primary-color) !important;
+  border-radius: 5px;
+  color: var(--primary-color) !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.custom-file-label:hover {
+  background-color: var(--primary-color) !important;
+  color: var(--button-text) !important;
 }
 
 
@@ -34,17 +195,6 @@ body {
   display: flex;
   justify-content: center;
   padding: 5px;
-}
-
-.articleOnSocialnetwork {
-  font-weight: 400;
-  font-family: 'Arial', sans-serif;
-  color: rgba(44, 13, 18, 0.71);
-  font-size: 17px;
-  letter-spacing: 0.5px;
-  text-transform: capitalize;
-
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .hr-with-text {
@@ -58,38 +208,151 @@ body {
 .hr-with-text hr {
   border: 0;
   height: 1px;
-  background-color: rgb(86, 18, 29);
+  background: var(--text-color);
   flex-grow: 1;
-}
-
-* {
-  text-transform: initial;
 }
 
 .hr-text {
   margin: 0 10px;
   padding: 0 10px;
-  background-color: white;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-  font-size: 17px;
-  color: rgba(44, 13, 18, 0.71);
+  color: var(--text-color);
 }
 
-::-webkit-scrollbar {
-  width: 8px;
+.MuiInputLabel-root {
+  color: var(--primary-color) !important;
 }
 
-::-webkit-scrollbar-track {
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary-color) !important;
+}
+
+.MuiTab-root {
+  color: var(--text-color);
+}
+
+.MuiTab-root.Mui-selected {
+  color: var(--secondary-color);
+}
+
+[data-theme="light"] .MuiTab-root.Mui-selected {
+  color: var(--primary-color);
+}
+
+.MuiTabs-indicator {
+  background: var(--primary-color) !important;
+}
+
+[data-theme="light"] .MuiTabs-indicator {
+  background: var(--primary-color) !important;
+}
+
+.MuiDialog-paper {
+  border-radius: 16px !important;
+  background: var(--background-color) !important;
+}
+
+.MuiDialogTitle-root,
+.MuiDialogContent-root,
+.MuiDialogActions-root {
+  background: var(--paper-color) !important;
+  color: var(--text-color) !important;
+}
+
+.MuiDialogActions-root .MuiButton-root[color="primary"] {
+  background-color: var(--button-bg) !important;
+  color: var(--button-text) !important;
+}
+
+.MuiDialogActions-root .MuiButton-root[color="primary"]:hover {
+  background-color: var(--button-hover-bg) !important;
+  color: var(--button-hover-text) !important;
+}
+
+.MuiDialogActions-root .MuiButton-root[color="error"] {
+  background-color: var(--button-bg) !important;
+  color: var(--button-text) !important;
+}
+
+.MuiDialogActions-root .MuiButton-root[color="error"]:hover {
+  background-color: var(--button-hover-bg) !important;
+  color: var(--button-hover-text) !important;
+}
+
+
+.chat-messages::-webkit-scrollbar-track {
   background: var(--background-color);
   border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--secondary-color);
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
   border-radius: 8px;
-  transition: var(--transition);
 }
 
-::-webkit-scrollbar-thumb:hover {
+.chat-messages::-webkit-scrollbar-thumb:hover {
   background: var(--secondary-color);
+}
+
+.chat-messages {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--background-color);
+}
+
+.nav-center,
+.headerSearch,
+.coin-box {
+  background: var(--background-color) !important;
+}
+
+.headerSearch {
+  border: 1px solid var(--secondary-color);
+}
+
+.headerSearch input {
+  color: var(--text-color) !important;
+}
+
+.headerSearch input::-webkit-input-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.headerSearch button {
+  color: var(--secondary-color);
+}
+
+.nav-btn {
+  color: var(--text-color) !important;
+}
+
+.nav-btn.active {
+  color: var(--primary-color) !important;
+}
+
+.tab-indicator {
+  background: var(--secondary-color);
+}
+
+.deposit-btn a {
+  border: 1px solid var(--secondary-color);
+  color: var(--text-color);
+  background: var(--secondary-color);
+}
+
+.right-icon {
+  color: var(--text-color) !important;
+  border: 3px solid var(--secondary-color);
+  background: var(--secondary-color);
+}
+
+.avatar {
+  background: var(--secondary-color) !important;
+}
+
+.sideBar .icon {
+  color: var(--secondary-color);
+}
+
+.sideBar .link,
+.sideBar .span {
+  color: var(--text-color);
 }

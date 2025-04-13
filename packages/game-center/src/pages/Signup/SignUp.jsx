@@ -113,7 +113,7 @@ function SignUp() {
                                     InputProps={{
                                         endAdornment: (
                                             <InputAdornment position="end">
-                                                <IconButton style={{ color: 'rgb(86, 18, 29)' }}
+                                                <IconButton style={{ color: 'var(--primary-color' }}
                                                     aria-label="toggle password visibility"
                                                     onClick={handleClickShowPassword}
                                                     edge="end"

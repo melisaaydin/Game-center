@@ -20,7 +20,7 @@ import { Lock, Event, ContentCopy } from "@mui/icons-material";
 import axios from "axios";
 import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
-import CreateLobby from "../../pages/CreateLobby";
+import CreateLobby from "../CreateLobby/CreateLobby";
 import "./LobbySection.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
 function LobbySection() {

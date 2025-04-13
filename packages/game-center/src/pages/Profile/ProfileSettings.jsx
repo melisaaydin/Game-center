@@ -129,7 +129,7 @@ function ProfileSettings() {
     if (loading) return <div>Loading...</div>;
 
     return (
-        <div className={`profile-container ${mode === "dark" ? "profile-dark" : "profile-light"}`}>
+        <div className="profile-container">
             <div className="form-container">
                 <div className="form-title">
                     <span>Profile Settings</span>
@@ -274,11 +274,11 @@ function ProfileSettings() {
                             variant="contained"
                             fullWidth
                             sx={{
-                                backgroundColor: "var(--button-bg)",
-                                color: "var(--button-text)",
+                                backgroundColor: theme.palette.primary.main,
+                                color: theme.palette.buttonText,
                                 "&:hover": {
-                                    backgroundColor: "var(--button-hover-bg)",
-                                    color: "var(--button-hover-text)",
+                                    backgroundColor: theme.palette.buttonHoverBg,
+                                    color: theme.palette.buttonHoverText,
                                 },
                             }}
                         >
