@@ -335,7 +335,7 @@ const LobbyDetails = () => {
     if (!lobby || !user) return <Typography>Lobby or user data not found.</Typography>;
 
     return (
-        <Box className={`lobby-details-container ${mode === "dark" ? "lobby-dark-theme" : "lobby-light-theme"}`}>
+        <Box className="lobby-details-container">
             {/* Main Content: Players on the left, Chat on the right */}
             <Box className="lobby-content">
                 {/* Left Section: Header + Players */}

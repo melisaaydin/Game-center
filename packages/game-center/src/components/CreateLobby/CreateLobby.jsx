@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, TextField, Button, Typography, Switch, FormControlLabel, IconButton, Snackbar, Alert } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import axios from "axios";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 
 function CreateLobby({ gameId, onLobbyCreated }) {
     const { user } = useUser();
@@ -34,12 +34,12 @@ function CreateLobby({ gameId, onLobbyCreated }) {
         setError(null);
 
         if (!gameId) {
-            setError("Oyun ID'si eksik! Lütfen bir oyun seçin.");
+            setError("Please select a game!");
             return;
         }
 
         if (!formData.name || !formData.max_players) {
-            setError("Lobi adı ve maksimum oyuncu sayısı zorunludur!");
+            setError("Lobby name and maximum number of players are required!");
             return;
         }
 
@@ -63,14 +63,14 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                 const link = `${window.location.origin}/lobbies/${lobbyId}`;
                 setLobbyLink(link);
                 onLobbyCreated();
-                setSnackbarMessage("Lobi başarıyla oluşturuldu!");
+                setSnackbarMessage("Lobby created successfully!");
                 setSnackbarSeverity("success");
                 setSnackbarOpen(true);
             } else {
-                setError(res.data.message || "Lobi oluşturulamadı.");
+                setError(res.data.message || "Failed to create lobby.");
             }
         } catch (err) {
-            setError(err.response?.data?.message || "Lobi oluşturulamadı: " + err.message);
+            setError(err.response?.data?.message || "Failed to create lobby: " + err.message);
         } finally {
             setLoading(false);
         }
@@ -78,7 +78,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(lobbyLink);
-        setSnackbarMessage("Lobi bağlantısı kopyalandı!");
+        setSnackbarMessage("Lobby link copied!");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
     };
@@ -90,15 +90,12 @@ function CreateLobby({ gameId, onLobbyCreated }) {
 
     return (
         <Box className="create-lobby-container">
-            <Typography variant="h5" className="lobby-title" gutterBottom>
-                Create a New Lobby
-            </Typography>
             {error && <Typography className="error-text" color="error">{error}</Typography>}
             {lobbyLink ? (
                 <Box className="lobby-success">
-                    <Typography className="success-text">Lobi başarıyla oluşturuldu!</Typography>
+                    <Typography className="success-text">Lobby created successfully!</Typography>
                     <Typography className="lobby-link" sx={{ mt: 1 }}>
-                        Lobi Bağlantısı: {lobbyLink}
+                        Lobby link: {lobbyLink}
                     </Typography>
                     <Button
                         className="copy-button"
@@ -107,7 +104,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                         onClick={handleCopyLink}
                         sx={{ mt: 2 }}
                     >
-                        Bağlantıyı Kopyala
+                        Copy link
                     </Button>
                 </Box>
             ) : (
@@ -187,7 +184,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                         className="create-button"
                         sx={{ mt: 2 }}
                     >
-                        {loading ? "Oluşturuluyor..." : "Create Lobby"}
+                        {loading ? "Creating..." : "Create Lobby"}
                     </Button>
                 </form>
             )}

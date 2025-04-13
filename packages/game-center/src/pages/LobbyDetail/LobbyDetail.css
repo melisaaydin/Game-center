@@ -1,31 +1,6 @@
-.lobby-dark-theme {
-    --background-color: rgb(29, 30, 32);
-    --text-color: #fff;
-    --shadow-color: rgba(255, 255, 255, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: pink;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #fff;
-    --button-hover-text: rgb(169, 29, 52);
-}
-
-.lobby-light-theme {
-    --background-color: #fafafa;
-    --text-color: #2d2d2d;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: pink;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #ffffff;
-    --button-hover-text: rgb(169, 29, 52);
-}
-
 .lobby-details-container {
     min-height: 100vh !important;
     padding: 30px !important;
-    background-color: var(--background-color);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -38,16 +13,10 @@
     margin-bottom: 20px;
 }
 
-.lobby-header-title {
-    color: var(--text-color);
-    text-transform: initial !important;
-}
-
 .lobby-left-section {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* Vertically center the left section */
     height: 100%;
 }
 
@@ -56,27 +25,9 @@
     justify-content: flex-start;
     align-items: center;
     gap: 5px;
-    /* Compact gap */
     padding: 6px 0;
     flex-wrap: wrap;
     max-width: 600px;
-}
-
-.lobby-actions button {
-    color: var(--button-text);
-    background-color: var(--button-bg);
-    border-radius: 20px;
-    text-transform: none;
-    transition: 0.2s;
-    padding: 6px 12px;
-    min-width: 100px;
-    /* Reduced width for buttons */
-    font-size: 13px;
-}
-
-.lobby-actions button:hover {
-    background-color: var(--button-hover-bg);
-    color: var(--button-hover-text);
 }
 
 .lobby-content {
@@ -84,45 +35,19 @@
     flex: 1;
     gap: 20px;
     flex-direction: column;
-    /* Stack vertically on mobile */
-}
-
-.lobby-card {
-    background: var(--background-color) !important;
-    border-radius: 16px !important;
-    box-shadow: 2px 1px 0 var(--shadow-color) !important;
-}
-
-.lobby-dark-theme .lobby-card {
-    background: var(--background-color) !important;
-    box-shadow: 0 4px 12px var(--shadow-color);
-    color: var(--text-color);
-}
-
-.section-title {
-    color: var(--text-color) !important;
-    text-transform: initial !important;
-    margin-bottom: 10px;
-}
-
-.section-text {
-    color: var(--text-color);
-    text-transform: initial !important;
-    font-size: 16px;
-}
-
-.lobby-dark-theme .section-text {
-    color: var(--text-color);
 }
 
 .players-card {
     max-height: 300px;
     overflow-y: auto;
+    background: var(--background-color) !important;
+    margin-top: 20px;
 }
 
 .chat-card {
     display: flex;
     flex-direction: column;
+    background: var(--background-color) !important;
 }
 
 .chat-input {
@@ -138,44 +63,20 @@
     flex-grow: 1;
 }
 
-.chat-messages::-webkit-scrollbar-track {
-    background: var(--background-color);
-    border-radius: 10px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 8px;
-    transition: 0.2s;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
-}
-
-.chat-messages {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-color) var(--background-color);
-}
-
 /* Responsive Design */
 @media (min-width: 900px) {
     .lobby-content {
         flex-direction: row;
-        /* Side-by-side on desktop */
         height: calc(100vh - 200px);
-        /* Adjust height for header */
     }
 
     .players-card {
         width: 100%;
-        /* Take full width of the parent (lobby-left-section) */
         max-height: none;
     }
 
     .lobby-left-section {
         width: 40%;
-        /* Same width as players-card */
     }
 
     .chat-card {
@@ -190,17 +91,12 @@
 @media (max-width: 600px) {
     .lobby-actions {
         gap: 6px;
-        /* Even smaller gap for mobile */
         max-width: 100%;
-        /* Full width on mobile but with wrapping */
     }
 
     .lobby-actions button {
         min-width: 90px;
-        /* Even smaller width for mobile */
         font-size: 12px;
-        /* Smaller font for mobile */
         padding: 5px 10px;
-        /* Smaller padding for mobile */
     }
 }

@@ -20,12 +20,12 @@ import {
 } from "@mui/material";
 import { Info, Group, Add, History, PlayArrow, Settings, SportsEsports, Delete } from "@mui/icons-material";
 import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "@mui/material/styles";
 import { ColorModeContext } from "../../context/ThemeContext";
-import CreateLobby from "../CreateLobby";
-import LobbyList from "../LobbyList";
+import CreateLobby from "../../components/CreateLobby/CreateLobby";
+import LobbyList from "../../components/LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
 
@@ -161,7 +161,7 @@ function GameDetail() {
     if (!game) return <div className="loading">Loading game...</div>;
 
     return (
-        <Box className={`game-detail-container ${mode === "dark" ? "g-detail-dark-theme" : "g-detail-light-theme"}`}>
+        <Box className="game-detail-container">
             <Box sx={{ justifyContent: "center", alignItems: "center", display: "flex" }}>
                 <Tabs value={activeTab} onChange={handleTabChange} className="game-tabs">
                     <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
@@ -266,15 +266,37 @@ function GameDetail() {
                         <Card className="game-card sidebar-card">
                             <CardContent>
                                 <Typography variant="h6" className="section-title">Quick Actions</Typography>
-                                <Button variant="contained" fullWidth sx={{ mb: 1 }} onClick={() => setActiveTab(1)}>
-                                    Create Lobby
-                                </Button>
-                                <Button variant="outlined" fullWidth sx={{ mb: 1 }} onClick={() => setActiveTab(2)}>
-                                    View Lobbies
-                                </Button>
-                                <Button variant="contained" fullWidth onClick={handlePlayGame} startIcon={<SportsEsports />}>
-                                    Play
-                                </Button>
+                                <Box className="quick-actions-container">
+                                    <Button
+                                        className="quick-action-button"
+                                        variant="contained"
+                                        onClick={() => setActiveTab(1)}
+                                    >
+                                        Create Lobby
+                                    </Button>
+                                    <Button
+                                        className="quick-action-button"
+                                        variant="contained"
+                                        onClick={() => setActiveTab(2)}
+                                    >
+                                        View Lobbies
+                                    </Button>
+                                    <Button
+                                        className="quick-action-button play-button"
+                                        variant="contained"
+                                        onClick={handlePlayGame}
+                                        startIcon={<SportsEsports className="play-icon" />}
+                                    >
+                                        Play
+                                    </Button>
+                                    <Button
+                                        className="quick-action-button back-button"
+                                        variant="text"
+                                        onClick={() => navigate("/")}
+                                    >
+                                        Back to Home
+                                    </Button>
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>

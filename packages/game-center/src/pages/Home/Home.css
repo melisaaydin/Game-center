@@ -1,39 +1,3 @@
-:root {
-    --background-color: #fafafa;
-    --text-color: #2d2d2def;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: pink;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #ffffff;
-    --button-hover-text: rgb(169, 29, 52);
-}
-
-.profile-dark {
-    --background-color: #1e1e1eac;
-    --text-color: #fff;
-    --shadow-color: rgba(255, 255, 255, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: pink;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #fff;
-    --button-hover-text: rgb(169, 29, 52);
-}
-
-.profile-light {
-    --background-color: #fafafa;
-    --text-color: #2d2d2d;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: pink;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #ffffff;
-    --button-hover-text: rgb(169, 29, 52);
-}
-
 .home-container {
     display: flex;
     min-height: 100vh;

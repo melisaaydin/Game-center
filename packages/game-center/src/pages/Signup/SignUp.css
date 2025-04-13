@@ -39,7 +39,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: white;
+    background-color: var(--background-color);
 }
 
 .signUpWrapper {
@@ -50,39 +50,10 @@ body {
 
 }
 
-.form {
-    max-width: 400px;
-    width: 100%;
-    border: 1rem;
-    box-shadow: 10px 10px 15px rgba(200, 54, 132, 0.7), 15px 15px 25px rgba(255, 20, 147, 0.5);
-    transition: box-shadow 0.6s ease-in-out;
 
-}
-
-.form:hover {
-    box-shadow: 10px 10px 15px rgba(255, 20, 147, 0.9), 15px 15px 25px rgba(255, 20, 147, 0.7);
-
-}
-
-.signupWrapper .form .title {
-    font-weight: bold;
-    color: rgb(169, 29, 52);
-    align-items: center;
-    font-size: 30px;
-    display: flex;
-    justify-content: center;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-
-}
-
-
-
-.signupWrapper .text-property label {
-    color: rgb(86, 18, 29);
-}
 
 .MuiInputBase-root.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: rgb(86, 18, 29) !important;
+    border-color: var(--primary-color) !important;
     border-bottom: none;
 
 
@@ -94,31 +65,29 @@ body {
     border-bottom: none;
 }
 
-.text-property input {
-    color: rgb(86, 18, 29);
-}
+
 
 .signupButton {
-    background-color: rgb(86, 18, 29) !important;
-    color: #fff !important;
+    background-color: var(--primary-color) !important;
+    color: var(--button-text) !important;
     border-radius: 50px !important;
     text-transform: none !important;
 }
 
 .signupButton:hover {
-    color: rgb(86, 18, 29) !important;
-    background: #fff !important;
+    color: var(--primary-color) !important;
+    background: var(--button-hover-bg) !important;
     transition: 0.6s;
 }
 
 
 .loginLink {
-    color: rgb(86, 18, 29) !important;
+    color: var(--primary-color) !important;
     text-decoration: none !important;
     font-size: 14px !important;
     font-weight: bold !important;
 }
 
 .loginLink:hover {
-    color: rgb(169, 29, 52) !important;
+    color: var(--primary-color) !important;
 }

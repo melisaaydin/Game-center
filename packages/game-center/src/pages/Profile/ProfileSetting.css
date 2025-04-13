@@ -1,45 +1,8 @@
-:root {
-    --background-color: #fafafa;
-    --text-color: #2d2d2def;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: ;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #ffffff;
-    --button-hover-text: rgb(86, 18, 29);
-}
-
-.profile-dark {
-    --background-color: rgb(29, 30, 32);
-    --text-color: #fff;
-    --shadow-color: rgba(255, 255, 255, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: pink !important;
-    --button-bg: rgb(169, 29, 52);
-    --button-text: #ffffff;
-    --button-hover-bg: #fff;
-    --button-hover-text: rgb(169, 29, 52);
-}
-
-.profile-light {
-    --background-color: #fafafa;
-    --text-color: #2d2d2d;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --primary-color: rgb(169, 29, 52);
-    --secondary-color: rgb(169, 29, 52);
-    --button-bg: rgb(86, 18, 29);
-    --button-text: #ffffff;
-    --button-hover-bg: #ffffff;
-    --button-hover-text: rgb(86, 18, 29);
-}
-
 .profile-container {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background-color: var(--background-color);
 }
 
 .form-container {
@@ -52,11 +15,12 @@
 }
 
 .form-title {
+    align-items: center !important;
+    justify-content: center !important;
     font-size: 30px;
-    color: var(--primary-color);
-    font-weight: bold;
     text-align: center;
-    margin-bottom: 20px;
+    text-shadow: 2px 0 0 var(--shadow-color);
+    font-weight: 700;
 
 }
 
@@ -75,41 +39,4 @@
 
 .input-group {
     margin-bottom: 15px;
-}
-
-.custom-file-label {
-    margin-top: 10px;
-    padding: 8px 16px;
-    border: none;
-    box-shadow: 2px 1px 0 var(--primary-color) !important;
-    border-radius: 5px;
-    color: var(--primary-color) !important;
-    cursor: pointer;
-    display: inline-block;
-    transition: all 0.3s ease;
-}
-
-.custom-file-label:hover {
-    background-color: var(--primary-color) !important;
-    color: var(--button-text) !important;
-}
-
-.error-message {
-    color: var(--primary-color);
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-
-.profile-container .MuiInputLabel-root {
-    color: var(--secondary-color) !important;
-}
-
-.profile-container .MuiInputBase-root.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: var(--secondary-color) !important;
-}
-
-.profile-container .MuiButton-root {
-    border-radius: 50px;
-    text-transform: none;
 }

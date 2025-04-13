@@ -162,7 +162,7 @@ function Login() {
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton style={{ color: 'rgb(86, 18, 29)' }}
+                                            <IconButton style={{ color: 'var(--primary-color)' }}
                                                 aria-label="toggle password visibility"
                                                 onClick={handleClickShowPassword}
                                                 edge="end"
@@ -175,7 +175,7 @@ function Login() {
                             />
                         </div>
                         <div className='bottomSide'>
-                            <label style={{ color: '#333' }}>
+                            <label >
                                 <input className='checkbox' type="checkbox" checked={values.rememberMe} onChange={handleRememberMe} /> Remember Me
                             </label>
                             <MuiLink
