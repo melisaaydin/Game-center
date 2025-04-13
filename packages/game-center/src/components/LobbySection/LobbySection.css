@@ -3,7 +3,7 @@
 }
 
 .lobby-section-title {
-    color: var(--primary-color);
+    color: var(--secondary-color);
     font-weight: 600;
     text-transform: initial;
     margin-bottom: 15px;
@@ -50,7 +50,7 @@
 }
 
 .lobby-icon {
-    color: var(--primary-color);
+    color: var(--secondary-color);
     margin-left: 5px;
 }
 
@@ -65,7 +65,7 @@
 }
 
 .dummy-title {
-    color: var(--primary-color);
+    color: var(--secondary-color);
     font-weight: 600;
     text-transform: initial;
 }

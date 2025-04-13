@@ -16,7 +16,7 @@
     --shadow-color: rgba(255, 255, 255, 0.1);
     --primary-color: rgb(169, 29, 52);
     --secondary-color: pink;
-    --button-bg: rgb(169, 29, 52);
+    --button-bg: pink;
     --button-text: #ffffff;
     --button-hover-bg: #fff;
     --button-hover-text: rgb(169, 29, 52);
@@ -49,7 +49,6 @@
 
 
 }
-
 
 .game-tabs {
     gap: 4px;
@@ -168,4 +167,66 @@
     text-transform: none;
     border-radius: 20px;
 
+}
+
+
+.dialog-for-delete .MuiDialog-paper {
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+
+.dialog-for-delete .MuiDialogTitle-root {
+    background: var(--background-color) !important;
+
+    color: var(--text-color) !important;
+    padding: 16px 24px !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+}
+
+.dialog-for-delete .MuiDialogContent-root {
+    background: var(--background-color) !important;
+    color: var(--text-color) !important;
+    padding: 16px 24px !important;
+}
+
+
+.dialog-for-delete .MuiDialogActions-root {
+    background: var(--background-color) !important;
+    padding: 8px 24px 16px !important;
+    gap: 10px !important;
+}
+
+.dialog-for-delete .MuiDialogActions-root .MuiButton-root {
+    text-transform: none !important;
+    border-radius: 20px !important;
+    padding: 8px 16px !important;
+    transition: all 0.3s ease !important;
+    min-width: 80px !important;
+}
+
+.dialog-for-delete .MuiDialogActions-root .MuiButton-root[color="primary"] {
+    background-color: var(--button-bg) !important;
+    color: var(--text-color) !important;
+}
+
+
+.dialog-for-delete .MuiDialogActions-root .MuiButton-root[color="primary"]:hover {
+    background-color: var(--button-bg) !important;
+}
+
+.dialog-for-delete .MuiDialogActions-root .MuiButton-root[color="error"] {
+    background-color: var(--button-bg) !important;
+    color: var(--text-color) !important;
+}
+
+.dialog-for-delete .MuiDialogActions-root .MuiButton-root[color="error"]:hover {
+    background-color: var(--button-hover-bg) !important;
+
+}
+
+
+.dialog-for-delete .MuiBackdrop-root {
+    background-color: rgba(0, 0, 0, 0.5) !important;
 }

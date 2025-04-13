@@ -11,8 +11,14 @@ import {
     Snackbar,
     Alert,
     Button,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from "@mui/material";
-import { Info, Group, Add, History, PlayArrow, Settings } from "@mui/icons-material";
+import { Info, Group, Add, History, PlayArrow, Settings, SportsEsports, Delete } from "@mui/icons-material";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
@@ -36,14 +42,15 @@ function GameDetail() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(null);
     const { getTimeDisplay, eventLobbies, activeLobbies, pastLobbies } = useLobbyUtils(lobbies);
 
     useEffect(() => {
         if (!gameId) {
-            console.error("gameId eksik!");
+            console.error("gameId is missing!");
             navigate("/games");
         } else {
-            console.log("gameId alındı:", gameId);
+            console.log("gameId received:", gameId);
         }
     }, [gameId, navigate]);
 
@@ -55,11 +62,11 @@ function GameDetail() {
                 if (res.data.success) {
                     setGame(res.data.game);
                 } else {
-                    console.error("Oyun bulunamadı:", res.data.message);
+                    console.error("Game not found:", res.data.message);
                     navigate("/games");
                 }
             } catch (err) {
-                console.error("Oyun yüklenemedi:", err);
+                console.error("Could not load game:", err);
                 navigate("/games");
             }
         };
@@ -67,7 +74,6 @@ function GameDetail() {
         const interval = setInterval(() => {
             setLobbies((prevLobbies) => [...prevLobbies]);
         }, 1000);
-
         return () => clearInterval(interval);
     }, [gameId, navigate]);
 
@@ -81,11 +87,11 @@ function GameDetail() {
                 setTotalPlayers(total);
             } else {
                 setLobbies([]);
-                console.error("Lobiler alınamadı:", res.data.message);
+                console.error("Could not fetch lobbies:", res.data.message);
             }
         } catch (err) {
             setLobbies([]);
-            console.error("Lobiler alınamadı:", err);
+            console.error("Could not fetch lobbies:", err);
         }
     };
 
@@ -103,6 +109,25 @@ function GameDetail() {
         if (reason === "clickaway") return;
         setSnackbarOpen(false);
     };
+
+    const handlePlayGame = () => {
+        if (gameId === "tombala") {
+            const gameUrl = `${window.location.origin}/games/tombala`;
+            window.open(gameUrl, "_blank");
+            setSnackbarMessage("Opening Tombala game...");
+            setSnackbarSeverity("info");
+            setSnackbarOpen(true);
+        } else {
+            setSnackbarMessage("Game not available yet!");
+            setSnackbarSeverity("warning");
+            setSnackbarOpen(true);
+        }
+    };
+
+    const handleDeleteClick = (lobbyId) => {
+        setDeleteConfirmOpen(lobbyId);
+    };
+
     const handleDeleteLobby = async (lobbyId) => {
         try {
             const token = localStorage.getItem("token");
@@ -111,27 +136,29 @@ function GameDetail() {
             });
             if (res.data.success) {
                 fetchLobbies();
-                setSnackbarMessage("Lobi başarıyla silindi!");
+                setSnackbarMessage("Lobby deleted successfully!");
                 setSnackbarSeverity("success");
                 setSnackbarOpen(true);
+                setDeleteConfirmOpen(null);
             } else {
                 setSnackbarMessage(res.data.message);
                 setSnackbarSeverity("error");
                 setSnackbarOpen(true);
             }
         } catch (err) {
-            setSnackbarMessage("Lobi silinemedi!");
+            setSnackbarMessage("Could not delete lobby!");
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         }
     };
-    if (loading) return <div className="loading">Yükleniyor...</div>;
+
+    if (loading) return <div className="loading">Loading...</div>;
     if (!user) {
         navigate("/login");
         return null;
     }
-    if (!gameId) return <div className="error">Oyun ID'si eksik! Lütfen bir oyun seçin.</div>;
-    if (!game) return <div className="loading">Oyun yükleniyor...</div>;
+    if (!gameId) return <div className="error">Game ID is missing! Please select a game.</div>;
+    if (!game) return <div className="loading">Loading game...</div>;
 
     return (
         <Box className={`game-detail-container ${mode === "dark" ? "g-detail-dark-theme" : "g-detail-light-theme"}`}>
@@ -153,9 +180,7 @@ function GameDetail() {
                             <CardContent>
                                 {activeTab === 0 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">
-                                            About Game
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">About Game</Typography>
                                         <Typography className="section-text">{game.description}</Typography>
                                         {game.image_url && (
                                             <img
@@ -193,16 +218,13 @@ function GameDetail() {
                                             setSnackbarSeverity("success");
                                             setSnackbarOpen(true);
                                         }}
-                                        onDeleteLobby={(lobbyId) => {
-                                            handleDeleteLobby(lobbyId);
-                                        }}
+                                        userId={user.id}
+                                        onDeleteClick={handleDeleteClick}
                                     />
                                 )}
                                 {activeTab === 3 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">
-                                            Game History
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">Game History</Typography>
                                         <Typography className="section-text">
                                             You don't have any gaming history yet.
                                         </Typography>
@@ -210,9 +232,7 @@ function GameDetail() {
                                 )}
                                 {activeTab === 4 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">
-                                            How to Play?
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">How to Play?</Typography>
                                         <Typography component="ul" className="section-text how-to-play-list">
                                             <li>Mode of play will be standard Entite.</li>
                                             <li>All players must be logged in to Entite.</li>
@@ -222,9 +242,7 @@ function GameDetail() {
                                 )}
                                 {activeTab === 5 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">
-                                            Game Settings
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">Game Settings</Typography>
                                         <Typography className="section-text">
                                             <strong>Card Size:</strong> 5x5 (Fixed)<br />
                                             <strong>Game Speed:</strong> Medium (Constant)
@@ -238,30 +256,48 @@ function GameDetail() {
                     <Grid item xs={12} md={4}>
                         <Card className="game-card sidebar-card">
                             <CardContent>
-                                <Typography variant="h6" className="section-title">
-                                    Players
-                                </Typography>
+                                <Typography variant="h6" className="section-title">Players</Typography>
                                 <Typography className="section-text">
                                     <strong>Confirmed:</strong> {totalPlayers} Players<br />
-                                    <strong>Aktif Lobiler:</strong> {lobbies.length}
+                                    <strong>Active Lobbies:</strong> {lobbies.length}
                                 </Typography>
                             </CardContent>
                         </Card>
                         <Card className="game-card sidebar-card">
                             <CardContent>
-                                <Typography variant="h6" className="section-title"
-                                >Quick Actions</Typography>
+                                <Typography variant="h6" className="section-title">Quick Actions</Typography>
                                 <Button variant="contained" fullWidth sx={{ mb: 1 }} onClick={() => setActiveTab(1)}>
-                                    Lobi Oluştur
+                                    Create Lobby
                                 </Button>
-                                <Button variant="outlined" fullWidth onClick={() => setActiveTab(2)}>
-                                    Lobileri Gör
+                                <Button variant="outlined" fullWidth sx={{ mb: 1 }} onClick={() => setActiveTab(2)}>
+                                    View Lobbies
+                                </Button>
+                                <Button variant="contained" fullWidth onClick={handlePlayGame} startIcon={<SportsEsports />}>
+                                    Play
                                 </Button>
                             </CardContent>
                         </Card>
                     </Grid>
                 </Grid>
             </Fade>
+
+            <Dialog className="dialog-for-delete" open={deleteConfirmOpen !== null} onClose={() => setDeleteConfirmOpen(null)}>
+                <DialogTitle>Are You Sure?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete this lobby?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteConfirmOpen(null)} color="primary">
+                        No
+                    </Button>
+                    <Button onClick={() => handleDeleteLobby(deleteConfirmOpen)} color="error" variant="contained">
+                        Yes
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={3000}

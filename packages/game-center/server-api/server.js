@@ -113,7 +113,7 @@ io.on("connection", (socket) => {
         console.log(`${socket.username || userId} left lobby ${lobbyId}`);
         const leaveMessage = {
             user: "System",
-            content: `${socket.username || "Bir kullanıcı"} lobiden ayrıldı!`,
+            content: `${socket.username || "A user"} left the lobby!`,
             timestamp: new Date().toISOString(),
         };
         await db.query(
