@@ -65,8 +65,8 @@
 }
 
 .nav-left .logo {
-    width: 60px;
-    height: 50px;
+    width: 75px;
+    height: 65px;
     object-fit: contain;
     text-align: center;
     justify-content: center;
@@ -100,6 +100,7 @@
 .headerSearch {
     display: flex;
     width: 260px;
+    max-width: 300px;
     height: 34px;
     flex-wrap: wrap;
     justify-content: center;
@@ -211,13 +212,14 @@
 .coin-box .img {
     width: 20px;
     height: 20px;
-    margin-left: 4px;
+    margin-left: 2px;
     background: var(--background-color);
 }
 
 .coin-box span {
     font-size: 12px;
     padding: 0px 8px;
+    margin-right: 8px;
     color: var(--text-color);
 }
 
@@ -239,6 +241,7 @@
     font-size: 13px;
     padding: 5px 9px;
     margin-left: 15px;
+    margin-right: 15px;
 }
 
 .right-icon {
@@ -266,7 +269,7 @@
 .sideBar {
     position: fixed;
     top: 70px;
-    width: 70px;
+    width: 80px;
     height: calc(100vh - 70px);
     display: flex;
     flex-direction: column;
@@ -285,13 +288,13 @@
 }
 
 .sideBar .icon {
-    font-size: 25px;
+    font-size: 30px;
     color: var(--secondary-color);
 }
 
 .sideBar .link {
     display: flex;
-    margin-top: 20px;
+    margin-top: 30px;
     flex-direction: column;
     align-items: center;
     text-decoration: none;
@@ -302,8 +305,8 @@
 
 
 .sideBar .image {
-    width: 22px;
-    height: 22px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
 }
 

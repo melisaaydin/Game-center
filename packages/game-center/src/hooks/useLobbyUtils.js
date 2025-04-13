@@ -1,6 +1,4 @@
-import { useEffect } from "react";
-
-const useLobbyUtils = (lobbies, refreshInterval = 1000) => {
+const useLobbyUtils = (lobbies) => {
     const getTimeDisplay = (startTime) => {
         const now = new Date();
         const start = new Date(startTime);
@@ -19,9 +17,11 @@ const useLobbyUtils = (lobbies, refreshInterval = 1000) => {
     };
 
     const now = new Date();
+    // Filter event lobbies (active events)
     const eventLobbies = lobbies
         .filter((lobby) => lobby.is_event && new Date(lobby.end_time) > now)
         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    // Filter active non-event lobbies 
     const activeLobbies = lobbies
         .filter((lobby) => !lobby.is_event || (lobby.is_event && new Date(lobby.end_time) > now))
         .filter((lobby) => !lobby.is_event);

@@ -25,17 +25,16 @@
 .lobby-details-container {
     min-height: 100vh !important;
     padding: 30px !important;
-    text-transform: initial !important;
     background-color: var(--background-color);
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .lobby-header {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+    border-radius: 16px;
+    padding: 10px;
+    text-align: left;
     margin-bottom: 20px;
 }
 
@@ -44,13 +43,23 @@
     text-transform: initial !important;
 }
 
+.lobby-left-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* Vertically center the left section */
+    height: 100%;
+}
+
 .lobby-actions {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    gap: 20px;
-    padding-top: 8px;
-    margin-bottom: 8px !important;
+    gap: 5px;
+    /* Compact gap */
+    padding: 6px 0;
+    flex-wrap: wrap;
+    max-width: 600px;
 }
 
 .lobby-actions button {
@@ -59,6 +68,10 @@
     border-radius: 20px;
     text-transform: none;
     transition: 0.2s;
+    padding: 6px 12px;
+    min-width: 100px;
+    /* Reduced width for buttons */
+    font-size: 13px;
 }
 
 .lobby-actions button:hover {
@@ -67,14 +80,17 @@
 }
 
 .lobby-content {
-    padding: 0 20px;
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    flex-direction: column;
+    /* Stack vertically on mobile */
 }
 
 .lobby-card {
     background: var(--background-color) !important;
     border-radius: 16px !important;
     box-shadow: 2px 1px 0 var(--shadow-color) !important;
-    margin: 0 15px 20px 15px;
 }
 
 .lobby-dark-theme .lobby-card {
@@ -99,20 +115,14 @@
     color: var(--text-color);
 }
 
+.players-card {
+    max-height: 300px;
+    overflow-y: auto;
+}
 
-@media (min-width: 900px) {
-    .lobby-content {
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .lobby-card {
-        flex: 1;
-        max-width: 48%;
-        margin-left: 0;
-        margin-right: 0;
-    }
+.chat-card {
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-input {
@@ -122,12 +132,11 @@
 }
 
 .chat-messages {
-    max-height: 200px;
+    max-height: 50vh;
     overflow-y: auto;
     border-radius: 8px;
+    flex-grow: 1;
 }
-
-
 
 .chat-messages::-webkit-scrollbar-track {
     background: var(--background-color);
@@ -147,4 +156,51 @@
 .chat-messages {
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) var(--background-color);
+}
+
+/* Responsive Design */
+@media (min-width: 900px) {
+    .lobby-content {
+        flex-direction: row;
+        /* Side-by-side on desktop */
+        height: calc(100vh - 200px);
+        /* Adjust height for header */
+    }
+
+    .players-card {
+        width: 100%;
+        /* Take full width of the parent (lobby-left-section) */
+        max-height: none;
+    }
+
+    .lobby-left-section {
+        width: 40%;
+        /* Same width as players-card */
+    }
+
+    .chat-card {
+        width: 60%;
+    }
+
+    .chat-messages {
+        max-height: calc(100vh - 300px);
+    }
+}
+
+@media (max-width: 600px) {
+    .lobby-actions {
+        gap: 6px;
+        /* Even smaller gap for mobile */
+        max-width: 100%;
+        /* Full width on mobile but with wrapping */
+    }
+
+    .lobby-actions button {
+        min-width: 90px;
+        /* Even smaller width for mobile */
+        font-size: 12px;
+        /* Smaller font for mobile */
+        padding: 5px 10px;
+        /* Smaller padding for mobile */
+    }
 }

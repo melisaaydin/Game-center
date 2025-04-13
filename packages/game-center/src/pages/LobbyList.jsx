@@ -10,8 +10,9 @@ function LobbyList({
     pastLobbies,
     getTimeDisplay,
     onCopyLink,
-    onDeleteLobby,
     fetchLobbies,
+    userId,
+    onDeleteClick,
 }) {
     const { user } = useUser();
 
@@ -19,8 +20,10 @@ function LobbyList({
         const interval = setInterval(() => { }, 1000);
         return () => clearInterval(interval);
     }, []);
+
     console.log("Current User ID:", user?.id);
     console.log("Lobbies:", lobbies);
+
     return (
         <Box>
             {eventLobbies.length > 0 && (
@@ -43,8 +46,8 @@ function LobbyList({
                                 <IconButton onClick={() => onCopyLink(lobby.id)}>
                                     <ContentCopy fontSize="small" />
                                 </IconButton>
-                                {lobby.created_by === String(user?.id) && (
-                                    <IconButton onClick={() => onDeleteLobby(lobby.id)}>
+                                {parseInt(lobby.created_by) === parseInt(userId) && (
+                                    <IconButton onClick={() => onDeleteClick(lobby.id)} color="error">
                                         <Delete fontSize="small" />
                                     </IconButton>
                                 )}
@@ -69,8 +72,8 @@ function LobbyList({
                             <IconButton onClick={() => onCopyLink(lobby.id)}>
                                 <ContentCopy fontSize="small" />
                             </IconButton>
-                            {lobby.created_by === String(user?.id) && (
-                                <IconButton onClick={() => onDeleteLobby(lobby.id)}>
+                            {parseInt(lobby.created_by) === parseInt(userId) && (
+                                <IconButton onClick={() => onDeleteClick(lobby.id)} color="--text-color">
                                     <Delete fontSize="small" />
                                 </IconButton>
                             )}
@@ -98,8 +101,8 @@ function LobbyList({
                                 <IconButton onClick={() => onCopyLink(lobby.id)}>
                                     <ContentCopy fontSize="small" />
                                 </IconButton>
-                                {lobby.created_by === String(user?.id) && (
-                                    <IconButton onClick={() => onDeleteLobby(lobby.id)}>
+                                {parseInt(lobby.created_by) === parseInt(userId) && (
+                                    <IconButton onClick={() => onDeleteClick(lobby.id)} color="error">
                                         <Delete fontSize="small" />
                                     </IconButton>
                                 )}

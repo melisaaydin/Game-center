@@ -3,16 +3,15 @@ import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Login from './pages/Login/Login';
 import SignUp from './pages/Signup/SignUp';
-import Home from './components/Home/Home';
+import Home from './pages/Home/Home';
 import ForgotPassword from './pages/Login/ForgotPassword';
 import './App.css'
 import { ThemeContextProvider } from './context/ThemeContext';
 import GameList from './components/GameList/GameList'
 import ProfileSettings from './pages/Profile/ProfileSettings';
 import { UserProvider } from './context/UserContext';
-import LobbyDetail from './pages/LobbyDetail';
+import LobbyDetail from './pages/LobbyDetail/LobbyDetail';
 import GameDetail from './pages/GameDetails/GameDetail';
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 const App = () => {
 
