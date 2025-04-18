@@ -9,7 +9,7 @@ export const ThemeContextProvider = ({ children }) => {
 
     useEffect(() => {
         localStorage.setItem("themeMode", mode);
-        document.documentElement.setAttribute("data-theme", mode); // CSS için
+        document.documentElement.setAttribute("data-theme", mode);
     }, [mode]);
 
     const colorMode = useMemo(

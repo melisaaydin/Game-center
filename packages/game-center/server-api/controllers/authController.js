@@ -22,7 +22,7 @@ const signup = async (req, res) => {
         // Insert new user into the database
         const result = await db.query(sql, values);
 
-        // Send success response with user data (excluding password)
+        // Send success response with user data
         res.json({ success: true, user: result.rows[0] });
     } catch (err) {
         // Catch any database errors
@@ -71,10 +71,8 @@ const login = async (req, res) => {
             token,
         });
     } catch (err) {
-        // Handle unexpected database errors
-        res.status(500).json({ success: false, message: "Database error" }); // fixed typo: "errror"
+        res.status(500).json({ success: false, message: "Database error" });
     }
 };
 
-// Export the signup and login handlers
 module.exports = { signup, login };

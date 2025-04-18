@@ -20,13 +20,12 @@ import { useContext } from "react";
 import { ColorModeContext } from "../../context/ThemeContext";
 
 function ProfileSettings() {
-    const { userId } = useParams();
     const { user, setUser, loading } = useUser();
     const navigate = useNavigate();
     const { mode } = useContext(ColorModeContext);
     const theme = useTheme();
 
-    const [userData, setUserData] = useState({ name: "", email: "", profileImage: "" });
+    const [userData, setUserData] = useState({ name: "", email: "", bio: "", profileImage: "" });
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
@@ -41,14 +40,18 @@ function ProfileSettings() {
 
     useEffect(() => {
         if (loading) return;
-        if (!userId || !user || userId !== String(user.id)) {
-            setErrorMessage("Kullanıcı ID'si geçersiz veya eşleşmiyor.");
+        if (!user) {
+            setErrorMessage("Please log in to edit your profile.");
+            setSnackbarMessage("Please log in to edit your profile.");
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
+            setTimeout(() => navigate("/login"), 2000);
             return;
         }
 
         const fetchUserData = async () => {
             try {
-                const response = await axios.get(`http://localhost:8081/users/user/${userId}`, {
+                const response = await axios.get(`http://localhost:8081/users/user/${user.id}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
                 setUserData({
@@ -57,29 +60,44 @@ function ProfileSettings() {
                     profileImage: response.data.avatar_url || "",
                 });
             } catch (error) {
-                setErrorMessage("Kullanıcı verileri yüklenemedi.");
+                const errorMsg = error.response?.status === 401
+                    ? "Session expired. Please log in again."
+                    : "Failed to load user data.";
+                setErrorMessage(errorMsg);
+                setSnackbarMessage(errorMsg);
+                setSnackbarSeverity("error");
+                setSnackbarOpen(true);
+                if (error.response?.status === 401) {
+                    setTimeout(() => navigate("/login"), 2000);
+                }
             }
         };
 
         fetchUserData();
-    }, [userId, user, loading]);
+    }, [user, loading, navigate]);
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
+        if (file && !["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
+            setErrorMessage("Please select a valid image file (JPEG, PNG, or GIF).");
+            setSnackbarMessage("Invalid file type. Please select an image.");
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
+            return;
+        }
         setSelectedFile(file);
-        setPreview(URL.createObjectURL(file));
+        setPreview(file ? URL.createObjectURL(file) : "");
     };
 
     const handleUpdateProfile = async (event) => {
         event.preventDefault();
         if (newPassword && newPassword !== confirmNewPassword) {
-            setErrorMessage("Yeni şifreler eşleşmiyor!");
-            setSnackbarMessage("Yeni şifreler eşleşmiyor!");
+            setErrorMessage("New passwords do not match!");
+            setSnackbarMessage("New passwords do not match!");
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
             return;
         }
-
         const formData = new FormData();
         formData.append("name", userData.name);
         formData.append("email", userData.email);
@@ -93,7 +111,7 @@ function ProfileSettings() {
 
         try {
             setUpdateLoading(true);
-            const response = await axios.put(`http://localhost:8081/users/user/${userId}`, formData, {
+            const response = await axios.put(`http://localhost:8081/users/user/${user.id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                     "Content-Type": "multipart/form-data",
@@ -105,13 +123,16 @@ function ProfileSettings() {
                 email: response.data.user.email,
                 avatar_url: response.data.user.avatar_url,
             }));
-            setSnackbarMessage("Profil başarıyla güncellendi!");
+            setSnackbarMessage("Profile updated successfully!");
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
             setTimeout(() => navigate("/"), 2000);
         } catch (error) {
-            setErrorMessage("Güncelleme sırasında hata oluştu: " + (error.response?.data?.message || error.message));
-            setSnackbarMessage("Profil güncellenemedi: " + (error.response?.data?.message || error.message));
+            const errorMsg = error.response?.status === 401
+                ? "Session expired. Please log in again."
+                : error.response?.data?.message || "Failed to update profile.";
+            setErrorMessage(errorMsg);
+            setSnackbarMessage(errorMsg);
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         } finally {

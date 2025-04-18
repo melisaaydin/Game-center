@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }) => {
                 setUser(response.data.user);
             })
             .catch((error) => {
-                console.error("Login error:", error);
                 alert('Login failed. Please check your credentials.');
             });
     };

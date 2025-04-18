@@ -11,20 +11,18 @@ export const useUser = () => {
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [preferredLanguage, setPreferredLanguage] = useState("en");
 
     const fetchUserData = useCallback(async (token, userId) => {
         try {
             if (!userId) {
-                console.error("User ID is undefined");
-                return;
+                throw new Error("User ID is undefined");
             }
-            console.log("Fetching user data for ID:", userId);
             const res = await axios.get(`http://localhost:8081/users/user/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            console.log("Fetched user data:", res.data);
             if (!res.data.id) {
-                console.error("Backend'den dönen veride ID eksik:", res.data);
+                throw new Error("Backend'den dönen veride ID eksik");
             }
             setUser({
                 id: res.data.id,
@@ -32,30 +30,30 @@ export const UserProvider = ({ children }) => {
                 email: res.data.email,
                 avatar_url: res.data.avatar_url,
             });
+            setPreferredLanguage(res.data.language || "en");
         } catch (err) {
-            console.error("Kullanıcı bilgisi alınamadı:", err.response?.data || err.message);
+            console.error("Kullanıcı bilgisi alınamadı:", err.message, err.stack);
             localStorage.removeItem("token");
             setUser(null);
+            setPreferredLanguage("en");
         }
     }, []);
 
     useEffect(() => {
         const initializeUser = async () => {
             const token = localStorage.getItem("token");
-            console.log("Initializing user with token:", token);
             if (token) {
                 try {
                     const decodedToken = jwtDecode(token);
-                    console.log("Decoded token:", decodedToken);
                     await fetchUserData(token, decodedToken.userId);
                 } catch (err) {
-                    console.error("Token decoding failed:", err);
                     localStorage.removeItem("token");
                     setUser(null);
+                    setPreferredLanguage("en");
                 }
             } else {
-                console.log("No token found");
                 setUser(null);
+                setPreferredLanguage("en");
             }
             setLoading(false);
         };
@@ -68,12 +66,11 @@ export const UserProvider = ({ children }) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         try {
             const decoded = jwtDecode(token);
-            console.log("Login - Decoded token:", decoded);
             await fetchUserData(token, decoded.userId);
         } catch (err) {
-            console.error("Login token decoding failed:", err);
             localStorage.removeItem("token");
             setUser(null);
+            setPreferredLanguage("en");
         }
     };
 
@@ -81,11 +78,11 @@ export const UserProvider = ({ children }) => {
         localStorage.removeItem("token");
         delete axios.defaults.headers.common['Authorization'];
         setUser(null);
-        console.log("User logged out");
+        setPreferredLanguage("en");
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser, login, logout, loading }}>
+        <UserContext.Provider value={{ user, setUser, login, logout, loading, preferredLanguage, setPreferredLanguage }}>
             {children}
         </UserContext.Provider>
     );

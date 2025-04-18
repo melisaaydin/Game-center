@@ -3,13 +3,10 @@ const db = require("../models/db");
 // Fetch all games from the database
 const getAllGames = async (req, res) => {
     try {
-        // Query all games
         const result = await db.query("SELECT * FROM games");
-
-        // Send the result back as JSON
+        console.log("Fetched games:", result.rows);
         res.json(result.rows);
     } catch (err) {
-        // Log and handle errors
         console.error("Game fetch error:", err);
         res.status(500).json({ message: "Games could not be retrieved" });
     }
@@ -20,21 +17,33 @@ const getGameDetails = async (req, res) => {
     const { gameId } = req.params;
 
     try {
-        // Query the game with the given ID
-        const result = await db.query("SELECT * FROM games WHERE id = $1", [gameId]);
-
-        // If no game is found, return 404
+        const result = await db.query("SELECT * FROM games WHERE id = $1::text", [gameId]);
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, message: "Game not found" });
         }
-
-        // Return game details
         res.json({ success: true, game: result.rows[0] });
     } catch (err) {
-        // Handle database errors
+        console.error("Game details error:", err);
         res.status(500).json({ success: false, message: "Database error", error: err.message });
     }
 };
 
+// Search games by title
+const searchGames = async (req, res) => {
+    const { q } = req.query;
+    console.log("searchGames hit with query:", q); // Debug
+    try {
+        const result = await db.query(
+            "SELECT id, title, image_url FROM games WHERE title ILIKE $1",
+            [`%${q}%`]
+        );
+        console.log(`Search query "${q}" returned:`, result.rows);
+        res.json({ games: result.rows });
+    } catch (err) {
+        console.error("Search games error:", err.message, err.stack);
+        res.status(500).json({ success: false, message: "Failed to search games!" });
+    }
+};
+
 // Export controller functions
-module.exports = { getAllGames, getGameDetails };
+module.exports = { getAllGames, getGameDetails, searchGames };

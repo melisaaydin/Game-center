@@ -7,7 +7,6 @@
     align-items: center;
     padding: 0 20px;
     justify-content: space-between;
-    width: 100% !important;
     box-shadow: 2px 0 5px var(--shadow-color);
     background-color: var(--background-color) !important;
     color: var(--text-color);
@@ -38,18 +37,17 @@
 
 .navbar .link {
     text-decoration: none;
-    color: #fff;
+    color: var(--text-color);
 }
 
 .nav-center {
     display: flex !important;
-    align-items: center;
+    align-items: center !important;
     justify-content: center !important;
     background: var(--background-color);
     border-radius: 20px;
     width: 179px;
     height: 34px;
-
 }
 
 .nav-tab-wrapper {
@@ -65,15 +63,12 @@
     width: 260px;
     max-width: 300px;
     height: 34px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
     align-items: center;
     background: var(--background-color) !important;
-    position: relative;
     border-radius: 20px;
     border: 1px solid var(--secondary-color);
-
-
+    position: relative;
 }
 
 .headerSearch input {
@@ -81,38 +76,32 @@
     outline: none !important;
     font-size: 16px;
     color: var(--text-color) !important;
-    width: 100%;
-    height: 20px;
+    flex-grow: 1;
+    height: 100%;
     border: none !important;
-    padding: 6px;
-}
-
-.headerSearch input::-webkit-input-placeholder {
-    color: var(--text-color) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    .headerSearch input::-webkit-input-placeholder {
-        color: rgba(255, 255, 255, 0.5);
-    }
+    padding: 0 12px;
 }
 
 .headerSearch button {
-    position: absolute;
-    right: 0px;
-    z-index: 100;
     min-width: 40px !important;
-    height: 20px !important;
-    width: 40px !important;
-    border-radius: 50% !important;
+    height: 100% !important;
+    border-radius: 0 20px 20px 0 !important;
     color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+.headerSearch input::-webkit-input-placeholder {
+    color: var(--text-secondary) !important;
+}
+
+
 
 .headerSearch button svg {
     font-size: 25px;
     opacity: 0.6;
 }
-
 
 .nav-btn {
     position: relative;
@@ -131,7 +120,6 @@
     color: var(--primary-color);
     background: transparent;
     border-radius: 20px;
-
 }
 
 .nav-btn.active:hover {
@@ -146,28 +134,23 @@
     border-radius: 25px;
     background: var(--secondary-color);
     transition: all 0.2s ease;
-
 }
 
 .tab-indicator.games {
     left: 0;
     width: calc(50% - 4px);
-
 }
 
 .tab-indicator.matches {
     left: 50%;
     width: calc(50% - 4px);
-
 }
-
 
 .nav-right {
     display: flex !important;
     align-items: center !important;
     flex-direction: row !important;
     gap: 16px;
-
 }
 
 .coin-box {
@@ -188,7 +171,7 @@
 
 .coin-box span {
     font-size: 12px;
-    padding: 0px 8px;
+    padding: 0 8px;
     margin-right: 8px;
     color: var(--text-color);
 }
@@ -204,7 +187,6 @@
     gap: 4px;
     text-decoration: none;
     border-radius: 20px;
-    border: none;
     border: 1px solid var(--secondary-color);
     color: var(--text-color);
     background: var(--secondary-color);
@@ -219,10 +201,8 @@
     border-radius: 50%;
     display: inline-flex;
     border: 3px solid var(--secondary-color);
-    background: var(--secondary-color);
     justify-content: center;
     align-items: center;
-
 }
 
 .right-icon svg {
@@ -232,8 +212,8 @@
 .avatar {
     height: 30px !important;
     width: 30px !important;
-    color: rgba(0, 0, 0, 0.7) !important;
-    background: pink !important;
+    color: var(--text-color) !important;
+    background: transparent !important;
 }
 
 .sideBar {
@@ -246,16 +226,13 @@
     align-items: center;
     justify-content: space-between;
     box-shadow: 4px 0 8px var(--shadow-color);
-
     background-color: var(--background-color);
-
     color: var(--text-color);
 }
 
 .sideBar .down {
     position: absolute;
-    bottom: 20px;
-
+    bottom: 90px;
 }
 
 .sideBar .icon {
@@ -271,14 +248,13 @@
     text-decoration: none;
     color: var(--text-color);
     font-size: 10px !important;
-
 }
-
 
 .sideBar .image {
     width: 30px;
     height: 30px;
     object-fit: contain;
+
 }
 
 .sideBar .span {

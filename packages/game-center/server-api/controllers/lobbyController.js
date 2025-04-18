@@ -48,7 +48,7 @@ const createLobbie = async (req, res) => {
         const result = await db.query(query, values);
         const newLobby = result.rows[0];
 
-        // Add lobby creator as the first player (marked as ready)
+        // Add lobby creator as the first player
         const addOwnerQuery = `
             INSERT INTO lobby_players (lobby_id, user_id, is_ready)
             VALUES ($1, $2, TRUE) RETURNING *;
@@ -62,7 +62,7 @@ const createLobbie = async (req, res) => {
     }
 };
 
-// Get all lobbies (optionally filtered by game ID)
+// Get all lobbies
 const getLobbies = async (req, res) => {
     const { gameId } = req.query;
     let query = `

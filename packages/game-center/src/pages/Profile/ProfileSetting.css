@@ -40,3 +40,32 @@
 .input-group {
     margin-bottom: 15px;
 }
+
+.visited-profile-container {
+    padding: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.visited-profile-avatar {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px;
+}
+
+.visited-profile-name {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.visited-profile-email {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.visited-profile-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
