@@ -16,7 +16,6 @@
     --text-color: #fff;
 }
 
-/* Slick slider overrides */
 .slick-slide {
     padding: 0 10px;
 }
@@ -57,7 +56,6 @@
     right: 10px;
 }
 
-/* Slide item styles */
 .slide-item {
     width: 100%;
     height: 250px;
@@ -78,7 +76,6 @@
     transform: scale(1.05);
 }
 
-/* Responsive adjustments */
 @media (max-width: 900px) {
     .slider-container {
         padding: 15px;

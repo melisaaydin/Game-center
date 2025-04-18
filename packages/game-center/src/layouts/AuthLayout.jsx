@@ -8,7 +8,6 @@ function AuthLayout() {
         <div className="auth-image-container">
             <img src={characterImage} alt="character" className="auth-image"
             />
-
         </div>
 
     )

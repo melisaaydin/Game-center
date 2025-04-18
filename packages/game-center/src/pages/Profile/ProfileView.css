@@ -1,0 +1,300 @@
+/* === Profile Main Layout === */
+.main-content-profile-view {
+    margin: 100px 0 40px 120px;
+}
+
+.profile-view-container {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+}
+
+.profile-card {
+    width: 100%;
+    max-width: 800px;
+    background: var(--background-color);
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    padding: 32px;
+    margin-bottom: 50px;
+    height: 600px;
+    transition: transform 0.2s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-2px);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-left: 16px;
+}
+
+.profile-view-avatar {
+    width: 100px !important;
+    height: 100px !important;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    object-fit: cover;
+}
+
+.profile-name {
+    color: var(--text-color);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.profile-email {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+
+.edit-profile-button,
+.friend-request-button {
+    text-transform: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #fff;
+    transition: background 0.3s ease, transform 0.2s ease;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+}
+
+.edit-profile-button:hover,
+.friend-request-button:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    transform: scale(1.05);
+}
+
+.friend-request-button:disabled {
+    background: var(--background-color-secondary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.friend-request-button:active {
+    animation: clickEffect 0.2s ease;
+}
+
+@keyframes clickEffect {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.card-content-profile-view {
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+.low-cards {
+    width: 700px;
+    margin-top: 60px !important;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.about-card,
+.games-card {
+    margin-top: 24px;
+    background: var(--background-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.about-card:hover,
+.games-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.about-card-content,
+.games-card-content {
+    padding: 24px;
+    text-align: center;
+}
+
+
+.card-title {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.card-text {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+
+.game-list-item {
+    padding: 12px 0;
+    justify-content: center;
+}
+
+.game-title {
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.game-date {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.profile-loading,
+.profile-error,
+.profile-not-found {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.profile-loading {
+    color: var(--primary-color);
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.profile-error {
+    color: var(--primary-color);
+}
+
+.profile-not-found {
+    color: var(--text-color);
+}
+
+
+.snackbar-alert {
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 900px) {
+    .main-content-profile-view {
+        margin-left: 100px;
+    }
+
+    .profile-view-container,
+    .profile-card,
+    .card-content-profile-view {
+        padding: 24px;
+        max-width: 100%;
+    }
+
+    .profile-view-avatar {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    .profile-name {
+        font-size: 1.8rem;
+    }
+
+    .profile-email {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-content-profile-view {
+        margin: 16px;
+        margin-left: 100px;
+        margin-top: 100px;
+    }
+
+    .profile-view-container {
+        padding: 16px;
+    }
+
+    .profile-card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .profile-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding-left: 12px;
+    }
+
+    .profile-view-avatar {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .profile-name {
+        font-size: 1.5rem;
+    }
+
+    .profile-email {
+        font-size: 0.9rem;
+    }
+
+    .edit-profile-button,
+    .friend-request-button {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .about-card-content,
+    .games-card-content {
+        padding: 16px;
+    }
+
+    .card-title {
+        font-size: 1.3rem;
+    }
+
+    .card-text {
+        font-size: 1rem;
+    }
+}

@@ -1,0 +1,264 @@
+.main-content-friends {
+    margin-top: 100px;
+    margin-left: 100px;
+    box-shadow: 4px 0 12px var(--shadow-color);
+    max-width: 1220px;
+    min-height: 500px;
+    border-radius: 10px;
+    padding: 20px;
+
+    box-sizing: border-box;
+}
+
+
+.friends-section {
+    background-color: var(--background-secondary);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
+.section-title {
+    font-weight: 800;
+    font-size: 32px;
+    color: var(--text-color);
+    margin-bottom: 40px;
+    text-align: center;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.subsection-title {
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--text-color);
+    margin-bottom: 24px;
+    position: relative;
+
+
+    padding-bottom: 10px;
+    padding-left: 12px;
+}
+
+.subsection-title::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 180px;
+    height: 4px;
+    background-color: var(--primary-color);
+}
+
+.requests-section {
+    margin-bottom: 48px;
+}
+
+.friend-card {
+    border-radius: 14px;
+    box-shadow: 0 3px 8px var(--shadow-color);
+    margin-bottom: 28px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 250px;
+    animation: fadeIn 0.6s ease-in;
+    margin-top: 24px;
+    background-color: var(--card-background);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.friend-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px var(--shadow-color);
+}
+
+.friend-card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+}
+
+.friend-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.friend-name {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.friend-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.action-button {
+    color: var(--text-color);
+    padding: 10px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.action-button.accept {
+    color: var(--primary-color);
+}
+
+.action-button.reject {
+    color: var(--text-secondary);
+}
+
+.action-button.delete {
+    color: var(--text-color);
+    padding: 10px;
+    background-color: transparent;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.action-button.accept:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.action-button.reject:hover {
+    background-color: var(--text-secondary);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.action-button.delete:hover {
+    color: var(--error-color);
+    transform: scale(1.1);
+}
+
+.no-data {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 28px;
+    font-size: 18px;
+    font-style: italic;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    transition: transform 0.3s ease;
+    border-radius: 50%;
+}
+
+.avatar:hover {
+    transform: scale(1.15);
+}
+
+.activity-status {
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.animated-dialog .MuiDialog-paper {
+    animation: zoomIn 0.3s ease-out;
+    border-radius: 12px;
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        max-width: 100%;
+        padding: 20px;
+    }
+
+    .friends-section {
+        padding: 24px;
+    }
+
+    .friend-card {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        padding: 16px;
+    }
+
+    .friends-section {
+        padding: 20px;
+    }
+
+    .section-title {
+        font-size: 28px;
+        margin-bottom: 32px;
+    }
+
+    .subsection-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .friend-card-content {
+        padding: 20px;
+    }
+
+    .avatar {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-content {
+        padding: 12px;
+    }
+
+    .friends-section {
+        padding: 16px;
+    }
+
+    .friend-card-content {
+        padding: 16px;
+    }
+
+    .friend-name {
+        font-size: 16px;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .action-button {
+        padding: 8px;
+    }
+
+    .no-data {
+        font-size: 16px;
+        padding: 20px;
+    }
+
+    .section-title {
+        font-size: 24px;
+    }
+
+    .subsection-title {
+        font-size: 18px;
+    }
+}

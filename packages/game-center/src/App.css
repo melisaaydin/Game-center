@@ -1,9 +1,6 @@
-/* app.css */
-
-/* Font Import */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&family=Dosis:wght@200..800&display=swap');
 
-/* CSS Değişkenleri */
+
 :root {
   --background-color: #fafafa;
   --background-color-secondary: #f5f5f5;
@@ -150,6 +147,36 @@ body {
 .form:hover {
   box-shadow: 10px 10px 15px rgba(255, 20, 147, 0.9), 15px 15px 25px rgba(255, 20, 147, 0.7);
 
+}
+
+.layout-container {
+  display: flex;
+  background-color: transparent;
+}
+
+.layout-content {
+  flex: 1;
+  background: var(--background-color);
+  box-sizing: border-box;
+}
+
+@media (max-width: 1200px) {
+  .layout-content {
+    padding: 15px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout-content {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .layout-content {
+    padding: 5px;
+  }
 }
 
 .MuiButton-root {
@@ -304,21 +331,6 @@ body {
   background: var(--background-color) !important;
 }
 
-.headerSearch {
-  border: 1px solid var(--secondary-color);
-}
-
-.headerSearch input {
-  color: var(--text-color) !important;
-}
-
-.headerSearch input::-webkit-input-placeholder {
-  color: var(--text-secondary) !important;
-}
-
-.headerSearch button {
-  color: var(--secondary-color);
-}
 
 .nav-btn {
   color: var(--text-color) !important;

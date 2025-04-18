@@ -21,7 +21,8 @@ const GameList = () => {
 
     return (
         <div className="gamelist-div">
-            <span className="section-title">🎮 Slot Games</span>
+            <span className="section-title">
+                Games</span>
             <div className="games-grid">
                 {games.map((game) => (
                     <div

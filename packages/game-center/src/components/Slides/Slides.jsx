@@ -18,7 +18,7 @@ const slides = [
     { id: 3, img: B, alt: "Slide 3", path: "/slide3" },
     { id: 4, img: A, alt: "Slide 4", path: "/slide4" },
     { id: 5, img: E, alt: "Slide 5", path: "/slide5" },
-    { id: 5, img: D, alt: "Slide 5", path: "/slide5" },
+    { id: 6, img: D, alt: "Slide 5", path: "/slide5" },
 
 ];
 

@@ -52,7 +52,7 @@ const LobbyDetails = () => {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const chatRef = useRef(null);
     const lastMessageRef = useRef(null);
-    const preferredLanguage = "en"; // Assume English as default; you can make this dynamic based on user settings
+    const preferredLanguage = "en";
 
     useEffect(() => {
         const fetchLobbyDetails = async () => {
@@ -313,7 +313,7 @@ const LobbyDetails = () => {
                 setSnackbarSeverity("success");
                 setSnackbarOpen(true);
                 setDeleteConfirmOpen(false);
-                navigate("/games");
+                navigate("/");
             } else {
                 throw new Error(res.data.message);
             }
@@ -336,9 +336,8 @@ const LobbyDetails = () => {
 
     return (
         <Box className="lobby-details-container">
-            {/* Main Content: Players on the left, Chat on the right */}
+            {/* Main Contentt */}
             <Box className="lobby-content">
-                {/* Left Section: Header + Players */}
                 <Box className="lobby-left-section">
                     {/* Lobby Header */}
                     <Box className="lobby-header">
@@ -420,7 +419,7 @@ const LobbyDetails = () => {
                     </Paper>
                 </Box>
 
-                {/* Right Column: Chat */}
+                {/*  Chat */}
                 <Paper elevation={2} className="lobby-card chat-card">
                     <Box sx={{ p: 2 }}>
                         <Typography variant="h6" className="section-title">Chat</Typography>
