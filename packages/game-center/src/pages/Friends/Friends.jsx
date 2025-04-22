@@ -19,6 +19,7 @@ import axios from "axios";
 import { useUser } from "../../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
+import "moment/locale/en-gb";
 import "./Friends.css";
 
 function Friends() {
@@ -32,20 +33,29 @@ function Friends() {
     const [friendToDelete, setFriendToDelete] = useState(null);
     const navigate = useNavigate();
 
+    // Set moment to use English for date formatting
+    moment.locale("en-gb");
+
     useEffect(() => {
         const fetchFriendData = async () => {
+            const token = localStorage.getItem("token");
+            console.log("Frontend - Token:", token); // Logging the token for debugging
             try {
+                // Fetch pending friend requests
                 const reqRes = await axios.get("http://localhost:8081/users/friend-requests", {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
                 setFriendRequests(reqRes.data.requests || []);
+                console.log("Friend Requests:", JSON.stringify(reqRes.data.requests, null, 2));
 
+                // Fetch the list of current friends
                 const friendsRes = await axios.get("http://localhost:8081/users/friends", {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
                 setFriends(friendsRes.data.friends || []);
+                console.log("Friends:", JSON.stringify(friendsRes.data.friends, null, 2));
             } catch (err) {
-                setSnackbarMessage("Failed to load friend data.");
+                setSnackbarMessage("Couldn't load friend data.");
                 setSnackbarSeverity("error");
                 setSnackbarOpen(true);
             }
@@ -54,6 +64,7 @@ function Friends() {
         fetchFriendData();
     }, []);
 
+    // Handle accepting a friend request
     const handleAcceptRequest = async (requestId) => {
         try {
             const res = await axios.post(
@@ -69,12 +80,13 @@ function Friends() {
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
         } catch (err) {
-            setSnackbarMessage("Failed to accept friend request.");
+            setSnackbarMessage("Couldn't accept the friend request.");
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         }
     };
 
+    // Handle rejecting a friend request
     const handleRejectRequest = async (requestId) => {
         try {
             await axios.post(
@@ -82,29 +94,32 @@ function Friends() {
                 {},
                 { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
             );
+            // Remove the rejected request from the list
             setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
             setSnackbarMessage("Friend request rejected.");
             setSnackbarSeverity("info");
             setSnackbarOpen(true);
         } catch (err) {
-            setSnackbarMessage("Failed to reject friend request.");
+            setSnackbarMessage("Couldn't reject the friend request.");
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         }
     };
 
+    // Handle deleting a friend
     const handleDeleteFriend = async () => {
         try {
             await axios.delete(`http://localhost:8081/users/friends/${friendToDelete.id}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
             });
+            // Remove the friend from the list
             setFriends((prev) => prev.filter((friend) => friend.id !== friendToDelete.id));
             setSnackbarMessage("Friend removed successfully.");
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
         } catch (err) {
             console.error("Error removing friend:", err);
-            setSnackbarMessage("Failed to remove friend.");
+            setSnackbarMessage("Couldn't remove the friend.");
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         } finally {
@@ -117,6 +132,7 @@ function Friends() {
         setFriendToDelete(friend);
         setDeleteDialogOpen(true);
     };
+
 
     const handleCloseDeleteDialog = () => {
         setDeleteDialogOpen(false);
@@ -132,22 +148,19 @@ function Friends() {
         setSnackbarOpen(false);
     };
 
+    // Determine the activity status of a friend 
     const getActivityStatus = (lastActive) => {
         if (!lastActive) return null;
         const now = moment();
         const last = moment(lastActive);
-        const diffHours = now.diff(last, "hours");
-        if (diffHours < 24) {
-            if (diffHours < 1) {
-                return (
-                    <>
-                        Online <span className="online-indicator" />
-                    </>
-                );
-            }
-            return `Last seen ${last.fromNow()}`;
+        const diffMinutes = now.diff(last, "minutes");
+        if (diffMinutes < 5) {
+            return true; // Online, show a green dot
         }
-        return null;
+        if (now.diff(last, "hours") >= 24) {
+            return null; // Older than 24 hours, show nothing
+        }
+        return `Last active: ${last.fromNow()}`; // Between 5 minutes and 24 hours
     };
 
     return (
@@ -170,18 +183,22 @@ function Friends() {
                             >
                                 <CardContent className="friend-card-content">
                                     <Box className="friend-info">
-                                        <Avatar
-                                            src={
-                                                request?.avatar_url
-                                                    ? `http://localhost:8081/uploads/${request.avatar_url}`
-                                                    : "/default-avatar.png"
-                                            }
-                                            className="avatar"
-                                            sx={{ width: 56, height: 56 }}
-                                        />
-                                        <Typography variant="subtitle1" className="friend-name">
-                                            {request?.name || "Unknown User"}
-                                        </Typography>
+                                        <Box className="avatar-container">
+                                            <Avatar
+                                                src={
+                                                    request?.avatar_url
+                                                        ? `http://localhost:8081/uploads/${request.avatar_url}`
+                                                        : "/default-avatar.png"
+                                                }
+                                                className="avatar"
+                                                sx={{ width: 56, height: 56 }}
+                                            />
+                                        </Box>
+                                        <Box>
+                                            <Typography variant="subtitle1" className="friend-name">
+                                                {request?.name || "Unknown User"}
+                                            </Typography>
+                                        </Box>
                                     </Box>
                                     <Box className="friend-actions">
                                         <IconButton
@@ -226,21 +243,27 @@ function Friends() {
                             >
                                 <CardContent className="friend-card-content">
                                     <Box className="friend-info">
-                                        <Avatar
-                                            src={
-                                                friend?.avatar_url
-                                                    ? `http://localhost:8081/uploads/${friend.avatar_url}`
-                                                    : "/default-avatar.png"
-                                            }
-                                            className="avatar"
-                                            sx={{ width: 56, height: 56 }}
-                                        />
+                                        <Box className="avatar-container">
+                                            <Avatar
+                                                src={
+                                                    friend?.avatar_url
+                                                        ? `http://localhost:8081/uploads/${friend.avatar_url}`
+                                                        : "/default-avatar.png"
+                                                }
+                                                className="avatar"
+                                                sx={{ width: 56, height: 56 }}
+                                            />
+                                            {getActivityStatus(friend?.last_active) === true && (
+                                                <span className="online-indicator" />
+                                            )}
+                                        </Box>
                                         <Box>
                                             <Typography variant="subtitle1" className="friend-name">
                                                 {friend?.name || "Unknown User"}
                                             </Typography>
                                             <Typography variant="caption" className="activity-status">
-                                                {getActivityStatus(friend?.last_active)}
+                                                {typeof getActivityStatus(friend?.last_active) === "string" &&
+                                                    getActivityStatus(friend?.last_active)}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -260,7 +283,7 @@ function Friends() {
                             </Card>
                         ))
                     ) : (
-                        <Typography className="no-data">No friends yet.</Typography>
+                        <Typography className="no-data">You don't have any friends yet.</Typography>
                     )}
                 </Box>
                 <Snackbar
@@ -287,7 +310,8 @@ function Friends() {
                     <DialogTitle sx={{ fontWeight: 600 }}>Remove Friend</DialogTitle>
                     <DialogContent>
                         <Typography>
-                            {friendToDelete && `Are you sure you want to remove ${friendToDelete.name || "Unknown User"} from your friends?`}
+                            {friendToDelete &&
+                                `Are you sure you want to remove ${friendToDelete.name || "Unknown User"} from your friends?`}
                         </Typography>
                     </DialogContent>
                     <DialogActions>

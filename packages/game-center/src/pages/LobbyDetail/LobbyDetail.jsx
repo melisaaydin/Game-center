@@ -1,35 +1,15 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import io from "socket.io-client";
-import {
-    Box,
-    Typography,
-    Button,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemAvatar,
-    Avatar,
-    TextField,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
-    Snackbar,
-    Alert,
-    Paper,
-} from "@mui/material";
+import { Box, Typography, Button, Snackbar, Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
 import { Lock, ContentCopy, ExitToApp, PlayArrow, SportsEsports, Delete } from "@mui/icons-material";
+import { FcInvite } from "react-icons/fc";
 import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
+import ChatSection from "../../components/LobbyDetails/ChatSection";
+import PlayersSection from "../../components/LobbyDetails/PlayersSection";
+import InviteDialog from "../../components/LobbyDetails/InviteDialog";
+import { socket, fetchLobbyDetails, leaveLobby, deleteLobby, inviteFriend, apiRequest } from "../../utils/lobbyUtils";
 import "./LobbyDetail.css";
-
-const socket = io("http://localhost:8081", {
-    reconnection: true,
-    reconnectionAttempts: 5,
-});
 
 const LobbyDetails = () => {
     const { id } = useParams();
@@ -44,54 +24,26 @@ const LobbyDetails = () => {
     const [password, setPassword] = useState("");
     const [chatMessages, setChatMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
     const [creatorName, setCreatorName] = useState("");
     const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+    const [friends, setFriends] = useState([]);
+    const [friendsLoading, setFriendsLoading] = useState(false);
+    const [invitedUsers, setInvitedUsers] = useState(new Set());
+    const [typingUser, setTypingUser] = useState(null);
     const chatRef = useRef(null);
     const lastMessageRef = useRef(null);
-    const preferredLanguage = "en";
 
     useEffect(() => {
-        const fetchLobbyDetails = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    setError("Please log in!");
-                    setSnackbarMessage("You need to log in!");
-                    setSnackbarSeverity("error");
-                    setSnackbarOpen(true);
-                    navigate("/login");
-                    return;
-                }
-
-                const res = await axios.get(`http://localhost:8081/lobbies/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
-                setLobby(res.data);
-                setCreatorName(res.data.created_by_name || "Unknown User");
-
-                if (user) {
-                    const playerCheck = res.data.players.some((p) => p.id === user.id);
-                    setIsJoined(playerCheck);
-                }
-
-                const messagesRes = await axios.get(`http://localhost:8081/lobbies/${id}/messages`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setChatMessages(messagesRes.data.messages || []);
-                setLoading(false);
-            } catch (err) {
-                setError("An error occurred while loading the lobby: " + (err.response?.data?.message || err.message));
-                setLoading(false);
-            }
+        const loadLobby = async () => {
+            setLoading(true);
+            const messages = await fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
+            setChatMessages(messages);
+            setLoading(false);
         };
-
-        fetchLobbyDetails();
+        loadLobby();
     }, [id, user, navigate]);
 
     useEffect(() => {
@@ -107,53 +59,50 @@ const LobbyDetails = () => {
         socket.on("connect", handleSocketConnect);
         socket.on("receive_message", (message) => {
             const lastMessage = lastMessageRef.current;
-            const newMessageString = `${message.user}: ${message.content}`;
+            const newMessageString = `${message.user}:${message.content}:${message.timestamp}`;
             if (lastMessage !== newMessageString) {
-                let translatedContent = message.content;
-                if (preferredLanguage === "tr" && message.content.includes("left the lobby")) {
-                    translatedContent = message.content.replace("left the lobby", "lobiden ayrıldı");
-                } else if (preferredLanguage === "en" && message.content.includes("lobiden ayrıldı")) {
-                    translatedContent = message.content.replace("lobiden ayrıldı", "left the lobby");
-                }
-                setChatMessages((prevMessages) => [...prevMessages, { user: message.user, content: translatedContent }]);
+                setChatMessages((prev) => [...prev, { user: message.user, content: message.content, avatar_url: message.avatar_url }]);
                 lastMessageRef.current = newMessageString;
             }
         });
-        socket.on("disconnect", () => {
-            setSnackbarMessage("Connection lost, reconnecting...");
-            setSnackbarSeverity("warning");
-            setSnackbarOpen(true);
+        socket.on("lobby_invite", ({ lobbyId, lobbyName, senderId, senderName }) => {
+            setSnackbar({ open: true, message: `${senderName} invited you to join ${lobbyName}`, severity: "info" });
         });
+        socket.on("lobby_invite_accepted", ({ lobbyId, lobbyName, receiverId, receiverName }) => {
+            setSnackbar({ open: true, message: `${receiverName} joined ${lobbyName}!`, severity: "success" });
+            if (lobbyId === id) fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
+        });
+        socket.on("lobby_invite_rejected", ({ lobbyId, lobbyName, receiverId, receiverName }) => {
+            setSnackbar({ open: true, message: `${receiverName} rejected the invitation to ${lobbyName}.`, severity: "info" });
+        });
+        socket.on("disconnect", () => setSnackbar({ open: true, message: "Connection lost, reconnecting...", severity: "warning" }));
         socket.on("reconnect", () => {
-            setSnackbarMessage("Reconnected successfully!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            setSnackbar({ open: true, message: "Reconnected successfully!", severity: "success" });
             if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
         });
+        socket.on("typing", ({ userName }) => setTypingUser(userName));
+        socket.on("stop_typing", () => setTypingUser(null));
 
         if (socket.connected) handleSocketConnect();
 
         return () => {
             socket.off("connect", handleSocketConnect);
             socket.off("receive_message");
+            socket.off("lobby_invite");
+            socket.off("lobby_invite_accepted");
+            socket.off("lobby_invite_rejected");
             socket.off("disconnect");
             socket.off("reconnect");
+            socket.off("typing");
+            socket.off("stop_typing");
         };
     }, [id, user, isJoined]);
 
-    useEffect(() => {
-        if (chatRef.current) {
-            chatRef.current.scrollTop = chatRef.current.scrollHeight;
-        }
-    }, [chatMessages]);
-
     const handleJoinLobby = async () => {
         if (!user) {
-            setSnackbarMessage("Please log in!");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            setSnackbar({ open: true, message: "Please log in!", severity: "error" });
             return;
         }
         if (lobby.password && !isJoined) {
@@ -161,126 +110,42 @@ const LobbyDetails = () => {
             return;
         }
 
-        try {
-            const token = localStorage.getItem("token");
-            const res = await axios.post(
-                `http://localhost:8081/lobbies/${id}/join`,
-                { userId: user.id },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+        const token = localStorage.getItem("token");
+        const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id }, token);
+        if (res.success) {
             if (res.data.alreadyJoined) {
-                setSnackbarMessage("You are already in this lobby!");
-                setSnackbarSeverity("info");
-                setSnackbarOpen(true);
+                setSnackbar({ open: true, message: "You are already in this lobby!", severity: "info" });
                 setIsJoined(true);
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
-                return;
+            } else {
+                setIsJoined(true);
+                socket.emit("join_lobby", { lobbyId: id, userId: user.id });
+                setLobby((prev) => ({ ...prev, current_players: prev.current_players + 1 }));
+                setSnackbar({ open: true, message: "You have joined the lobby!", severity: "success" });
             }
-            setIsJoined(true);
-            socket.emit("join_lobby", { lobbyId: id, userId: user.id });
-            setLobby((prev) => ({ ...prev, current_players: prev.current_players + 1 }));
-            setSnackbarMessage("You have joined the lobby!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
-        } catch (err) {
-            setSnackbarMessage("Could not join the lobby: " + (err.response?.data?.message || err.message));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+        } else {
+            setSnackbar({ open: true, message: "Could not join the lobby: " + res.message, severity: "error" });
         }
     };
 
     const handlePasswordSubmit = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await axios.post(
-                `http://localhost:8081/lobbies/${id}/join`,
-                { userId: user.id, password },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+        const token = localStorage.getItem("token");
+        const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id, password }, token);
+        if (res.success) {
             if (res.data.alreadyJoined) {
-                setSnackbarMessage("You are already in this lobby!");
-                setSnackbarSeverity("info");
-                setSnackbarOpen(true);
+                setSnackbar({ open: true, message: "You are already in this lobby!", severity: "info" });
                 setIsJoined(true);
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
-                setPasswordDialogOpen(false);
-                return;
+            } else {
+                setIsJoined(true);
+                socket.emit("join_lobby", { lobbyId: id, userId: user.id });
+                const lobbyRes = await apiRequest("get", `http://localhost:8081/lobbies/${id}`, null, token);
+                if (lobbyRes.success) setLobby(lobbyRes.data);
+                setSnackbar({ open: true, message: "You have joined the lobby!", severity: "success" });
             }
-            setIsJoined(true);
-            socket.emit("join_lobby", { lobbyId: id, userId: user.id });
             setPasswordDialogOpen(false);
-            const lobbyRes = await axios.get(`http://localhost:8081/lobbies/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setLobby(lobbyRes.data);
-            setSnackbarMessage("You have joined the lobby!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
-        } catch (err) {
-            setSnackbarMessage(err.response?.data?.message || "Incorrect password or an error occurred!");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
-        }
-    };
-
-    const handleLeaveLobbyClick = () => {
-        setLeaveConfirmOpen(true);
-    };
-
-    const handleLeaveLobbyConfirm = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            await axios.post(
-                `http://localhost:8081/lobbies/${id}/leave`,
-                { userId: user.id },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setIsJoined(false);
-            socket.emit("leave_lobby", { lobbyId: id, userId: user.id });
-            const res = await axios.get(`http://localhost:8081/lobbies/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setLobby(res.data);
-            setSnackbarMessage("You have left the lobby!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
-            setLeaveConfirmOpen(false);
-        } catch (err) {
-            setSnackbarMessage("Could not leave the lobby!");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
-            setLeaveConfirmOpen(false);
-        }
-    };
-
-    const handleStartGame = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            await axios.post(`http://localhost:8081/lobbies/${id}/start`, null, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setSnackbarMessage("Game started successfully!");
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
-        } catch (err) {
-            setSnackbarMessage("Could not start the game!");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
-        }
-    };
-
-    const handleCopyLink = () => {
-        const link = `${window.location.origin}/lobbies/${id}`;
-        navigator.clipboard.writeText(link);
-        setSnackbarMessage("Lobby link copied to clipboard!");
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-    };
-
-    const handleSendMessage = () => {
-        if (newMessage.trim()) {
-            socket.emit("send_message", { lobbyId: id, userId: user.id, content: newMessage });
-            setNewMessage("");
+        } else {
+            setSnackbar({ open: true, message: res.message || "Incorrect password or an error occurred!", severity: "error" });
         }
     };
 
@@ -288,46 +153,48 @@ const LobbyDetails = () => {
         if (lobby.game_id === "tombala") {
             const gameUrl = `${window.location.origin}/packages/${lobby.game_id}`;
             window.open(gameUrl, "_blank");
-            setSnackbarMessage(`Opening ${lobby.game_id} game...`);
-            setSnackbarSeverity("info");
-            setSnackbarOpen(true);
+            setSnackbar({ open: true, message: `Opening ${lobby.game_id} game...`, severity: "info" });
         } else {
-            setSnackbarMessage("Game not available yet!");
-            setSnackbarSeverity("warning");
-            setSnackbarOpen(true);
+            setSnackbar({ open: true, message: "Game not available yet!", severity: "warning" });
         }
     };
 
-    const handleDeleteLobbyClick = () => {
-        setDeleteConfirmOpen(true);
+    const handleCopyLink = () => {
+        const link = `${window.location.origin}/lobbies/${id}`;
+        navigator.clipboard.writeText(link);
+        setSnackbar({ open: true, message: "Lobby link copied to clipboard!", severity: "success" });
     };
 
-    const handleDeleteLobbyConfirm = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const res = await axios.delete(`http://localhost:8081/lobbies/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.data.success) {
-                setSnackbarMessage("Lobby deleted successfully!");
-                setSnackbarSeverity("success");
-                setSnackbarOpen(true);
-                setDeleteConfirmOpen(false);
-                navigate("/");
-            } else {
-                throw new Error(res.data.message);
-            }
-        } catch (err) {
-            setSnackbarMessage("Could not delete lobby: " + (err.response?.data?.message || err.message));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
-            setDeleteConfirmOpen(false);
+    const handleSendMessage = () => {
+        if (newMessage.trim()) {
+            socket.emit("send_message", { lobbyId: id, userId: user.id, content: newMessage, avatar_url: user.avatar_url });
+            socket.emit("stop_typing", { lobbyId: id });
+            setNewMessage("");
         }
     };
 
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === "clickaway") return;
-        setSnackbarOpen(false);
+    const handleTyping = () => {
+        if (newMessage.trim()) socket.emit("typing", { lobbyId: id, userName: user.name });
+        else socket.emit("stop_typing", { lobbyId: id });
+    };
+
+    const handleOpenInviteDialog = async () => {
+        setInviteDialogOpen(true);
+        setFriendsLoading(true);
+        const token = localStorage.getItem("token");
+        const res = await apiRequest("get", `http://localhost:8081/lobbies/${id}/friends`, null, token);
+        if (res.success) {
+            setFriends(res.data.friends || []);
+            setInvitedUsers(new Set());
+        } else {
+            setSnackbar({ open: true, message: "Failed to load friends: " + res.message, severity: "error" });
+        }
+        setFriendsLoading(false);
+    };
+
+    const handleInviteFriend = (friendId) => {
+        const token = localStorage.getItem("token");
+        inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token);
     };
 
     if (loading) return <Typography>Loading...</Typography>;
@@ -336,23 +203,13 @@ const LobbyDetails = () => {
 
     return (
         <Box className="lobby-details-container">
-            {/* Main Contentt */}
             <Box className="lobby-content">
                 <Box className="lobby-left-section">
-                    {/* Lobby Header */}
                     <Box className="lobby-header">
-                        <Typography variant="h4" className="lobby-header-title" sx={{ fontWeight: "bold" }}>
-                            {lobby.name}
-                        </Typography>
-                        <Typography variant="subtitle1" className="lobby-header-title" color="text.secondary">
-                            Game: {lobby.game_id}
-                        </Typography>
-                        <Typography variant="subtitle2" className="lobby-header-title" color="text.secondary">
-                            Players: {lobby.current_players}/{lobby.max_players}
-                        </Typography>
-                        <Typography variant="subtitle2" className="lobby-header-title" color="text.secondary">
-                            Created by: {creatorName}
-                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: "bold" }}>{lobby.name}</Typography>
+                        <Typography variant="subtitle1" color="text.secondary">Game: {lobby.game_id}</Typography>
+                        <Typography variant="subtitle2" color="text.secondary">Players: {lobby.current_players}/{lobby.max_players}</Typography>
+                        <Typography variant="subtitle2" color="text.secondary">Created by: {creatorName}</Typography>
                         {lobby.password && <Lock fontSize="small" sx={{ verticalAlign: "middle", ml: 1 }} />}
                         <Box className="lobby-actions">
                             {!isJoined ? (
@@ -366,99 +223,51 @@ const LobbyDetails = () => {
                                 </Button>
                             ) : (
                                 <>
-                                    <Button variant="contained" color="secondary" onClick={handleLeaveLobbyClick} startIcon={<ExitToApp />}>
+                                    <Button variant="contained" color="secondary" onClick={() => setLeaveConfirmOpen(true)} startIcon={<ExitToApp />}>
                                         Leave Lobby
                                     </Button>
                                     <Button variant="contained" color="primary" onClick={handlePlayGame} startIcon={<SportsEsports />}>
                                         Play
                                     </Button>
+                                    <Button variant="outlined" onClick={handleOpenInviteDialog} startIcon={<FcInvite />}>
+                                        Invite Friends
+                                    </Button>
                                     {lobby.created_by === user.id && (
-                                        <>
-                                            <Button variant="contained" color="success" onClick={handleStartGame} startIcon={<PlayArrow />}>
-                                                Start Game
-                                            </Button>
-                                            <Button variant="contained" color="error" onClick={handleDeleteLobbyClick} startIcon={<Delete />}>
-                                                Delete Lobby
-                                            </Button>
-                                        </>
+                                        <Button variant="contained" color="error" onClick={() => setDeleteConfirmOpen(true)} startIcon={<Delete />}>
+                                            Delete Lobby
+                                        </Button>
                                     )}
                                 </>
                             )}
-                            <Button variant="outlined" onClick={handleCopyLink} startIcon={<ContentCopy />}>
-                                Invite Friends
-                            </Button>
-                            <Button variant="outlined" onClick={() => navigate("/")}>
-                                Back to Home
-                            </Button>
+                            <Button variant="outlined" onClick={handleCopyLink} startIcon={<ContentCopy />}>Copy Lobby Link</Button>
+                            <Button variant="outlined" onClick={() => navigate("/")}>Back to Home</Button>
                         </Box>
                     </Box>
-
-                    {/* Players Card */}
-                    <Paper elevation={2} className="lobby-card players-card">
-                        <Box sx={{ p: 2 }}>
-                            <Typography variant="h6" className="section-title">Players</Typography>
-                            {lobby.players && lobby.players.length > 0 ? (
-                                <List>
-                                    {lobby.players.map((player) => (
-                                        <ListItem key={player.id}>
-                                            <ListItemAvatar>
-                                                <Avatar src={player.avatar_url} />
-                                            </ListItemAvatar>
-                                            <ListItemText
-                                                primary={player.name}
-                                                secondary={player.is_ready ? "Ready" : "Not Ready"}
-                                                sx={{ color: player.is_ready ? "green" : "orange" }}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            ) : (
-                                <Typography className="section-text">No players in this lobby yet.</Typography>
-                            )}
-                        </Box>
-                    </Paper>
+                    <PlayersSection lobby={lobby} />
                 </Box>
-
-                {/*  Chat */}
-                <Paper elevation={2} className="lobby-card chat-card">
-                    <Box sx={{ p: 2 }}>
-                        <Typography variant="h6" className="section-title">Chat</Typography>
-                        <Box ref={chatRef} className="chat-messages">
-                            {chatMessages.map((msg, index) => (
-                                <Typography
-                                    key={index}
-                                    className="section-text"
-                                    sx={{
-                                        mb: 1,
-                                        bgcolor: msg.user === "System" ? (mode === "dark" ? "#444" : "#e0f7fa") : "transparent",
-                                        p: 1,
-                                        borderRadius: 1,
-                                    }}
-                                >
-                                    <strong>{msg.user}:</strong> {msg.content}
-                                </Typography>
-                            ))}
-                        </Box>
-                        {isJoined && (
-                            <Box className="chat-input">
-                                <TextField
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder="Type a message..."
-                                    fullWidth
-                                    size="small"
-                                    sx={{ bgcolor: mode === "dark" ? "#444" : "white" }}
-                                />
-                                <Button variant="contained" onClick={handleSendMessage}>
-                                    Send
-                                </Button>
-                            </Box>
-                        )}
-                    </Box>
-                </Paper>
+                <ChatSection
+                    chatMessages={chatMessages}
+                    newMessage={newMessage}
+                    setNewMessage={setNewMessage}
+                    typingUser={typingUser}
+                    isJoined={isJoined}
+                    handleSendMessage={handleSendMessage}
+                    handleTyping={handleTyping}
+                    mode={mode}
+                    chatRef={chatRef}
+                    userName={user.name}
+                />
             </Box>
 
-            {/* Password Dialog */}
+            <InviteDialog
+                open={inviteDialogOpen}
+                onClose={() => setInviteDialogOpen(false)}
+                friends={friends}
+                friendsLoading={friendsLoading}
+                invitedUsers={invitedUsers}
+                handleInvite={handleInviteFriend}
+            />
+
             <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
                 <DialogTitle>Enter Lobby Password</DialogTitle>
                 <DialogContent>
@@ -478,47 +287,48 @@ const LobbyDetails = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Leave Confirmation Dialog */}
             <Dialog open={leaveConfirmOpen} onClose={() => setLeaveConfirmOpen(false)}>
                 <DialogTitle>Are You Sure You Want to Leave?</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to leave the lobby?
-                    </DialogContentText>
+                    <DialogContentText>Are you sure you want to leave the lobby?</DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setLeaveConfirmOpen(false)} color="primary">No</Button>
-                    <Button onClick={handleLeaveLobbyConfirm} color="secondary" variant="contained">Yes</Button>
+                    <Button onClick={() => leaveLobby(id, user.id, setIsJoined, setLobby, setSnackbar, localStorage.getItem("token"), setLeaveConfirmOpen)} color="secondary" variant="contained">
+                        Yes
+                    </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Delete Confirmation Dialog */}
             <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
                 <DialogTitle>Are You Sure You Want to Delete?</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete this lobby? This action cannot be undone.
-                    </DialogContentText>
+                    <DialogContentText>Are you sure you want to delete this lobby? This action cannot be undone.</DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDeleteConfirmOpen(false)} color="primary">No</Button>
-                    <Button onClick={handleDeleteLobbyConfirm} color="error" variant="contained">Yes</Button>
+                    <Button onClick={() => deleteLobby(id, setSnackbar, navigate, localStorage.getItem("token"))} color="error" variant="contained">
+                        Yes
+                    </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Snackbar for notifications */}
             <Snackbar
-                open={snackbarOpen}
+                open={snackbar.open}
                 autoHideDuration={3000}
-                onClose={handleSnackbarClose}
+                onClose={(e, reason) => reason !== "clickaway" && setSnackbar({ ...snackbar, open: false })}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             >
                 <Alert
-                    onClose={handleSnackbarClose}
-                    severity={snackbarSeverity}
-                    sx={{ width: "100%", bgcolor: snackbarSeverity === "success" ? "green" : snackbarSeverity === "error" ? "red" : "blue", color: "white" }}
+                    onClose={(e, reason) => {
+                        if (reason !== "clickaway") {
+                            setSnackbar({ ...snackbar, open: false });
+                        }
+                    }}
+                    severity={snackbar.severity}
+                    sx={{ width: "100%", bgcolor: snackbar.severity === "success" ? "green" : snackbar.severity === "error" ? "red" : "blue", color: "white" }}
                 >
-                    {snackbarMessage}
+                    {snackbar.message}
                 </Alert>
             </Snackbar>
         </Box>

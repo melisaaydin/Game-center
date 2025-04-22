@@ -4,7 +4,7 @@ const useLobbyUtils = (lobbies) => {
         const start = new Date(startTime);
         const timeDiff = start - now;
 
-        if (timeDiff <= 0) return "Etkinlik başladı";
+        if (timeDiff <= 0) return "Event start!";
         const hoursLeft = timeDiff / (1000 * 60 * 60);
         if (hoursLeft < 24) {
             const hours = Math.floor(timeDiff / (1000 * 60 * 60));

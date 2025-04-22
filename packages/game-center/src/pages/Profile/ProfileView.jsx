@@ -136,7 +136,7 @@ function ProfileView() {
                             />
                             <Box>
                                 <Typography className="profile-name">{profile.name}</Typography>
-                                <Typography className="profile-email">{profile.email}</Typography>
+
                             </Box>
                         </Box>
                         {user && user.id === profile.id ? (

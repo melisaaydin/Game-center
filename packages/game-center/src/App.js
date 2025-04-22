@@ -17,8 +17,8 @@ import Friends from './pages/Friends/Friends';
 import Sidebar from './components/SideBar/SideBar';
 
 function Layout() {
-  const location = useLocation(); // Get current route
-  const hideSidebar = location.pathname === '/profile/edit'; // Hide Sidebar on in profileSettings page.
+  const location = useLocation();
+  const hideSidebar = location.pathname === '/profile/edit' || location.pathname.startsWith('/lobbies/');
 
   return (
     <div className="layout-container">
