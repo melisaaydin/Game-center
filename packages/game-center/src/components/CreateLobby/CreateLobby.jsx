@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Box, TextField, Button, Typography, Switch, FormControlLabel, IconButton, Snackbar, Alert } from "@mui/material";
+import { Box, TextField, Button, Typography, Switch, FormControlLabel, Snackbar, Alert } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import axios from "axios";
 import { useUser } from "../../context/UserContext";
 
 function CreateLobby({ gameId, onLobbyCreated }) {
-    const { user } = useUser();
     const [loading, setLoading] = useState(false);
+    // State for managing form input data
     const [formData, setFormData] = useState({
         name: "",
         is_event: false,
@@ -20,7 +20,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-
+    // Handle changes in form inputs
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData({
@@ -28,7 +28,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
             [name]: type === "checkbox" ? checked : value,
         });
     };
-
+    // Handle form submission to create a new lobby
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -45,6 +45,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
 
         setLoading(true);
         try {
+            // Send a POST request to create the lobby
             const res = await axios.post(
                 "http://localhost:8081/lobbies",
                 {
@@ -58,6 +59,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                     },
                 }
             );
+            // Handle the response
             if (res.data.success) {
                 const lobbyId = res.data.lobby.id;
                 const link = `${window.location.origin}/lobbies/${lobbyId}`;

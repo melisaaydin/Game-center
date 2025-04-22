@@ -2,7 +2,7 @@ import axios from 'axios';
 export const API_URL = 'http://localhost:8081';
 
 const getToken = () => localStorage.getItem('token');
-
+// Search for games based on a query
 export const searchGames = async (query) => {
     try {
         const response = await fetch(`${API_URL}/games/search?q=${encodeURIComponent(query)}`);
@@ -12,11 +12,10 @@ export const searchGames = async (query) => {
         const data = await response.json();
         return Array.isArray(data.games) ? data.games : [];
     } catch (err) {
-        console.error('Search games error:', err.message);
         throw err;
     }
 };
-
+// Search for users based on a query
 export const searchUsers = async (query) => {
     try {
         const response = await fetch(`${API_URL}/users/search?q=${encodeURIComponent(query)}`);
@@ -26,11 +25,11 @@ export const searchUsers = async (query) => {
         const data = await response.json();
         return Array.isArray(data.users) ? data.users : [];
     } catch (err) {
-        console.error('Search users error:', err.message);
         throw err;
     }
 };
 
+// Send a friend request to another user
 export const sendFriendRequest = async (friendId) => {
     const token = getToken();
     if (!token) {
@@ -54,14 +53,14 @@ export const sendFriendRequest = async (friendId) => {
         throw err;
     }
 };
-
+// Fetch notifications for the authenticated user
 export const fetchNotifications = async () => {
     const token = getToken();
     if (!token) {
         return [];
     }
     try {
-        const response = await axios.get(`${API_URL}/users/notifications`, {
+        const response = await axios.get(`${API_URL}/notifications`, {
             headers: { Authorization: `Bearer ${token}` },
         });
         const notifications = response.data?.notifications || [];
@@ -70,7 +69,6 @@ export const fetchNotifications = async () => {
         }
         return notifications;
     } catch (err) {
-        console.error('Fetch notifications error:', err.response?.data || err.message);
         return [];
     }
 };
@@ -82,7 +80,7 @@ export const markNotificationAsRead = async (notificationId) => {
     }
     try {
         const response = await axios.post(
-            `${API_URL}/users/notifications/${notificationId}/read`,
+            `${API_URL}/notifications/${notificationId}/read`,
             {},
             { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -91,6 +89,7 @@ export const markNotificationAsRead = async (notificationId) => {
         throw err;
     }
 };
+
 export const deleteNotification = async (notificationId) => {
     const token = getToken();
     if (!token) {
@@ -98,9 +97,9 @@ export const deleteNotification = async (notificationId) => {
     }
     try {
         const response = await axios.delete(
-            `http://localhost:8081/users/notifications/${notificationId}`,
+            `${API_URL}/notifications/${notificationId}`,
             {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                headers: { Authorization: `Bearer ${token}` },
             }
         );
         return response.data;

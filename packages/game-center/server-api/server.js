@@ -15,8 +15,9 @@ app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// Log all incoming requests for debugging
+// Middleware to log all incoming requests and attach the Socket.IO instance to the request object
 app.use((req, res, next) => {
+    req.io = io;
     console.log(`Incoming request: ${req.method} ${req.url}`);
     next();
 });
@@ -24,21 +25,26 @@ app.use((req, res, next) => {
 // Mount routes
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/games", require("./routes/gameRoutes"));
-app.use("/users", require("./routes/userRoute"));
 app.use("/lobbies", require("./routes/lobbyRoutes"));
-app.use("/users", require("./routes/friendRoutes"))
+app.use("/users", require("./routes/userRoute"));
+// app.use("/users", require("./routes/friendRoutes"))
+app.use("/notifications", require("./routes/notificationRoutes"));
+
+
 app.get("/", (req, res) => {
     res.send("Game Lobby API is running!");
 });
 
-// Catch-all route for debugging 404s
+// Catch-all route to handle 404 errors for undefined endpoints
 app.use((req, res) => {
     console.log(`404 - Route not found: ${req.method} ${req.url}`);
     res.status(404).json({ message: "Endpoint not found" });
 });
 
+// Function to close expired lobbies (event-based and normal lobbies)
 const closeExpiredLobbies = async () => {
     try {
+        // Close event lobbies whose end time has passed
         const eventLobbiesResult = await db.query(
             `
       UPDATE lobbies 
@@ -48,6 +54,7 @@ const closeExpiredLobbies = async () => {
       `
         );
         console.log(`${eventLobbiesResult.rowCount} lobby closed.`);
+        // Notify clients in the affected lobbies about the event start
         if (eventLobbiesResult.rows.length > 0) {
             eventLobbiesResult.rows.forEach((lobby) => {
                 io.to(lobby.id).emit("event_started", { lobbyId: lobby.id });
@@ -68,16 +75,15 @@ const closeExpiredLobbies = async () => {
         console.error("Bug fix for closing expired lobbies: ", err);
     }
 };
+// Run the closeExpiredLobbies function every 10 minutes
 setInterval(closeExpiredLobbies, 10 * 60 * 1000);
 
 io.on("connection", (socket) => {
-    console.log("New connection:", socket.id);
-
+    // Set a username for the socket connection
     socket.on("set_username", (username) => {
         socket.username = username;
-        console.log(`Username set: ${username} for socket ${socket.id}`);
     });
-
+    // Handle sending a global message to all connected clients
     socket.on("sendMessage", (content) => {
         io.emit("newMessage", {
             username: socket.username || "Anonim",
@@ -85,14 +91,14 @@ io.on("connection", (socket) => {
             timestamp: new Date().toISOString(),
         });
     });
-
+    // Handle a user joining a lobby
     socket.on("join_lobby", async ({ lobbyId, userId, silent }) => {
         socket.join(lobbyId);
-        console.log(`${socket.username || userId} joined lobby ${lobbyId}`);
+        // Send a join message to the lobby unless silent mode is enabled
         if (!silent) {
             const joinMessage = {
                 user: "System",
-                content: `${socket.username || "Bir kullanıcı"} lobiye katıldı!`,
+                content: `${socket.username || "A user"} attended the lobby!`,
                 timestamp: new Date().toISOString(),
             };
             await db.query(
@@ -101,46 +107,87 @@ io.on("connection", (socket) => {
             );
             io.to(lobbyId).emit("receive_message", joinMessage);
             io.to(lobbyId).emit("lobby_joined", { userId });
+            // Create a notification for the user joining the lobby
             await db.query(
                 "INSERT INTO notifications (user_id, type, content) VALUES ($1, 'lobby_joined', $2)",
                 [userId, JSON.stringify({ lobbyId })]
             );
         }
     });
-
+    // Handle sending a message to a specific lobby
     socket.on("send_message", async ({ lobbyId, userId, content }) => {
         const message = {
-            user: socket.username || "Anonim",
+            user: socket.username || "Anonymous",
             content,
             timestamp: new Date().toISOString(),
         };
         try {
+            // Save the message to the database and broadcast it to the lobby
             await db.query(
                 "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
                 [lobbyId, userId, content]
             );
             io.to(lobbyId).emit("receive_message", message);
-            console.log(`Message sent to lobby ${lobbyId}: ${content}`);
         } catch (err) {
             console.error("Error saving message:", err);
         }
     });
-
+    // Handle a user leaving a lobby
     socket.on("leave_lobby", async ({ lobbyId, userId }) => {
         socket.leave(lobbyId);
-        console.log(`${socket.username || userId} left lobby ${lobbyId}`);
         const leaveMessage = {
             user: "System",
             content: `${socket.username || "A user"} left the lobby!`,
             timestamp: new Date().toISOString(),
         };
-        await db.query(
-            "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
-            [lobbyId, userId || null, leaveMessage.content]
-        );
-        io.to(lobbyId).emit("receive_message", leaveMessage);
+        try {
+            // Prevent duplicate leave messages within 5 seconds
+            const existingMessage = await db.query(
+                "SELECT * FROM lobby_messages WHERE lobby_id = $1 AND message = $2 AND created_at > NOW() - INTERVAL '5 seconds'",
+                [lobbyId, leaveMessage.content]
+            );
+            if (existingMessage.rows.length === 0) {
+                await db.query(
+                    "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
+                    [lobbyId, userId || null, leaveMessage.content]
+                );
+                io.to(lobbyId).emit("receive_message", leaveMessage);
+            }
+        } catch (err) {
+            console.error("Error handling leave_lobby:", err);
+        }
     });
-
+    // Handle sending a lobby invitation
+    socket.on("lobby_invite", async ({ lobbyId, userId, invitedUserId, lobbyName, invitationId }) => {
+        try {
+            socket.to(invitedUserId).emit("lobby_invite", {
+                lobbyId,
+                lobbyName,
+                senderId: userId,
+                senderName: socket.username || "Anonymous",
+                invitationId,
+            });
+        } catch (err) {
+            console.error("Error emitting lobby invite:", err);
+        }
+    });
+    // Handle a user accepting a lobby invitation
+    socket.on("lobby_invite_accepted", async ({ lobbyId, receiverId, lobbyName }) => {
+        try {
+            socket.to(lobbyId).emit("lobby_joined", { userId: receiverId });
+        } catch (err) {
+            console.error("Error emitting lobby invite accepted:", err);
+        }
+    });
+    // Handle a user rejecting a lobby invitation
+    socket.on("lobby_invite_rejected", async ({ lobbyId, receiverId, lobbyName, receiverName }) => {
+        try {
+            socket.to(lobbyId).emit("lobby_invite_rejected", { receiverId, receiverName, lobbyName });
+        } catch (err) {
+            console.error("Error emitting lobby invite rejected:", err);
+        }
+    });
+    // Handle sending a game invitation
     socket.on("game_invite", async ({ lobbyId, userId, invitedUserId }) => {
         try {
             await db.query(
@@ -152,25 +199,27 @@ io.on("connection", (socket) => {
             console.error("Error sending invite:", err);
         }
     });
-
+    // Handle sending a friend request
     socket.on("friend_request", async ({ senderId, receiverId }) => {
         socket.to(receiverId).emit("friend_request", { senderId });
     });
-
+    // Handle a friend request being accepted
     socket.on("friend_accepted", async ({ senderId, receiverId }) => {
         socket.to(senderId).emit("friend_accepted", { receiverId });
     });
-
+    // Handle turn-based game events
     socket.on("turn_based", async ({ gameId, userId }) => {
         socket.to(userId).emit("turn_based", { gameId });
     });
+    // Handle a friend being removed
     socket.on("friend_removed", async ({ userId, friendId }) => {
         socket.to(friendId).emit("friend_removed", { userId });
     });
+    // Handle an event starting in a lobby
     socket.on("event_started", async ({ lobbyId }) => {
         socket.to(lobbyId).emit("event_started", { lobbyId });
     });
-
+    // Handle client disconnection
     socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.username || socket.id}`);
     });

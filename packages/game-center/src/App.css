@@ -305,19 +305,26 @@ body {
   color: var(--button-hover-text) !important;
 }
 
+.chat-messages::-webkit-scrollbar {
+  width: 6px !important;
+}
 
 .chat-messages::-webkit-scrollbar-track {
   background: var(--background-color);
-  border-radius: 10px;
+  border-radius: 20px !important;
+  margin: 5px 0;
+
 }
+
 
 .chat-messages::-webkit-scrollbar-thumb {
   background: var(--primary-color);
-  border-radius: 8px;
+  border-radius: 20px !important;
+
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
+  background: var(--primary-color);
 }
 
 .chat-messages {

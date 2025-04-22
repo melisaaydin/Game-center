@@ -83,34 +83,6 @@ function LobbyList({
                     <Typography>No active lobbies yet.</Typography>
                 )}
             </List>
-
-            {pastLobbies.length > 0 && (
-                <>
-                    <Typography variant="h6" className="section-title" sx={{ mt: 2 }}>
-                        Past Event Lobbies
-                    </Typography>
-                    <List>
-                        {pastLobbies.map((lobby) => (
-                            <ListItem key={lobby.id}>
-                                <ListItemText
-                                    primary={lobby.name}
-                                    secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
-                                />
-                                {lobby.password && <Lock fontSize="small" />}
-                                <Event fontSize="small" />
-                                <IconButton onClick={() => onCopyLink(lobby.id)}>
-                                    <ContentCopy fontSize="small" />
-                                </IconButton>
-                                {parseInt(lobby.created_by) === parseInt(userId) && (
-                                    <IconButton onClick={() => onDeleteClick(lobby.id)} color="error">
-                                        <Delete fontSize="small" />
-                                    </IconButton>
-                                )}
-                            </ListItem>
-                        ))}
-                    </List>
-                </>
-            )}
         </Box>
     );
 }

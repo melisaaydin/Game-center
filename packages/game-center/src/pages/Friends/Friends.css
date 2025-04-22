@@ -6,10 +6,8 @@
     min-height: 500px;
     border-radius: 10px;
     padding: 20px;
-
     box-sizing: border-box;
 }
-
 
 .friends-section {
     background-color: var(--background-secondary);
@@ -35,8 +33,6 @@
     color: var(--text-color);
     margin-bottom: 24px;
     position: relative;
-
-
     padding-bottom: 10px;
     padding-left: 12px;
 }
@@ -155,6 +151,11 @@
     font-style: italic;
 }
 
+.avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
 .avatar {
     width: 60px;
     height: 60px;
@@ -166,12 +167,21 @@
     transform: scale(1.15);
 }
 
+.online-indicator {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 14px;
+    height: 14px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    border: 2px solid var(--background-secondary);
+}
+
 .activity-status {
     font-size: 14px;
     color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: block;
 }
 
 .animated-dialog .MuiDialog-paper {
@@ -180,7 +190,7 @@
 }
 
 @media (max-width: 1200px) {
-    .main-content {
+    .main-content-friends {
         max-width: 100%;
         padding: 20px;
     }
@@ -195,7 +205,7 @@
 }
 
 @media (max-width: 900px) {
-    .main-content {
+    .main-content-friends {
         padding: 16px;
     }
 
@@ -221,10 +231,17 @@
         width: 48px;
         height: 48px;
     }
+
+    .online-indicator {
+        width: 12px;
+        height: 12px;
+        bottom: -3px;
+        right: -3px;
+    }
 }
 
 @media (max-width: 600px) {
-    .main-content {
+    .main-content-friends {
         padding: 12px;
     }
 
@@ -243,6 +260,13 @@
     .avatar {
         width: 40px;
         height: 40px;
+    }
+
+    .online-indicator {
+        width: 10px;
+        height: 10px;
+        bottom: -2px;
+        right: -2px;
     }
 
     .action-button {

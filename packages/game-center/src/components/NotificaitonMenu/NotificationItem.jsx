@@ -1,21 +1,45 @@
 import React from 'react';
-import { MenuItem, Typography, Box, Avatar, Button } from '@mui/material';
+import { MenuItem, Typography, Box, Avatar, Button, IconButton } from '@mui/material';
 import { IoPersonAdd, IoNotifications } from 'react-icons/io5';
-import { MdCheck, MdClose, MdDelete } from 'react-icons/md';
+import { MdCheck, MdClose, MdGroup } from 'react-icons/md';
+import { Close } from '@mui/icons-material';
 import moment from 'moment';
 
-function NotificationItem({ notification, index, markAsRead, acceptRequest, rejectRequest, deleteNotification, navigate }) {
+// Component to render a single notification item in the notification menu
+function NotificationItem({
+    notification,
+    index,
+    markAsRead,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    acceptLobbyInvite,
+    rejectLobbyInvite,
+    deleteNotification,
+    navigate,
+    processingInvites,
+    processingFriendRequests
+}) {
+    // Validate the notification object to ensure it has an ID
     if (!notification || !notification.id) {
-        console.warn('Invalid notification:', notification);
         return null;
     }
 
+    // Navigate to the user's profile when their avatar or name is clicked
     const handleProfileClick = (userId) => {
         if (!userId) {
-            console.warn('Profil için userId eksik');
             return;
         }
         navigate(`/users/user/${userId}`);
+    };
+
+    // Handle accepting a lobby invitation
+    const handleAcceptLobbyInvite = async (notificationId, invitationId) => {
+        await acceptLobbyInvite(notificationId, invitationId);
+    };
+
+    // Handle rejecting a lobby invitation
+    const handleRejectLobbyInvite = async (notificationId, invitationId) => {
+        await rejectLobbyInvite(notificationId, invitationId);
     };
 
     return (
@@ -24,7 +48,21 @@ function NotificationItem({ notification, index, markAsRead, acceptRequest, reje
             style={{ animationDelay: `${index * 0.1}s` }}
             onClick={() => !notification.is_read && markAsRead(notification.id)}
         >
-            <Box className="notification-content">
+            <Box className="notification-content" sx={{ position: 'relative' }}>
+                {/* Delete button for the notification */}
+                <IconButton
+                    className="delete-icon"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notification.id);
+                    }}
+                    aria-label="Delete notification"
+                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                >
+                    <Close />
+                </IconButton>
+
+                {/* Avatar of the sender or system */}
                 <Avatar
                     src={
                         notification.sender_avatar_url
@@ -40,6 +78,8 @@ function NotificationItem({ notification, index, markAsRead, acceptRequest, reje
                     }}
                     alt={notification.sender_name || 'Notification'}
                 />
+
+                {/* Notification content */}
                 <Box className="notification-text">
                     {notification.type === 'friend_request' ? (
                         <>
@@ -57,55 +97,51 @@ function NotificationItem({ notification, index, markAsRead, acceptRequest, reje
                             <Typography variant="caption" className="notification-timestamp">
                                 {moment(notification.created_at).fromNow()}
                             </Typography>
-                            {notification.request_id ? (
+                            {notification.request_id && (!notification.content?.status || notification.content?.status === 'pending') ? (
                                 <Box className="notification-actions">
                                     <Button
                                         className="action-button accept"
+                                        variant="contained"
+                                        color="success"
+                                        size="small"
+                                        disabled={processingFriendRequests?.has(notification.request_id)}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            acceptRequest(notification.id, notification.request_id);
+                                            acceptFriendRequest(notification.id, notification.request_id);
                                         }}
                                         aria-label="Accept friend request"
-                                        sx={{ '&:hover': { transform: 'none', boxShadow: 'none' } }}
+                                        sx={{ mr: 1 }}
                                     >
                                         <MdCheck style={{ marginRight: 4 }} /> Accept
                                     </Button>
                                     <Button
                                         className="action-button reject"
+                                        variant="outlined"
+                                        color="error"
+                                        size="small"
+                                        disabled={processingFriendRequests?.has(notification.request_id)}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            rejectRequest(notification.id, notification.request_id);
+                                            rejectFriendRequest(notification.id, notification.request_id);
                                         }}
                                         aria-label="Reject friend request"
-                                        sx={{ '&:hover': { transform: 'none', boxShadow: 'none' } }}
+                                        sx={{ mr: 1 }}
                                     >
                                         <MdClose style={{ marginRight: 4 }} /> Reject
-                                    </Button>
-                                    <Button
-                                        className="action-button delete"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteNotification(notification.id);
-                                        }}
-                                        aria-label="Delete notification"
-                                        sx={{ '&:hover': { transform: 'none', boxShadow: 'none' } }}
-                                    >
-                                        <MdDelete style={{ marginRight: 4 }} /> Delete
                                     </Button>
                                 </Box>
                             ) : (
                                 <Box className="notification-actions">
-                                    <Button
-                                        className="action-button delete"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteNotification(notification.id);
-                                        }}
-                                        aria-label="Delete notification"
-                                        sx={{ '&:hover': { transform: 'none', boxShadow: 'none' } }}
-                                    >
-                                        <MdDelete style={{ marginRight: 4 }} /> Delete
-                                    </Button>
+                                    {notification.content?.status === 'accepted' && (
+                                        <Typography variant="caption" color="success.main">
+                                            Friend request accepted
+                                        </Typography>
+                                    )}
+                                    {notification.content?.status === 'rejected' && (
+                                        <Typography variant="caption" color="error">
+                                            Friend request rejected
+                                        </Typography>
+                                    )}
                                 </Box>
                             )}
                         </>
@@ -125,17 +161,121 @@ function NotificationItem({ notification, index, markAsRead, acceptRequest, reje
                             <Typography variant="caption" className="notification-timestamp">
                                 {moment(notification.created_at).fromNow()}
                             </Typography>
+                        </>
+                    ) : notification.type === 'lobby_invite' ? (
+                        <>
+                            <Box className="notification-header">
+                                <MdGroup className="notification-icon" />
+                                <Typography
+                                    variant="body2"
+                                    className="notification-message"
+                                    onClick={() => notification.content?.id && navigate(`/lobbies/${notification.content.id}`)}
+                                    sx={{ cursor: 'pointer' }}
+                                >
+                                    <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
+                                    {notification.content?.message || 'invited you to a lobby'}
+                                </Typography>
+                            </Box>
+                            <Typography variant="caption" className="notification-timestamp">
+                                {moment(notification.created_at).fromNow()}
+                            </Typography>
+                            {(notification.content?.invitationId) && notification.content?.status === 'pending' ? (
+                                <Box className="notification-actions">
+                                    <Button
+                                        className="action-button join-lobby"
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        disabled={processingInvites?.has(notification.content.invitationId)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            console.log('Accepting lobby invite with invitationId:', notification.content.invitationId);
+                                            handleAcceptLobbyInvite(notification.id, notification.content.invitationId);
+                                        }}
+                                        aria-label="Join lobby"
+                                        sx={{ mr: 1, bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
+                                    >
+                                        <MdCheck style={{ marginRight: 4 }} /> Join Lobby
+                                    </Button>
+                                    <Button
+                                        className="action-button decline-lobby"
+                                        variant="outlined"
+                                        color="warning"
+                                        size="small"
+                                        disabled={processingInvites?.has(notification.content.invitationId)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            console.log('Rejecting lobby invite with invitationId:', notification.content.invitationId);
+                                            handleRejectLobbyInvite(notification.id, notification.content.invitationId);
+                                        }}
+                                        aria-label="Decline lobby invite"
+                                        sx={{ mr: 1 }}
+                                    >
+                                        <MdClose style={{ marginRight: 4 }} /> Decline
+                                    </Button>
+                                </Box>
+                            ) : (
+                                <Box className="notification-actions">
+                                    {notification.content?.status === 'accepted' && notification.content?.id && (
+                                        <Button
+                                            className="action-button view-lobby"
+                                            variant="contained"
+                                            color="primary"
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/lobbies/${notification.content.id}`);
+                                            }}
+                                            aria-label="View lobby"
+                                            sx={{ mr: 1 }}
+                                        >
+                                            View Lobby
+                                        </Button>
+                                    )}
+                                    {notification.content?.status === 'rejected' && (
+                                        <Typography variant="caption" color="error">
+                                            Lobby invitation rejected
+                                        </Typography>
+                                    )}
+                                    {(!notification.content?.status || notification.content?.status === 'pending') && (
+                                        <Typography variant="caption" color="error">
+                                            Invitation status unknown or expired
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                        </>
+                    ) : notification.type === 'lobby_invite_accepted' ? (
+                        <>
+                            <Box className="notification-header">
+                                <MdGroup className="notification-icon" />
+                                <Typography
+                                    variant="body2"
+                                    className="notification-message"
+                                    onClick={() => notification.content?.lobbyId && navigate(`/lobbies/${notification.content.lobbyId}`)}
+                                    sx={{ cursor: 'pointer' }}
+                                >
+                                    <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
+                                    {notification.content?.message || 'accepted your lobby invite'}
+                                </Typography>
+                            </Box>
+                            <Typography variant="caption" className="notification-timestamp">
+                                {moment(notification.created_at).fromNow()}
+                            </Typography>
                             <Box className="notification-actions">
                                 <Button
-                                    className="action-button delete"
+                                    className="action-button view-lobby"
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        deleteNotification(notification.id);
+                                        navigate(`/lobbies/${notification.content.lobbyId}`);
                                     }}
-                                    aria-label="Delete notification"
-                                    sx={{ '&:hover': { transform: 'none', boxShadow: 'none' } }}
+                                    aria-label="View lobby"
+                                    sx={{ mr: 1 }}
                                 >
-                                    <MdDelete style={{ marginRight: 4 }} /> Delete
+                                    View Lobby
                                 </Button>
                             </Box>
                         </>
@@ -150,19 +290,6 @@ function NotificationItem({ notification, index, markAsRead, acceptRequest, reje
                             <Typography variant="caption" className="notification-timestamp">
                                 {moment(notification.created_at).fromNow()}
                             </Typography>
-                            <Box className="notification-actions">
-                                <Button
-                                    className="action-button delete"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteNotification(notification.id);
-                                    }}
-                                    aria-label="Delete notification"
-                                    sx={{ '&:hover': { transform: 'none', boxShadow: 'none' } }}
-                                >
-                                    <MdDelete style={{ marginRight: 4 }} /> Delete
-                                </Button>
-                            </Box>
                         </>
                     )}
                 </Box>
