@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Box, TextField, Button, Typography, Switch, FormControlLabel, Snackbar, Alert } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import axios from "axios";
-import { useUser } from "../../context/UserContext";
 
 function CreateLobby({ gameId, onLobbyCreated }) {
     const [loading, setLoading] = useState(false);
