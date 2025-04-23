@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { Box, CssBaseline, IconButton, useTheme, Button } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
 import Logo from '../../assets/mlslogoo.png';
 import { Link } from 'react-router-dom';
 import NavLinks from './NavLinks';
@@ -54,7 +53,7 @@ function SideBar() {
                         </Link>
                         <SearchBar searchRef={searchRef} />
                     </Box>
-                    <Box className="nav-center">
+                    <Box className="nav-center" sx={{ display: 'flex', alignItems: 'center', flexGrow: 18 }}>
                         <Box className="nav-tab-wrapper">
                             <span className={`tab-indicator ${activeTab}`} />
                             {TABS.map((tab) => (
