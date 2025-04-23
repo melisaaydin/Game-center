@@ -179,7 +179,7 @@ function NotificationItem({
                             <Typography variant="caption" className="notification-timestamp">
                                 {moment(notification.created_at).fromNow()}
                             </Typography>
-                            {(notification.content?.invitationId) && notification.content?.status === 'pending' ? (
+                            {notification.content?.invitationId && notification.content?.status === 'pending' ? (
                                 <Box className="notification-actions">
                                     <Button
                                         className="action-button join-lobby"
@@ -216,7 +216,7 @@ function NotificationItem({
                                 </Box>
                             ) : (
                                 <Box className="notification-actions">
-                                    {notification.content?.status === 'accepted' && notification.content?.id && (
+                                    {notification.content?.status === 'accepted' && notification.content?.id ? (
                                         <Button
                                             className="action-button view-lobby"
                                             variant="contained"
@@ -231,13 +231,11 @@ function NotificationItem({
                                         >
                                             View Lobby
                                         </Button>
-                                    )}
-                                    {notification.content?.status === 'rejected' && (
+                                    ) : notification.content?.status === 'rejected' ? (
                                         <Typography variant="caption" color="error">
                                             Lobby invitation rejected
                                         </Typography>
-                                    )}
-                                    {(!notification.content?.status || notification.content?.status === 'pending') && (
+                                    ) : (
                                         <Typography variant="caption" color="error">
                                             Invitation status unknown or expired
                                         </Typography>

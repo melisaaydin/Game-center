@@ -3,7 +3,7 @@ const { handleError, handleUnauthorized, handleNotFound, handleBadRequest } = re
 
 // Helper function to format a notification for the response
 const formatNotification = (n) => {
-    let content = n.content || {};
+    let content = typeof n.content === 'string' ? JSON.parse(n.content) : n.content || {};
 
     // Set the status based on the notification type
     content.status = n.type === 'friend_request' ? n.friend_request_status || 'pending' :
@@ -33,11 +33,16 @@ const getNotifications = async (req, res) => {
     try {
         // Fetch notifications with sender details and related statuses
         const result = await db.query(
-            `SELECT n.*, u.name AS sender_name, u.avatar_url AS sender_avatar_url, fr.status AS friend_request_status, i.status AS invitation_status
+            `SELECT n.*, 
+                    u.name AS sender_name, 
+                    u.avatar_url AS sender_avatar_url, 
+                    fr.status AS friend_request_status, 
+                    i.status AS invitation_status,
+                    i.id AS invitation_id
              FROM notifications n
              LEFT JOIN users u ON n.sender_id = u.id
              LEFT JOIN friend_requests fr ON n.request_id = fr.id AND n.type = 'friend_request'
-             LEFT JOIN invitations i ON n.request_id = i.id AND n.type = 'lobby_invite'
+             LEFT JOIN invitations i ON n.invitation_id = i.id AND n.type = 'lobby_invite'
              WHERE n.user_id = $1
              ORDER BY n.created_at DESC`,
             [userId]

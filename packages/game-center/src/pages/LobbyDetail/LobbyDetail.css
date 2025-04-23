@@ -4,6 +4,8 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
+    padding-left: 30px !important;
+
 }
 
 .lobby-header {
@@ -11,6 +13,7 @@
     padding: 10px;
     text-align: left;
     margin-bottom: 20px;
+    color: var(--text-color);
 }
 
 .lobby-left-section {
@@ -45,11 +48,14 @@
 }
 
 .chat-card {
+    max-width: 990px;
     display: flex;
     flex-direction: column;
     background: var(--background-color) !important;
     border-radius: 16px;
     padding: 16px;
+    margin-top: 100px;
+    max-height: calc(100vh - 195px);
 }
 
 .chat-messages {
@@ -146,6 +152,12 @@
     font-style: italic;
 }
 
+@media(max-width:1200px) {
+    .chat-card {
+        margin-top: 0;
+    }
+
+}
 
 @media (min-width: 900px) {
     .lobby-content {
@@ -164,6 +176,7 @@
 
     .chat-card {
         width: 60%;
+
     }
 
     .chat-messages {

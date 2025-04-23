@@ -66,11 +66,16 @@ const closeExpiredLobbies = async () => {
       SET lobby_status = 'closed' 
       WHERE is_event = false 
       AND lobby_status = 'active' 
-      AND last_active < NOW() - INTERVAL '8 hours' 
+      AND updated_at < NOW() - INTERVAL '8 hours' 
       RETURNING id;
       `
         );
         console.log(`${normalLobbiesResult.rowCount} normal lobi kapatıldı.`);
+        if (normalLobbiesResult.rows.length > 0) {
+            for (const lobby of normalLobbiesResult.rows) {
+                await db.query("DELETE FROM lobby_players WHERE lobby_id = $1", [lobby.id]);
+            }
+        }
     } catch (err) {
         console.error("Bug fix for closing expired lobbies: ", err);
     }
@@ -96,10 +101,13 @@ io.on("connection", (socket) => {
         socket.join(lobbyId);
         // Send a join message to the lobby unless silent mode is enabled
         if (!silent) {
+            const userResult = await db.query("SELECT name FROM users WHERE id = $1", [userId]);
+            const username = userResult.rows[0]?.name || socket.username || "A user";
             const joinMessage = {
                 user: "System",
-                content: `${socket.username || "A user"} attended the lobby!`,
+                content: `${username} joined the lobby!`,
                 timestamp: new Date().toISOString(),
+                isSystem: true
             };
             await db.query(
                 "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",

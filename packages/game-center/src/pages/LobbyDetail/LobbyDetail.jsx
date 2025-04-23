@@ -16,6 +16,8 @@ const LobbyDetails = () => {
     const navigate = useNavigate();
     const { user } = useUser();
     const { mode } = useContext(ColorModeContext);
+
+    // State for managing lobby data, loading status, and UI interactions
     const [lobby, setLobby] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,6 +38,7 @@ const LobbyDetails = () => {
     const chatRef = useRef(null);
     const lastMessageRef = useRef(null);
 
+    // Effect to load lobby details and messages on component mount or when user changes
     useEffect(() => {
         const loadLobby = async () => {
             setLoading(true);
@@ -45,17 +48,17 @@ const LobbyDetails = () => {
         };
         loadLobby();
     }, [id, user, navigate]);
-
+    // Effect to handle socket connections and events
     useEffect(() => {
         if (!user) return;
-
+        // Function to handle socket connection and join lobby
         const handleSocketConnect = () => {
             socket.emit("set_username", user.name);
             if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
         };
-
+        // Register socket event listeners
         socket.on("connect", handleSocketConnect);
         socket.on("receive_message", (message) => {
             const lastMessage = lastMessageRef.current;
@@ -76,6 +79,8 @@ const LobbyDetails = () => {
             setSnackbar({ open: true, message: `${receiverName} rejected the invitation to ${lobbyName}.`, severity: "info" });
         });
         socket.on("disconnect", () => setSnackbar({ open: true, message: "Connection lost, reconnecting...", severity: "warning" }));
+
+
         socket.on("reconnect", () => {
             setSnackbar({ open: true, message: "Reconnected successfully!", severity: "success" });
             if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
@@ -85,8 +90,9 @@ const LobbyDetails = () => {
         socket.on("typing", ({ userName }) => setTypingUser(userName));
         socket.on("stop_typing", () => setTypingUser(null));
 
+        // Trigger connection handler if socket is already connected
         if (socket.connected) handleSocketConnect();
-
+        // Cleanup socket event listeners on component unmount
         return () => {
             socket.off("connect", handleSocketConnect);
             socket.off("receive_message");
@@ -99,7 +105,7 @@ const LobbyDetails = () => {
             socket.off("stop_typing");
         };
     }, [id, user, isJoined]);
-
+    // Cleanup socket event listeners on component unmount
     const handleJoinLobby = async () => {
         if (!user) {
             setSnackbar({ open: true, message: "Please log in!", severity: "error" });
@@ -127,7 +133,7 @@ const LobbyDetails = () => {
             setSnackbar({ open: true, message: "Could not join the lobby: " + res.message, severity: "error" });
         }
     };
-
+    // Function to handle password submission for protected lobbies
     const handlePasswordSubmit = async () => {
         const token = localStorage.getItem("token");
         const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id, password }, token);
@@ -148,7 +154,7 @@ const LobbyDetails = () => {
             setSnackbar({ open: true, message: res.message || "Incorrect password or an error occurred!", severity: "error" });
         }
     };
-
+    // Function to handle launching the game
     const handlePlayGame = () => {
         if (lobby.game_id === "tombala") {
             const gameUrl = `${window.location.origin}/packages/${lobby.game_id}`;
@@ -158,7 +164,7 @@ const LobbyDetails = () => {
             setSnackbar({ open: true, message: "Game not available yet!", severity: "warning" });
         }
     };
-
+    // Function to copy the lobby link to clipboard
     const handleCopyLink = () => {
         const link = `${window.location.origin}/lobbies/${id}`;
         navigator.clipboard.writeText(link);
@@ -206,12 +212,14 @@ const LobbyDetails = () => {
             <Box className="lobby-content">
                 <Box className="lobby-left-section">
                     <Box className="lobby-header">
+                        {/* Display lobby name, game, player count, and creator */}
                         <Typography variant="h4" sx={{ fontWeight: "bold" }}>{lobby.name}</Typography>
                         <Typography variant="subtitle1" color="text.secondary">Game: {lobby.game_id}</Typography>
                         <Typography variant="subtitle2" color="text.secondary">Players: {lobby.current_players}/{lobby.max_players}</Typography>
                         <Typography variant="subtitle2" color="text.secondary">Created by: {creatorName}</Typography>
                         {lobby.password && <Lock fontSize="small" sx={{ verticalAlign: "middle", ml: 1 }} />}
                         <Box className="lobby-actions">
+                            {/* Display lobby name, game, player count, and creator */}
                             {!isJoined ? (
                                 <Button
                                     variant="contained"
@@ -245,6 +253,7 @@ const LobbyDetails = () => {
                     </Box>
                     <PlayersSection lobby={lobby} />
                 </Box>
+                {/* Render the chat section */}
                 <ChatSection
                     chatMessages={chatMessages}
                     newMessage={newMessage}
