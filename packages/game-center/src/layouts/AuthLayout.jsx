@@ -1,7 +1,6 @@
 import characterImage from '../assets/nobackground.png';
 import './AuthLayout.css'
 import React from 'react'
-import { motion } from 'framer-motion';
 
 function AuthLayout() {
     return (

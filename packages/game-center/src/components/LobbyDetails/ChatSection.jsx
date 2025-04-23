@@ -2,14 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Box, Typography, TextField, Button, Avatar, Paper } from "@mui/material";
 
 const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJoined, handleSendMessage, handleTyping, mode, chatRef, userName }) => {
-    const preferredLanguage = "en";
 
-    const translateMessage = (content) => {
-        if (preferredLanguage !== "tr") return content;
-        if (content.includes("left the lobby")) return content.replace("left the lobby", "lobiden ayrıldı");
-        if (content.includes("joined the lobby")) return content.replace("joined the lobby", "lobiye katıldı");
-        return content;
-    };
 
     useEffect(() => {
         if (chatRef.current) {
@@ -18,17 +11,15 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
     }, [chatMessages, chatRef]);
 
     return (
-        <Paper elevation={2} className="lobby-card chat-card">
+        <Paper className="lobby-card chat-card">
             <Box sx={{ p: 2 }}>
                 <Typography variant="h6" className="section-title">Chat</Typography>
                 <Box ref={chatRef} className="chat-messages">
                     {chatMessages.map((msg, index) => {
                         const isSystemMessage =
-                            msg.content.includes("lobiden ayrıldı") ||
                             msg.content.includes("left the lobby") ||
-                            msg.content.includes("lobiye katıldı") ||
-                            msg.content.includes("joined the lobby");
-                        const translatedContent = translateMessage(msg.content);
+                            msg.content.includes("joined the lobby") || msg.is_system;
+
                         const isSent = !isSystemMessage && msg.user === userName;
                         const avatarSrc = msg.avatar_url ? `http://localhost:8081/uploads/${msg.avatar_url}` : null;
                         const initial = msg.user ? msg.user.charAt(0).toUpperCase() : "?";
@@ -37,7 +28,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
                             return (
                                 <Box key={index} className="system-message">
                                     <Typography className="message-content" variant="body2">
-                                        {translatedContent}
+                                        {msg.content}
                                     </Typography>
                                 </Box>
                             );
@@ -51,7 +42,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
                                     </Avatar>
                                 )}
                                 <Box className="message-content">
-                                    <Typography variant="body2">{translatedContent}</Typography>
+                                    <Typography variant="body2">{msg.content}</Typography>
                                 </Box>
                             </Box>
                         );

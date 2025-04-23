@@ -22,6 +22,7 @@ import moment from "moment";
 import "moment/locale/en-gb";
 import "./Friends.css";
 
+// Component for managing friends and friend requests
 function Friends() {
     const { user } = useUser();
     const [friendRequests, setFriendRequests] = useState([]);
@@ -36,6 +37,7 @@ function Friends() {
     // Set moment to use English for date formatting
     moment.locale("en-gb");
 
+    // Fetch friend requests and friends list on component mount
     useEffect(() => {
         const fetchFriendData = async () => {
             const token = localStorage.getItem("token");
@@ -128,21 +130,24 @@ function Friends() {
         }
     };
 
+    // Open dialog to confirm friend deletion
     const handleOpenDeleteDialog = (friend) => {
         setFriendToDelete(friend);
         setDeleteDialogOpen(true);
     };
 
-
+    // Close the delete friend dialog
     const handleCloseDeleteDialog = () => {
         setDeleteDialogOpen(false);
         setFriendToDelete(null);
     };
 
+    // Navigate to user profile on click
     const handleProfileClick = (userId) => {
         navigate(`/users/user/${userId}`);
     };
 
+    // Close snackbar notification
     const handleSnackbarClose = (event, reason) => {
         if (reason === "clickaway") return;
         setSnackbarOpen(false);
@@ -166,126 +171,136 @@ function Friends() {
     return (
         <div className="main-content-friends">
             <Box className="friends-section">
-                <Typography variant="h5" className="section-title">
-                    Friends
-                </Typography>
-                <Box className="requests-section">
-                    <Typography variant="h6" className="subsection-title">
-                        Friend Requests
+                {/* Friends title with animated emoji */}
+                <Box className="section-title-container">
+                    <Typography variant="h5" className="section-title">
+                        Friends
+                        <span className="animated-emoji">🎀</span>
                     </Typography>
-                    {friendRequests.length > 0 ? (
-                        friendRequests.map((request) => (
-                            <Card
-                                key={request?.id || Math.random()}
-                                className="friend-card"
-                                onClick={() => request?.sender_id && handleProfileClick(request.sender_id)}
-                                sx={{ borderRadius: "14px" }}
-                            >
-                                <CardContent className="friend-card-content">
-                                    <Box className="friend-info">
-                                        <Box className="avatar-container">
-                                            <Avatar
-                                                src={
-                                                    request?.avatar_url
-                                                        ? `http://localhost:8081/uploads/${request.avatar_url}`
-                                                        : "/default-avatar.png"
-                                                }
-                                                className="avatar"
-                                                sx={{ width: 56, height: 56 }}
-                                            />
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="subtitle1" className="friend-name">
-                                                {request?.name || "Unknown User"}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                    <Box className="friend-actions">
-                                        <IconButton
-                                            className="action-button accept"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                request?.id && handleAcceptRequest(request.id);
-                                            }}
-                                            disabled={!request?.id}
-                                        >
-                                            <Check />
-                                        </IconButton>
-                                        <IconButton
-                                            className="action-button reject"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                request?.id && handleRejectRequest(request.id);
-                                            }}
-                                            disabled={!request?.id}
-                                        >
-                                            <Close />
-                                        </IconButton>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        ))
-                    ) : (
-                        <Typography className="no-data">No friend requests.</Typography>
-                    )}
                 </Box>
-                <Box className="friends-section">
-                    <Typography variant="h6" className="subsection-title">
-                        My Friends
-                    </Typography>
-                    {friends.length > 0 ? (
-                        friends.map((friend) => (
-                            <Card
-                                key={friend?.id || Math.random()}
-                                className="friend-card"
-                                onClick={() => friend?.id && handleProfileClick(friend.id)}
-                                sx={{ borderRadius: "14px" }}
-                            >
-                                <CardContent className="friend-card-content">
-                                    <Box className="friend-info">
-                                        <Box className="avatar-container">
-                                            <Avatar
-                                                src={
-                                                    friend?.avatar_url
-                                                        ? `http://localhost:8081/uploads/${friend.avatar_url}`
-                                                        : "/default-avatar.png"
-                                                }
-                                                className="avatar"
-                                                sx={{ width: 56, height: 56 }}
-                                            />
-                                            {getActivityStatus(friend?.last_active) === true && (
-                                                <span className="online-indicator" />
-                                            )}
+                {/* Container for side-by-side friend requests and friends list */}
+                <Box className="friends-content-container">
+                    {/* Friend Requests Section */}
+                    <Box className="requests-section">
+                        <Typography variant="h6" className="subsection-title">
+                            Friend Requests
+                        </Typography>
+                        {friendRequests.length > 0 ? (
+                            friendRequests.map((request) => (
+                                <Card
+                                    key={request?.id || Math.random()}
+                                    className="friend-card"
+                                    onClick={() => request?.sender_id && handleProfileClick(request.sender_id)}
+                                    sx={{ borderRadius: "14px" }}
+                                >
+                                    <CardContent className="friend-card-content">
+                                        <Box className="friend-info">
+                                            <Box className="avatar-container">
+                                                <Avatar
+                                                    src={
+                                                        request?.avatar_url
+                                                            ? `http://localhost:8081/uploads/${request.avatar_url}`
+                                                            : "/default-avatar.png"
+                                                    }
+                                                    className="avatar"
+                                                    sx={{ width: 56, height: 56 }}
+                                                />
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="subtitle1" className="friend-name">
+                                                    {request?.name || "Unknown User"}
+                                                </Typography>
+                                            </Box>
                                         </Box>
-                                        <Box>
-                                            <Typography variant="subtitle1" className="friend-name">
-                                                {friend?.name || "Unknown User"}
-                                            </Typography>
-                                            <Typography variant="caption" className="activity-status">
-                                                {typeof getActivityStatus(friend?.last_active) === "string" &&
-                                                    getActivityStatus(friend?.last_active)}
-                                            </Typography>
+                                        <Box className="friend-actions">
+                                            <IconButton
+                                                className="action-button accept"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    request?.id && handleAcceptRequest(request.id);
+                                                }}
+                                                disabled={!request?.id}
+                                            >
+                                                <Check />
+                                            </IconButton>
+                                            <IconButton
+                                                className="action-button reject"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    request?.id && handleRejectRequest(request.id);
+                                                }}
+                                                disabled={!request?.id}
+                                            >
+                                                <Close />
+                                            </IconButton>
                                         </Box>
-                                    </Box>
-                                    <Box className="friend-actions">
-                                        <IconButton
-                                            className="action-button delete"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                friend && handleOpenDeleteDialog(friend);
-                                            }}
-                                            disabled={!friend?.id}
-                                        >
-                                            <Delete />
-                                        </IconButton>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        ))
-                    ) : (
-                        <Typography className="no-data">You don't have any friends yet.</Typography>
-                    )}
+                                    </CardContent>
+                                </Card>
+                            ))
+                        ) : (
+                            <Typography className="no-data">No friend requests.</Typography>
+                        )}
+                    </Box>
+                    {/* Friends List Section */}
+                    <Box className="friends-list-section">
+                        <Typography variant="h6" className="subsection-title">
+                            My Friends
+                        </Typography>
+                        {friends.length > 0 ? (
+                            friends.map((friend) => (
+                                <Card
+                                    key={friend?.id || Math.random()}
+                                    className="friend-card"
+                                    onClick={() => friend?.id && handleProfileClick(friend.id)}
+                                    sx={{ borderRadius: "14px" }}
+                                >
+                                    <CardContent className="friend-card-content">
+                                        <Box className="friend-info">
+                                            <Box className="avatar-container">
+                                                <Avatar
+                                                    src={
+                                                        friend?.avatar_url
+                                                            ? `http://localhost:8081/uploads/${friend.avatar_url}`
+                                                            : "/default-avatar.png"
+                                                    }
+                                                    className="avatar"
+                                                    sx={{ width: 56, height: 56 }}
+                                                />
+                                                {getActivityStatus(friend?.last_active) === true && (
+                                                    <span className="online-indicator" />
+                                                )}
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="subtitle1" className="friend-name">
+                                                    {friend?.name || "Unknown User"}
+                                                </Typography>
+                                                <Typography variant="caption" className="activity-status">
+                                                    {typeof getActivityStatus(friend?.last_active) === "string" &&
+                                                        getActivityStatus(friend?.last_active)}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                        <Box className="friend-actions">
+                                            <IconButton
+                                                className="action-button delete"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    friend && handleOpenDeleteDialog(friend);
+                                                }}
+                                                disabled={!friend?.id}
+                                            >
+                                                <Delete />
+                                            </IconButton>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        ) : (
+                            <Typography className="no-data">You don't have any friends yet.</Typography>
+                        )}
+                    </Box>
                 </Box>
+                {/* Snackbar for notifications */}
                 <Snackbar
                     open={snackbarOpen}
                     autoHideDuration={3000}
@@ -301,6 +316,7 @@ function Friends() {
                         {snackbarMessage}
                     </Alert>
                 </Snackbar>
+                {/* Dialog for confirming friend deletion */}
                 <Dialog
                     open={deleteDialogOpen}
                     onClose={handleCloseDeleteDialog}

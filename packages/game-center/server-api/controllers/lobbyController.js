@@ -224,7 +224,6 @@ const joinLobby = async (req, res) => {
         return handleBadRequest(res, "A valid user ID is required!");
     }
 
-
     try {
         // Check if user is already in another active lobby
         const userLobbyCheck = await db.query(
@@ -315,15 +314,24 @@ const leaveLobby = async (req, res) => {
         const userResult = await db.query("SELECT name FROM users WHERE id = $1", [userId]);
         if (userResult.rows.length === 0) {
             await db.query("ROLLBACK");
-            return handleNotFound(res, "Lobby not found.");
+            return handleNotFound(res, "User not found.");
         }
         const userName = userResult.rows[0].name;
 
-        // Add a message to the lobby chat indicating the user has left
+        // Add a system message to the lobby chat indicating the user has left
+        const leaveMessage = {
+            user: "System",
+            content: `${userName} left the lobby!`,
+            timestamp: new Date().toISOString(),
+            isSystem: true
+        };
         await db.query(
             "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
-            [id, userId, `${userName} left the lobby!`]
+            [id, null, leaveMessage.content]
         );
+
+        // Emit the system message to the lobby
+        req.io.to(id).emit("receive_message", leaveMessage);
 
         // Check if there are no players left in the lobby
         if (newPlayerCount <= 0) {

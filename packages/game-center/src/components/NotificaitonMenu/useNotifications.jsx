@@ -22,7 +22,7 @@ function useNotifications() {
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [processingInvites, setProcessingInvites] = useState(new Set());
     const [processingFriendRequests, setProcessingFriendRequests] = useState(new Set());
-
+    // Handle errors and display appropriate snackbar messages
     const handleError = (err, defaultMessage, isAuthError) => {
         let message;
         if (err.response?.status === 401) {
@@ -43,7 +43,7 @@ function useNotifications() {
         }
         return message;
     };
-
+    // Fetch and process notifications from the server
     const fetchNotificationsHandler = async (isInitialFetch = false) => {
         if (!user) return;
         if (isInitialFetch) setLoading(true);
@@ -54,9 +54,9 @@ function useNotifications() {
                 setUnreadCount(0);
                 return;
             }
-
+            // Enrich notifications with additional data and formatting
             const enrichedNotifications = data.map((notification) => {
-                const content = notification.content || {};
+                const content = typeof notification.content === 'string' ? JSON.parse(notification.content) : notification.content || {};
                 console.log(
                     `Notification ID: ${notification.id}, invitation_id: ${notification.invitation_id}, content.invitationId: ${content.invitationId}`
                 );
@@ -69,18 +69,19 @@ function useNotifications() {
                     invitation_id:
                         notification.type === 'lobby_invite'
                             ? notification.invitation_id || content.invitationId || null
-                            : null, // Only set for lobby_invite
+                            : null,
                     request_id: notification.type === 'friend_request' ? notification.request_id || content.requestId : null,
                     isNew: !notifications.some((n) => n.id === notification.id),
                     timeAgo: moment(notification.created_at).fromNow(),
                     content: {
                         ...content,
-                        id: content.id || content.lobbyId || null, // Ensure lobbyId is set
+                        id: content.id || content.lobbyId || null,
+                        invitationId: notification.type === 'lobby_invite' ? notification.invitation_id || content.invitationId || null : null,
                         status: content.status || (notification.type === 'lobby_invite' || notification.type === 'friend_request' ? 'pending' : null),
                     },
                 };
             });
-
+            // Update notifications state, preserving existing notifications where applicable
             setNotifications((prev) => {
                 const updatedNotifications = enrichedNotifications.map((newNotif) => {
                     const existing = prev.find((n) => n.id === newNotif.id);
@@ -99,7 +100,7 @@ function useNotifications() {
             if (isInitialFetch) setLoading(false);
         }
     };
-
+    // Mark a notification as read
     const markAsRead = async (notificationId) => {
         try {
             await markNotificationAsRead(notificationId);
@@ -109,7 +110,7 @@ function useNotifications() {
             handleError(err, 'Failed to mark notification as read.', true);
         }
     };
-
+    // Accept a friend request
     const acceptFriendRequest = async (notificationId, requestId) => {
         if (!requestId) {
             setSnackbarMessage('Failed to process friend request: Invalid request ID.');
@@ -148,7 +149,7 @@ function useNotifications() {
             });
         }
     };
-
+    // Reject a friend request
     const rejectFriendRequest = async (notificationId, requestId) => {
         if (!requestId) {
             setSnackbarMessage('Failed to process friend request: Invalid request ID.');
@@ -187,7 +188,7 @@ function useNotifications() {
             });
         }
     };
-
+    // Accept a lobby invitation
     const acceptLobbyInvite = async (notificationId, invitationId) => {
         if (!invitationId) {
             setSnackbarMessage('Failed to process lobby invite: Invalid invite ID.');
@@ -205,7 +206,7 @@ function useNotifications() {
                 {},
                 { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
-            const lobbyId = response.data.lobbyId; // Ensure backend sends lobbyId
+            const lobbyId = response.data.lobbyId;
             if (!lobbyId) {
                 console.warn('No lobbyId returned in acceptLobbyInvite response');
             }
@@ -214,10 +215,12 @@ function useNotifications() {
                     n.id === notificationId
                         ? {
                             ...n,
+                            invitation_id: invitationId,
                             content: {
                                 ...n.content,
                                 status: 'accepted',
-                                id: lobbyId || n.content.id || n.content.lobbyId, // Fallback to existing id
+                                id: lobbyId || n.content.id || n.content.lobbyId,
+                                invitationId: invitationId,
                             },
                             is_read: true,
                         }
@@ -231,7 +234,6 @@ function useNotifications() {
             setSnackbarOpen(true);
             await fetchNotificationsHandler(false);
         } catch (err) {
-            console.error('Accept lobby invite error:', err.response?.data || err.message);
             handleError(err, 'Failed to accept lobby invitation.', true);
         } finally {
             setProcessingInvites((prev) => {
@@ -241,7 +243,7 @@ function useNotifications() {
             });
         }
     };
-
+    // Reject a lobby invitation
     const rejectLobbyInvite = async (notificationId, invitationId) => {
         if (!invitationId) {
             setSnackbarMessage('Failed to process lobby invite: Invalid invite ID.');
@@ -262,7 +264,16 @@ function useNotifications() {
             setNotifications((prev) =>
                 prev.map((n) =>
                     n.id === notificationId
-                        ? { ...n, content: { ...n.content, status: 'rejected' }, is_read: true }
+                        ? {
+                            ...n,
+                            invitation_id: invitationId,
+                            content: {
+                                ...n.content,
+                                status: 'rejected',
+                                invitationId: invitationId,
+                            },
+                            is_read: true,
+                        }
                         : n
                 )
             );
@@ -309,7 +320,7 @@ function useNotifications() {
         if (reason === 'clickaway') return;
         setSnackbarOpen(false);
     };
-
+    // Fetch notifications on mount and periodically
     useEffect(() => {
         if (!user) {
             setNotifications([]);
@@ -320,7 +331,7 @@ function useNotifications() {
         const interval = setInterval(() => fetchNotificationsHandler(false), 60000);
         return () => clearInterval(interval);
     }, [user, navigate]);
-
+    // Set up socket listeners for real-time notifications
     useEffect(() => {
         if (!user) return;
 
@@ -358,7 +369,7 @@ function useNotifications() {
             setSnackbarOpen(true);
             fetchNotificationsHandler(false);
         });
-
+        // Clean up socket listeners on unmount
         return () => {
             socket.off('lobby_invite');
             socket.off('lobby_invite_accepted');
@@ -367,7 +378,7 @@ function useNotifications() {
             socket.off('friend_accepted');
         };
     }, [user, fetchNotificationsHandler]);
-
+    // Return hook values and functions
     return {
         notifications,
         unreadCount,
