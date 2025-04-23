@@ -236,7 +236,7 @@
 
 .sideBar .icon {
     font-size: 30px;
-    color: var(--secondary-color);
+    color: var(--accent-color);
 }
 
 .sideBar .link {
