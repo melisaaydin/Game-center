@@ -9,6 +9,27 @@ End User → Frontend → Backend → Database
 Bu yapı sayesinde kodların yönetimi, hata ayıklama ve geliştirme süreçleri çok daha kolay hale geldi.
 
 ---
+## 🧰 Kullanılan Teknolojiler
+
+Bu projede hem frontend hem de backend tarafında modern teknolojiler kullandım:
+
+### 🖥️ Frontend:
+- React
+- JavaScript (ES6+)
+- Lerna (çoklu paket yapısı)
+- React Router
+
+### 🗄️ Backend:
+- Node.js
+- Express.js
+- PostgreSQL
+
+### ⚙️ Diğer:
+- Middleware yapıları
+- Git & GitHub (versiyon kontrol)
+- dotenv (çevresel değişken yönetimi)
+
+---
 
 ## 🎨 Uygulama Özellikleri
 
