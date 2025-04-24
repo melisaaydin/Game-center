@@ -68,7 +68,7 @@ Bu sayede backend tarafında kod okunabilirliği ve yönetimi çok daha verimli 
 
 ## 📚 Git ve Sürüm Kontrolü
 
-Tüm proje sürecinde Git ile sürüm kontrolünü sağladım. Her yeni özellik ya da düzenleme için anlamlı commit mesajları kullanarak süreci dokümante ettim. Geriye dönük takip ve kod yönetimi açısından bu oldukça faydalı oldu.
+Proje sürecinde Git ile sürüm kontrolünü sağladım. Her yeni özellik ya da düzenleme için anlamlı commit mesajları kullanarak süreci dokümante ettim. Geriye dönük takip ve kod yönetimi açısından bu oldukça faydalı oldu.
 
 ---
 
