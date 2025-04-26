@@ -112,13 +112,14 @@
     background-color: #1565c0 !important;
 }
 
-.delete-icon .Mui {
+/* .delete-icon .MuiRoot {
     color: var(--text-secondary);
     font-size: 12px !important;
     position: absolute;
-    top: 5px;
+    top: 5px !important;
     right: 5px;
-}
+    padding: 0;
+} */
 
 .delete-icon:hover {
     color: #d32f2f;
