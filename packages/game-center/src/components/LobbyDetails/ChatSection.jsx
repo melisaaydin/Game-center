@@ -12,7 +12,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
 
     return (
         <Paper className="lobby-card chat-card">
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Typography variant="h6" className="section-title">Chat</Typography>
                 <Box ref={chatRef} className="chat-messages">
                     {chatMessages.map((msg, index) => {

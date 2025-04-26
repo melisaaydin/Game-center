@@ -50,16 +50,23 @@ function NotificationItem({
         >
             <Box className="notification-content" sx={{ position: 'relative' }}>
                 {/* Delete button for the notification */}
-                <IconButton
+                <IconButton disableRipple
                     className="delete-icon"
                     onClick={(e) => {
                         e.stopPropagation();
                         deleteNotification(notification.id);
                     }}
                     aria-label="Delete notification"
-                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                    sx={{
+                        position: 'absolute',
+                        top: 1,
+                        right: 1,
+                        paddingTop: '3px',
+                        paddingRight: '2px',
+
+                    }}
                 >
-                    <Close />
+                    <Close sx={{ fontSize: '14px' }} />
                 </IconButton>
 
                 {/* Avatar of the sender or system */}
