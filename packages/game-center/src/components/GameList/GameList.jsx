@@ -15,7 +15,7 @@ const GameList = () => {
                 setGames(res.data);
             })
             .catch((err) => {
-                console.error("Oyunları çekerken hata oluştu:", err);
+                console.error("Error occured while fetching games:", err);
             });
     }, []);
 

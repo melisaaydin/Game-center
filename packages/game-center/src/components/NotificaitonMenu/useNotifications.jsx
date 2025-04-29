@@ -57,9 +57,7 @@ function useNotifications() {
             // Enrich notifications with additional data and formatting
             const enrichedNotifications = data.map((notification) => {
                 const content = typeof notification.content === 'string' ? JSON.parse(notification.content) : notification.content || {};
-                console.log(
-                    `Notification ID: ${notification.id}, invitation_id: ${notification.invitation_id}, content.invitationId: ${content.invitationId}`
-                );
+
                 return {
                     ...notification,
                     sender_id: notification.sender_id || content.senderId || null,

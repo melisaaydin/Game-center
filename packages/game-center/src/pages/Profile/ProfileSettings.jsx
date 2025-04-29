@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import "./ProfileSetting.css";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";

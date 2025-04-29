@@ -1,37 +1,29 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Box, Typography, List, ListItem, ListItemText, IconButton } from "@mui/material";
-import { Lock, Event, ContentCopy, Delete } from "@mui/icons-material";
-import { useUser } from "../context/UserContext";
+import { Lock, Event, ContentCopy, Delete, Edit } from "@mui/icons-material";
 
+// LobbyList component displays a list of lobbies categorized as event or active lobbies
 function LobbyList({
-    lobbies,
     eventLobbies,
     activeLobbies,
-    pastLobbies,
     getTimeDisplay,
     onCopyLink,
-    fetchLobbies,
     userId,
     onDeleteClick,
+    onEditClick,
 }) {
-    const { user } = useUser();
 
-    useEffect(() => {
-        const interval = setInterval(() => { }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    console.log("Current User ID:", user?.id);
-    console.log("Lobbies:", lobbies);
-
+    // Render the lobby list with event and active sections
     return (
         <Box>
+            {/* Display event lobbies if there are any */}
             {eventLobbies.length > 0 && (
                 <>
-                    <Typography variant="h6" className="section-title">Event Lobbies</Typography>
+                    <Typography variant="h6" className="section-title">Event lobbies</Typography>
                     <List>
+                        {/* Iterate over event lobbies and render each one */}
                         {eventLobbies.map((lobby) => (
-                            <ListItem key={lobby.id}>
+                            <ListItem key={lobby.id} sx={{ display: "flex", alignItems: "center" }}>
                                 <ListItemText
                                     primary={lobby.name}
                                     secondary={
@@ -43,13 +35,20 @@ function LobbyList({
                                 />
                                 {lobby.password && <Lock fontSize="small" />}
                                 <Event fontSize="small" />
-                                <IconButton onClick={() => onCopyLink(lobby.id)}>
+                                <IconButton onClick={() => onCopyLink(lobby.id)} title="Coppy link">
                                     <ContentCopy fontSize="small" />
                                 </IconButton>
                                 {parseInt(lobby.created_by) === parseInt(userId) && (
-                                    <IconButton onClick={() => onDeleteClick(lobby.id)} color="error">
-                                        <Delete fontSize="small" />
-                                    </IconButton>
+                                    <>
+                                        {/* Button to open the edit dialog for the lobby */}
+                                        <IconButton onClick={() => onEditClick(lobby)} title="Edit lobby">
+                                            <Edit fontSize="small" />
+                                        </IconButton>
+                                        {/* Button to trigger the delete confirmation dialog */}
+                                        <IconButton onClick={() => onDeleteClick(lobby.id)} title="Delete lobby" color="error">
+                                            <Delete fontSize="small" />
+                                        </IconButton>
+                                    </>
                                 )}
                             </ListItem>
                         ))}
@@ -58,24 +57,34 @@ function LobbyList({
             )}
 
             <Typography variant="h6" className="section-title" sx={{ mt: eventLobbies.length > 0 ? 2 : 0 }}>
-                Active Lobbies
+                Active lobbies
             </Typography>
             <List>
+                {/* Display active lobbies or a message if there are none */}
                 {activeLobbies.length > 0 ? (
                     activeLobbies.map((lobby) => (
-                        <ListItem key={lobby.id}>
+                        <ListItem key={lobby.id} sx={{ display: "flex", alignItems: "center" }}>
                             <ListItemText
                                 primary={lobby.name}
                                 secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
                             />
+                            {/* Show a lock icon if the lobby has a password */}
                             {lobby.password && <Lock fontSize="small" />}
-                            <IconButton onClick={() => onCopyLink(lobby.id)}>
+                            <IconButton onClick={() => onCopyLink(lobby.id)} title="Coppy link">
                                 <ContentCopy fontSize="small" />
                             </IconButton>
+                            {/* Show edit and delete buttons only if the user is the lobby creator */}
                             {parseInt(lobby.created_by) === parseInt(userId) && (
-                                <IconButton onClick={() => onDeleteClick(lobby.id)} color="--text-color">
-                                    <Delete fontSize="small" />
-                                </IconButton>
+                                <>
+                                    {/* Button to open the edit dialog for the lobby */}
+                                    <IconButton onClick={() => onEditClick(lobby)} title="Edit lobby">
+                                        <Edit fontSize="small" />
+                                    </IconButton>
+                                    {/* Button to trigger the delete confirmation dialog */}
+                                    <IconButton onClick={() => onDeleteClick(lobby.id)} title="Delete lobby" color="error">
+                                        <Delete fontSize="small" />
+                                    </IconButton>
+                                </>
                             )}
                         </ListItem>
                     ))
