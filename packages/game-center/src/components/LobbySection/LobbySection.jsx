@@ -18,13 +18,11 @@ import {
 } from "@mui/material";
 import { Lock, Event, ContentCopy } from "@mui/icons-material";
 import axios from "axios";
-import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../CreateLobby/CreateLobby";
 import "./LobbySection.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
 function LobbySection() {
-    const { user } = useUser();
     const { mode } = useContext(ColorModeContext);
     const [lobbies, setLobbies] = useState([]);
     const [games, setGames] = useState([]);
@@ -35,8 +33,8 @@ function LobbySection() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("");
-    const { getTimeDisplay, eventLobbies, activeLobbies, pastLobbies } = useLobbyUtils(lobbies);
-
+    const { getTimeDisplay, eventLobbies, activeLobbies } = useLobbyUtils(lobbies);
+    // Fetch lobbies and games on initial load
     useEffect(() => {
         const fetchLobbies = async () => {
             try {
@@ -45,7 +43,7 @@ function LobbySection() {
                     setLobbies(res.data.lobbies || []);
                 }
             } catch (err) {
-                console.error("Lobiler alınamadı:", err);
+                console.error("Lobbies could not be received:", err);
             }
         };
 
@@ -60,8 +58,8 @@ function LobbySection() {
                 }
                 setLoadingGames(false);
             } catch (err) {
-                console.error("Oyunlar alınamadı:", err);
-                setErrorGames("Oyunlar yüklenirken bir hata oluştu.");
+                console.error("Games could not be received:", err);
+                setErrorGames("Error occured while games loading.");
                 setLoadingGames(false);
             }
         };
@@ -84,14 +82,15 @@ function LobbySection() {
     const handleGameSelect = (event) => {
         setSelectedGameId(event.target.value);
     };
-
+    // After a lobby is created, close dialog and fetch lobbies again
     const handleLobbyCreated = () => {
         setOpenDialog(false);
         setSelectedGameId("");
+        //Get the lobby list from the server and pass it to the lobbies variable to display it on the page.
         axios.get("http://localhost:8081/lobbies").then((res) => {
             if (res.data.success) setLobbies(res.data.lobbies || []);
         });
-        setSnackbarMessage("Lobi başarıyla oluşturuldu!");
+        setSnackbarMessage("Lobbby created successfully!");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
     };
@@ -99,7 +98,7 @@ function LobbySection() {
     const handleCopyLink = (lobbyId) => {
         const link = `${window.location.origin}/lobbies/${lobbyId}`;
         navigator.clipboard.writeText(link);
-        setSnackbarMessage("Lobi bağlantısı panoya kopyalandı!");
+        setSnackbarMessage("Lobby link copied to clipboard!");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
     };
@@ -112,6 +111,7 @@ function LobbySection() {
 
     return (
         <Box className="lobby-section">
+            {/* Event Lobbies */}
             {eventLobbies.length > 0 && (
                 <>
                     <Typography variant="h6" className="lobby-section-title">
@@ -141,9 +141,11 @@ function LobbySection() {
                     </List>
                 </>
             )}
+            {/* Active Lobbies */}
             <Typography variant="h6" className="lobby-section-title" sx={{ mt: eventLobbies.length > 0 ? 3 : 0 }}>
                 Active Lobbies
             </Typography>
+            {/* Button to open create lobby dialog */}
             <Button
                 variant="contained"
                 className="create-lobby-button"
@@ -172,31 +174,7 @@ function LobbySection() {
                     <Typography className="no-lobbies">No active lobbies yet.</Typography>
                 )}
             </List>
-            {pastLobbies.length > 0 && (
-                <>
-                    <Typography variant="h6" className="lobby-section-title" sx={{ mt: 3 }}>
-                        Past Event Lobbies
-                    </Typography>
-                    <List className="lobby-list">
-                        {pastLobbies.map((lobby) => (
-                            <ListItem key={lobby.id} className="lobby-item">
-                                <ListItemText
-                                    primary={lobby.name}
-                                    secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
-                                    primaryTypographyProps={{ className: "lobby-name" }}
-                                    secondaryTypographyProps={{ className: "lobby-info" }}
-                                />
-                                {lobby.password && <Lock fontSize="small" className="lobby-icon" />}
-                                <Event fontSize="small" className="lobby-icon" />
-                                <IconButton onClick={() => handleCopyLink(lobby.id)}>
-                                    <ContentCopy fontSize="small" />
-                                </IconButton>
-                            </ListItem>
-                        ))}
-                    </List>
-                </>
-            )}
-
+            {/* Placeholder sections */}
             <Box className="dummy-section" sx={{ mt: 3 }}>
                 <Typography variant="h6" className="dummy-title">
                     Chat
@@ -214,11 +192,11 @@ function LobbySection() {
                 <DialogTitle>Create a New Lobby</DialogTitle>
                 <DialogContent>
                     {loadingGames ? (
-                        <Typography>Yükleniyor...</Typography>
+                        <Typography>Loading...</Typography>
                     ) : errorGames ? (
                         <Typography color="error">{errorGames}</Typography>
                     ) : games.length === 0 ? (
-                        <Typography>Hiç oyun bulunamadı.</Typography>
+                        <Typography>No games found.</Typography>
                     ) : (
                         <>
                             <Select
