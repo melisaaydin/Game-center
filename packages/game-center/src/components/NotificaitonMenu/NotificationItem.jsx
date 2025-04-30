@@ -17,7 +17,7 @@ function NotificationItem({
     deleteNotification,
     navigate,
     processingInvites,
-    processingFriendRequests
+    processingFriendRequests,
 }) {
     // Validate the notification object to ensure it has an ID
     if (!notification || !notification.id) {
@@ -50,7 +50,8 @@ function NotificationItem({
         >
             <Box className="notification-content" sx={{ position: 'relative' }}>
                 {/* Delete button for the notification */}
-                <IconButton disableRipple
+                <IconButton
+                    disableRipple
                     className="delete-icon"
                     onClick={(e) => {
                         e.stopPropagation();
@@ -63,7 +64,6 @@ function NotificationItem({
                         right: 1,
                         paddingTop: '3px',
                         paddingRight: '2px',
-
                     }}
                 >
                     <Close sx={{ fontSize: '14px' }} />
@@ -250,7 +250,7 @@ function NotificationItem({
                                 </Box>
                             )}
                         </>
-                    ) : notification.type === 'lobby_invite_accepted' ? (
+                    ) : notification.type === 'lobby_invite_accepted' || notification.type === 'lobby_joined' ? (
                         <>
                             <Box className="notification-header">
                                 <MdGroup className="notification-icon" />
@@ -261,7 +261,7 @@ function NotificationItem({
                                     sx={{ cursor: 'pointer' }}
                                 >
                                     <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
-                                    {notification.content?.message || 'accepted your lobby invite'}
+                                    {notification.content?.message || 'joined the lobby'}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">

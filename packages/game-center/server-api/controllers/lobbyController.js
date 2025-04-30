@@ -297,6 +297,48 @@ const joinLobby = async (req, res) => {
             [id]
         );
 
+        // Fetch user and lobby details for notification
+        const userResult = await db.query("SELECT name FROM users WHERE id = $1", [userId]);
+        const lobbyName = lobby.name || "Unnamed Lobby";
+        const userName = userResult.rows[0]?.name || "Unknown User";
+
+        // Fetch lobby players to notify them
+        const playersResult = await db.query(
+            "SELECT user_id FROM lobby_players WHERE lobby_id = $1 AND user_id != $2",
+            [id, userId]
+        );
+        const players = playersResult.rows;
+
+        // Create notifications for all other players in the lobby
+        for (const player of players) {
+            await db.query(
+                "INSERT INTO notifications (user_id, type, content, sender_id, created_at) VALUES ($1, $2, $3, $4, NOW())",
+                [
+                    player.user_id,
+                    "lobby_joined",
+                    JSON.stringify({
+                        lobbyId: id,
+                        lobbyName,
+                        userId,
+                        userName,
+                        message: `joined ${lobbyName}!`,
+                    }),
+                    userId,
+                ]
+            );
+
+            // Emit real-time notification to each player
+            req.io.to(player.user_id).emit("lobby_joined", {
+                lobbyId: id,
+                lobbyName,
+                userId,
+                userName,
+            });
+        }
+
+        // Emit lobby_joined event to the lobby room
+        req.io.to(id).emit("lobby_joined", { userId, userName });
+
         res.status(200).json({ success: true, message: "You have joined the lobby." });
     } catch (err) {
         handleError(res, err, "Failed to join the lobby");

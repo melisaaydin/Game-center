@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import io from 'socket.io-client';
-
+import { handleNotification } from '../../utils/notificationSound';
 const socket = io('http://localhost:8081', {
     reconnection: true,
     reconnectionAttempts: 5,
@@ -334,38 +334,57 @@ function useNotifications() {
         if (!user) return;
 
         socket.on('lobby_invite', ({ lobbyId, lobbyName, senderId, senderName, invitationId }) => {
-            setSnackbarMessage(`${senderName} invited you to ${lobbyName}!`);
+            const message = `${senderName} invited you to ${lobbyName}!`;
+            setSnackbarMessage(message);
             setSnackbarSeverity('info');
             setSnackbarOpen(true);
             fetchNotificationsHandler(false);
+            handleNotification(message);
         });
 
         socket.on('lobby_invite_accepted', ({ lobbyId, lobbyName, receiverId, receiverName }) => {
-            setSnackbarMessage(`${receiverName} joined ${lobbyName}!`);
+            const message = `${receiverName} joined ${lobbyName}!`;
+            setSnackbarMessage(message);
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
             fetchNotificationsHandler(false);
+            handleNotification(message);
         });
 
         socket.on('lobby_invite_rejected', ({ lobbyId, lobbyName, receiverId, receiverName }) => {
+            const message = `${receiverName} declined the invitation to ${lobbyName}.`;
             setSnackbarMessage(`${receiverName} declined the invitation to ${lobbyName}.`);
             setSnackbarSeverity('info');
             setSnackbarOpen(true);
             fetchNotificationsHandler(false);
+            handleNotification(message);
         });
 
         socket.on('friend_request', ({ senderId, senderName, requestId }) => {
-            setSnackbarMessage(`${senderName} sent you a friend request!`);
+            const message = `${senderName} sent you a friend request!`;
+            setSnackbarMessage(message);
             setSnackbarSeverity('info');
             setSnackbarOpen(true);
             fetchNotificationsHandler(false);
+            handleNotification(message);
+
         });
 
         socket.on('friend_accepted', ({ senderId, senderName }) => {
-            setSnackbarMessage(`${senderName} accepted your friend request!`);
+            const message = `${senderName} accepted your friend request!`;
+            setSnackbarMessage(message);
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
             fetchNotificationsHandler(false);
+            handleNotification(message);
+        });
+        socket.on('lobby_joined', ({ lobbyId, lobbyName, userId, userName }) => {
+            const message = `${userName} joined ${lobbyName}!`;
+            setSnackbarMessage(message);
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            fetchNotificationsHandler(false);
+            handleNotification(message);
         });
         // Clean up socket listeners on unmount
         return () => {
@@ -374,6 +393,7 @@ function useNotifications() {
             socket.off('lobby_invite_rejected');
             socket.off('friend_request');
             socket.off('friend_accepted');
+            socket.off('lobby_joined');
         };
     }, [user, fetchNotificationsHandler]);
     // Return hook values and functions

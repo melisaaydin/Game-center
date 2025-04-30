@@ -118,15 +118,11 @@ io.on("connection", (socket) => {
             };
             await db.query(
                 "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
-                [lobbyId, userId || null, joinMessage.content]
+                [lobbyId, null, joinMessage.content]
             );
             io.to(lobbyId).emit("receive_message", joinMessage);
             io.to(lobbyId).emit("lobby_joined", { userId });
-            // Create a notification for the user joining the lobby
-            await db.query(
-                "INSERT INTO notifications (user_id, type, content) VALUES ($1, 'lobby_joined', $2)",
-                [userId, JSON.stringify({ lobbyId })]
-            );
+
         }
     });
     // Handle sending a message to a specific lobby
