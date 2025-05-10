@@ -1,3 +1,5 @@
+import { apiRequest } from "../utils/lobbyUtils";
+
 // Custom hook to provide utility functions and filtered lobby lists
 const useLobbyUtils = (lobbies) => {
     // Format the start time of a lobby for display
@@ -16,12 +18,15 @@ const useLobbyUtils = (lobbies) => {
             const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
             return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
         } else {
-          // Show the full date if the event is more than 24 hours away
             return `Start: ${start.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
         }
     };
 
-    // Get the current time for filtering
+    // Update a lobby by sending a PUT request to the backend
+    const updateLobby = async (lobbyId, updatedData, token) => {
+        return await apiRequest("put", `http://localhost:8081/lobbies/${lobbyId}`, updatedData, token);
+    };
+
     const now = new Date();
 
     // Filter lobbies that are events and haven't ended yet
@@ -33,11 +38,9 @@ const useLobbyUtils = (lobbies) => {
         )
         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-    // Filter lobbies that are not events
     const activeLobbies = lobbies.filter((lobby) => !lobby.is_event);
 
-
-    return { getTimeDisplay, eventLobbies, activeLobbies };
+    return { getTimeDisplay, updateLobby, eventLobbies, activeLobbies };
 };
 
 export default useLobbyUtils;

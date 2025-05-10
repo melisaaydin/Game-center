@@ -37,13 +37,10 @@ const LobbyDetails = () => {
     const [invitedUsers, setInvitedUsers] = useState(new Set());
     const [typingUser, setTypingUser] = useState(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
-    // Initialize editForm as null, will be set when opening edit dialog
-    const [editForm, setEditForm] = useState(null);
+    const [editForm, setEditForm] = useState({});
     const chatRef = useRef(null);
     const lastMessageRef = useRef(null);
-    const [anchorEl, setAnchorEl] = useState(null); // Menü için anchor
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [editForm, setEditForm] = useState({});
+    const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
         const loadLobby = async () => {
@@ -55,7 +52,6 @@ const LobbyDetails = () => {
         };
         loadLobby();
     }, [id, user, navigate]);
-
 
     // Set up socket connections and handle real-time events
     useEffect(() => {
@@ -174,7 +170,6 @@ const LobbyDetails = () => {
         }
     };
 
-
     // Copy the lobby link to the clipboard
     const handleCopyLink = () => {
         const link = `${window.location.origin}/lobbies/${id}`;
@@ -218,9 +213,9 @@ const LobbyDetails = () => {
         inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token);
     };
 
-  // Show the full date if the event is more than 24 hours away
+    // Show the full date if the event is more than 24 hours away
     const handleEditClick = () => {
-      // Initialize editForm with current lobby data
+        // Initialize editForm with current lobby data
         setEditForm({
             name: lobby.name,
             max_players: lobby.max_players,
@@ -230,7 +225,7 @@ const LobbyDetails = () => {
             is_event: lobby.is_event,
         });
         setEditDialogOpen(true);
-        setAnchorEl(null); // Menüyü kapat
+        setAnchorEl(null);
     };
 
     const handleEditLobby = async () => {
@@ -242,14 +237,13 @@ const LobbyDetails = () => {
             password: editForm.password || null,
             start_time: editForm.start_time || null,
             end_time: editForm.end_time || null,
-            gameId: lobby.game_id, // gameId'ı ekledik
+            gameId: lobby.game_id,
         };
         const res = await apiRequest("put", `http://localhost:8081/lobbies/${id}`, updatedData, token);
         if (res.success) {
             fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
             setSnackbar({ open: true, message: "Lobby updated successfully!", severity: "success" });
             setEditDialogOpen(false);
-
         } else {
             setSnackbar({ open: true, message: "Failed to update lobby: " + res.message, severity: "error" });
         }
