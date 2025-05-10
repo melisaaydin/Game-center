@@ -87,15 +87,17 @@ function UserMenu() {
                         </MenuItem>
                     )}
                 </Menu>
-                <div onChange={toggleColorMode} checked={mode === 'dark'} className='dark_mode'>
+                <div onChange={toggleColorMode} className='dark_mode'>
                     <input
                         className='dark_mode_input'
                         type='checkbox'
                         id='darkmode-toggle'
+                        checked={mode === 'dark'}
                     />
                     <label className='dark_mode_label' for='darkmode-toggle'>
-                        <Moon />
                         <Sun />
+                        <Moon />
+
                     </label>
                 </div>
             </Box>

@@ -10,6 +10,7 @@ function SearchBar({ searchRef }) {
     const [searchResults, setSearchResults] = useState({ games: [], users: [] });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isExpanded, setIsExpanded] = useState(false);
     const inputRef = useRef(null);
 
     const handleSearch = async () => {
@@ -17,19 +18,23 @@ function SearchBar({ searchRef }) {
             setSearchResults({ games: [], users: [] });
             setLoading(false);
             setError(null);
+            console.log('Search query empty, resetting results');
             return;
         }
 
         setLoading(true);
         setError(null);
+        console.log('Initiating search for query:', searchQuery);
         try {
             const [games, users] = await Promise.all([
-                searchGames(searchQuery),
-                searchUsers(searchQuery),
+                searchGames(searchQuery) || [],
+                searchUsers(searchQuery) || [],
             ]);
+            console.log('Search results:', { games, users });
             setSearchResults({ games, users });
         } catch (err) {
-            setError(err.message);
+            console.error('Search error:', err);
+            setError(err.message || 'An error occurred while searching');
             setSearchResults({ games: [], users: [] });
         } finally {
             setLoading(false);
@@ -39,21 +44,61 @@ function SearchBar({ searchRef }) {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             handleSearch();
+            console.log('Enter pressed, triggering search');
         }
     };
+
     const handleResultClick = () => {
         setSearchQuery('');
         setSearchResults({ games: [], users: [] });
+        setIsExpanded(false);
+        setError(null);
         if (inputRef.current) {
             inputRef.current.focus();
         }
+        console.log('Result clicked, resetting search');
     };
+
+    const handleClear = () => {
+        setSearchQuery('');
+        setSearchResults({ games: [], users: [] });
+        setIsExpanded(false);
+        setError(null);
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+        console.log('Clear button clicked');
+    };
+
+    const toggleSearch = () => {
+        if (window.innerWidth <= 1200) {
+            setIsExpanded(!isExpanded);
+            if (!isExpanded && inputRef.current) {
+                setTimeout(() => {
+                    inputRef.current.focus();
+                    console.log('Search bar expanded, focusing input');
+                }, 300);
+            } else {
+                console.log('Search bar collapsed');
+            }
+        }
+    };
+
     useEffect(() => {
         if (searchQuery.trim() === '') {
             setSearchResults({ games: [], users: [] });
             setLoading(false);
             setError(null);
+            if (window.innerWidth <= 1200) {
+                setIsExpanded(false);
+            }
+            console.log('Search query cleared, resetting state');
             return;
+        }
+
+        if (window.innerWidth <= 1200) {
+            setIsExpanded(true);
+            console.log('Typing detected, keeping search bar expanded');
         }
 
         const delayDebounceFn = setTimeout(() => {
@@ -62,43 +107,67 @@ function SearchBar({ searchRef }) {
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setSearchResults({ games: [], users: [] });
                 setSearchQuery('');
+                setIsExpanded(false);
+                setError(null);
+                console.log('Clicked outside, resetting search');
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [searchRef]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 1200) {
+                setIsExpanded(false);
+                console.log('Screen resized to >1200px, collapsing search bar');
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
-        <Box className="headerSearch" ref={searchRef}>
+        <Box className={`headerSearch ${isExpanded ? 'expanded' : ''}`} ref={searchRef}>
             <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    console.log('Input changed, query:', e.target.value);
+                }}
                 onKeyDown={handleKeyDown}
                 ref={inputRef}
             />
-            {searchQuery && (
-                <Button onClick={() => setSearchQuery('')} disableRipple>
+            {searchQuery ? (
+                <Button className="clear-btn" onClick={handleClear} disableRipple>
                     Clear
                 </Button>
+            ) : (
+                <Button
+                    disableRipple
+                    onClick={window.innerWidth <= 1200 ? toggleSearch : handleSearch}
+                >
+                    <IoSearch />
+                </Button>
             )}
-            <Button disableRipple onClick={handleSearch}>
-                <IoSearch />
-            </Button>
 
             {searchQuery.trim() && (
                 <Box
                     sx={{
                         position: 'absolute',
-                        top: '100%',
+                        top: 'calc(100% + 2px)',
                         left: 0,
-                        width: '100%',
+                        width: window.innerWidth <= 1200 ? '200px' : '100%',
                         maxHeight: '400px',
                         overflowY: 'auto',
                         backgroundColor: 'var(--paper-color)',
@@ -110,16 +179,22 @@ function SearchBar({ searchRef }) {
                     }}
                 >
                     {error && (
-                        <Box sx={{ padding: '8px', color: 'var(--primary-color)' }}>{error}</Box>
+                        <Box sx={{ padding: '8px', color: 'var(--primary-color)' }}>
+                            {error}
+                        </Box>
                     )}
                     <Box>
-                        <span style={{ color: 'var(--text-color)', fontWeight: '500' }}>Games</span>
+                        <span style={{ color: 'var(--text-color)', fontWeight: '500' }}>
+                            Games
+                        </span>
                         {loading ? (
                             <Box sx={{ padding: '8px', textAlign: 'center' }}>
                                 <CircularProgress size={20} />
                             </Box>
-                        ) : searchResults.games.length === 0 ? (
-                            <Box sx={{ padding: '8px', color: 'var(--text-color)' }}>No games found</Box>
+                        ) : searchResults.games.length === 0 && !error ? (
+                            <Box sx={{ padding: '8px', color: 'var(--text-color)' }}>
+                                No games found
+                            </Box>
                         ) : (
                             searchResults.games.map((game) => (
                                 <MuiLink
@@ -140,24 +215,34 @@ function SearchBar({ searchRef }) {
                                         }}
                                     >
                                         <Avatar
-                                            src={game.image_url ? `http://localhost:8081${game.image_url}` : '/default-game.png'}
+                                            src={
+                                                game.image_url
+                                                    ? `http://localhost:8081${game.image_url}`
+                                                    : '/default-game.png'
+                                            }
                                             alt={game.title}
                                             sx={{ width: 40, height: 40, marginRight: 2 }}
                                         />
-                                        <span style={{ color: 'var(--text-color)' }}>{game.title}</span>
+                                        <span style={{ color: 'var(--text-color)' }}>
+                                            {game.title}
+                                        </span>
                                     </Box>
                                 </MuiLink>
                             ))
                         )}
                     </Box>
                     <Box sx={{ marginTop: '10px' }}>
-                        <span style={{ color: 'var(--text-color)', fontWeight: '500' }}>Users</span>
+                        <span style={{ color: 'var(--text-color)', fontWeight: '500' }}>
+                            Users
+                        </span>
                         {loading ? (
                             <Box sx={{ padding: '8px', textAlign: 'center' }}>
                                 <CircularProgress size={20} />
                             </Box>
-                        ) : searchResults.users.length === 0 ? (
-                            <Box sx={{ padding: '8px', color: 'var(--text-color)' }}>No users found</Box>
+                        ) : searchResults.users.length === 0 && !error ? (
+                            <Box sx={{ padding: '8px', color: 'var(--text-color)' }}>
+                                No users found
+                            </Box>
                         ) : (
                             searchResults.users.map((user) => (
                                 <MuiLink
@@ -178,11 +263,17 @@ function SearchBar({ searchRef }) {
                                         }}
                                     >
                                         <Avatar
-                                            src={user.avatar_url ? `http://localhost:8081/uploads/${user.avatar_url}` : '/default-avatar.png'}
+                                            src={
+                                                user.avatar_url
+                                                    ? `http://localhost:8081/uploads/${user.avatar_url}`
+                                                    : '/default-avatar.png'
+                                            }
                                             alt={user.name}
                                             sx={{ width: 40, height: 40, marginRight: 2 }}
                                         />
-                                        <span style={{ color: 'var(--text-color)' }}>{user.name}</span>
+                                        <span style={{ color: 'var(--text-color)' }}>
+                                            {user.name}
+                                        </span>
                                     </Box>
                                 </MuiLink>
                             ))
