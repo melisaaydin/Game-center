@@ -62,7 +62,7 @@
 
 .headerSearch {
     display: flex;
-    width: 260px;
+    width: 300px;
     max-width: 300px;
     height: 34px;
     flex-wrap: nowrap;
@@ -72,9 +72,8 @@
     border: 1px solid var(--secondary-color);
     position: relative;
     transition: width 0.3s ease;
+    margin-left: auto;
 }
-
-
 
 .headerSearch input {
     background: transparent !important;
@@ -85,6 +84,7 @@
     height: 100%;
     border: none !important;
     padding: 0 12px;
+    display: block;
 }
 
 .headerSearch button {
@@ -95,6 +95,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.headerSearch button.clear-btn {
+    font-size: 14px;
+    color: var(--secondary-color);
+    padding: 0 12px;
+    min-width: 60px !important;
+    border-radius: 0 20px 20px 0 !important;
+    text-transform: none;
 }
 
 .headerSearch input::-webkit-input-placeholder {
@@ -271,7 +280,7 @@
     background: var(--background-color);
     padding: 4px 8px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px var(--box-shadow);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: opacity 0.2s ease;
 }
 
@@ -291,11 +300,14 @@
     color: var(--text-color);
 }
 
-@media (max-width: 768px) {
+
+
+@media (max-width: 1200px) {
     .nav-left .logo {
         width: 60px;
         height: 50px;
     }
+
 
     .nav-center {
         width: 140px;
@@ -306,24 +318,55 @@
         font-size: 14px;
     }
 
-}
+    .headerSearch {
+        width: 40px;
+        overflow: hidden;
+        cursor: pointer;
+    }
 
+    .headerSearch input {
+        display: none;
+        width: 0;
+        padding: 0;
+    }
+
+    .headerSearch.expanded {
+        width: 200px;
+        overflow: visible;
+    }
+
+    .headerSearch.expanded input {
+        display: block;
+        width: 100%;
+        padding: 0 12px;
+    }
+
+    .headerSearch button {
+        border-radius: 20px !important;
+    }
+
+    .headerSearch.expanded button.clear-btn {
+        min-width: 60px !important;
+        padding: 0 12px;
+    }
+}
 
 .dark_mode {
     margin-top: -20px;
     margin-left: 10px;
-    margin-right: 10px;
+    margin-right: 10px !important;
 }
-
 
 .dark_mode_label {
     width: 65px;
+    border-bottom: 2px solid var(--accent-color) !important;
+    border: 1px solid var(--accent-color);
     height: 30px;
     position: relative;
     display: block;
-    background: #ebebeb;
+    background: var(--background-color);
     border-radius: 200px;
-    box-shadow: inset 0px 5px 15px rgba(0, 0, 0, 0.4),
+    box-shadow: inset 0px 5px 15px var(--box-shadow),
         inset 0px -5px 15px rgba(255, 255, 255, 0.4);
     cursor: pointer;
     transition: 0.3s;
@@ -331,12 +374,12 @@
 
 .dark_mode_label:after {
     content: "";
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 29px;
+    top: 0;
+    left: 0;
     position: absolute;
-    top: 3px;
-    left: 3px;
-    background: linear-gradient(180deg, var(--accent-color), var(--primary-color));
+    background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
     border-radius: 180px;
     transition: 0.3s;
 }
@@ -348,13 +391,13 @@
 }
 
 .dark_mode_input:checked+.dark_mode_label {
-    background: var(--background-color-secondary);
+    background: var(--background-color);
 }
 
 .dark_mode_input:checked+.dark_mode_label:after {
-    left: 62px;
+    left: 64px;
     transform: translateX(-100%);
-    background: linear-gradient(180deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
 }
 
 .dark_mode_label:active:after {
@@ -364,24 +407,24 @@
 .dark_mode_label svg {
     position: absolute;
     width: 20px;
-    top: 5px;
+    top: 4.5px;
     z-index: 100;
 }
 
 .dark_mode_label svg.sun {
     left: 5px;
-    fill: var(--button-hover-bg);
+    fill: #fff;
     transition: 0.3s;
 }
 
 .dark_mode_label svg.moon {
     left: 40px;
-    fill: var(--text-secondary);
+    fill: #7e7e7e;
     transition: 0.3s;
 }
 
 .dark_mode_input:checked+.dark_mode_label svg.sun {
-    fill: var(--text-secondary);
+    fill: #7e7e7e;
 }
 
 .dark_mode_input:checked+.dark_mode_label svg.moon {
