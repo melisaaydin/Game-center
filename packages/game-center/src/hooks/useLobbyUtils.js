@@ -12,7 +12,7 @@ const useLobbyUtils = (lobbies) => {
             const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
             return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
         } else {
-            return `Başlangıç: ${start.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+            return `Start: ${start.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
         }
     };
 

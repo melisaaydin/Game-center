@@ -144,7 +144,7 @@ function SearchBar({ searchRef }) {
                                             alt={game.title}
                                             sx={{ width: 40, height: 40, marginRight: 2 }}
                                         />
-                                        <span>{game.title}</span>
+                                        <span style={{ color: 'var(--text-color)' }}>{game.title}</span>
                                     </Box>
                                 </MuiLink>
                             ))

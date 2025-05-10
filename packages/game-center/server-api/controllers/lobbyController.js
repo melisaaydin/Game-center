@@ -160,7 +160,7 @@ const updateLobby = async (req, res) => {
             `UPDATE lobbies
              SET name = $1, is_event = $2, start_time = $3, end_time = $4, password = $5, game_id = $6, max_players = $7, updated_at = NOW()
              WHERE id = $8 RETURNING *`,
-            [name, is_event, start_time, end_time, hashedPassword, game_id, max_players, id]
+            [name, is_event, start_time, end_time, hashedPassword, gameId, max_players, id]
         );
         if (result.rows.length === 0) {
             return handleNotFound(res, "Lobby not found.");

@@ -1,29 +1,48 @@
-/* GameDetail.css */
-
 .game-detail-container {
     min-height: 100vh !important;
     padding: 20px;
+    margin-left: 80px;
+    margin-right: 90px;
 }
 
 .game-header-content {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: 200px !important;
 }
 
 .game-tabs {
+    margin-top: 110px;
     gap: 4px;
+    width: 80px;
+    box-shadow: -2px 0 0px 0px var(--primary-color);
+
+    border-top-left-radius: 20px !important;
     border-bottom-left-radius: 20px !important;
-    border-bottom-right-radius: 20px !important;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 0 var(--primary-color);
+    border-bottom: none !important;
+    background: var(--background-color);
+    position: fixed;
+    right: 19px;
+    top: 80px;
+    z-index: 10;
 }
 
 .game-tab {
     transition: 0.2s;
     justify-content: center;
     align-items: center;
-    font-size: 16px;
+    font-size: 14px;
+    padding: 8px 16px;
+    color: var(--text-color);
+}
+
+
+.MuiTabs-indicator {
+    width: 2px;
+    background-color: var(--primary-color);
+    left: 0;
+    right: auto;
 }
 
 .game-image {
@@ -41,7 +60,9 @@
 }
 
 .sidebar-card {
-    margin-bottom: 20px;
+    margin: 90px 20px 20px 0;
+    max-width: 300px;
+    margin-left: auto;
 }
 
 .quick-actions-container {
@@ -65,6 +86,7 @@
     transform: scale(1.05);
     box-shadow: 0 4px 8px var(--shadow-color);
     background-color: var(--accent-color);
+    color: var(--button-hover-bg);
 }
 
 .play-button {
@@ -76,6 +98,7 @@
 
 .play-button:hover {
     background-color: var(--accent-color);
+    color: var(--button-hover-bg);
 }
 
 .play-icon {
@@ -100,6 +123,70 @@
     transform: scale(1.1);
 }
 
+.game-card {
+    position: relative;
+    margin-right: 0;
+    box-shadow: 0 2px 0 var(--primary-color) !important;
+    margin-left: 100px !important;
+    margin: 90px 0 0 20px;
+    display: block;
+    border-bottom: 2px solid var(--shadow-color);
+    border-radius: 8px;
+}
+
+.game-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0.5px;
+    height: 150px;
+    background: linear-gradient(to top, var(--primary-color) 50%, transparent 100%);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 1;
+}
+
+.sidebar-card:first-child {
+    position: relative;
+    border-bottom: 2px solid var(--shadow-color);
+    border-radius: 8px;
+    margin-right: 120px;
+}
+
+.sidebar-card:first-child::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 0.5px;
+    height: 70px;
+    background: linear-gradient(to top, var(--primary-color) 50%, transparent 100%);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 1;
+}
+
+.sidebar-card:last-child {
+    position: relative;
+    border-bottom: 2px solid var(--shadow-color);
+    border-radius: 8px;
+    margin-right: 120px;
+}
+
+.sidebar-card:last-child::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0.5px;
+    height: 120px;
+    background: linear-gradient(to top, var(--primary-color) 50%, transparent 100%);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 1;
+}
+
 @media (max-width: 900px) {
     .quick-actions-container {
         grid-template-columns: 1fr;
@@ -109,6 +196,25 @@
 
     .quick-action-button {
         width: 250px;
+    }
+
+    .game-detail-container {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .game-card {
+        max-width: 76%;
+        margin: 90px auto;
+    }
+
+    .sidebar-card {
+        width: 80%;
+        margin: 20px auto;
+    }
+
+    .game-tabs {
+        display: none;
     }
 
     .play-button {
@@ -135,5 +241,15 @@
     .play-button {
         width: 100%;
         max-width: 300px;
+    }
+
+    .game-card {
+        max-width: 62%;
+        margin: 90px auto;
+    }
+
+    .sidebar-card {
+        max-width: 62%;
+        margin: 20px auto;
     }
 }

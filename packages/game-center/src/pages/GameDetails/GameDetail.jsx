@@ -17,10 +17,11 @@ import {
     DialogContent,
     DialogContentText,
     DialogActions,
+    TextField,
 } from "@mui/material";
 import { Info, Group, Add, History, PlayArrow, Settings, SportsEsports, Delete } from "@mui/icons-material";
 import axios from "axios";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTheme } from "@mui/material/styles";
 import { ColorModeContext } from "../../context/ThemeContext";
@@ -43,7 +44,9 @@ function GameDetail() {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(null);
-    const { getTimeDisplay, eventLobbies, activeLobbies, pastLobbies } = useLobbyUtils(lobbies);
+    const [editDialogOpen, setEditDialogOpen] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const { getTimeDisplay, eventLobbies, activeLobbies, updateLobby } = useLobbyUtils(lobbies);
 
     useEffect(() => {
         if (!gameId) {
@@ -152,6 +155,47 @@ function GameDetail() {
         }
     };
 
+    const handleEditClick = (lobby) => {
+        setEditForm({
+            name: lobby.name,
+            max_players: lobby.max_players,
+            password: "",
+            start_time: lobby.start_time ? new Date(lobby.start_time).toISOString().slice(0, 16) : "",
+            end_time: lobby.end_time ? new Date(lobby.end_time).toISOString().slice(0, 16) : "",
+            is_event: lobby.is_event,
+        });
+        setEditDialogOpen(lobby.id);
+    };
+
+    const handleEditFormChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleEditLobby = async () => {
+        const token = localStorage.getItem("token");
+        const updatedData = {
+            name: editForm.name,
+            max_players: parseInt(editForm.max_players, 10),
+            password: editForm.password || null,
+            start_time: editForm.start_time || null,
+            end_time: editForm.end_time || null,
+            gameId: gameId,
+        };
+        const res = await updateLobby(editDialogOpen, updatedData, token);
+        if (res.success) {
+            fetchLobbies();
+            setSnackbarMessage("Lobby updated successfully!");
+            setSnackbarSeverity("success");
+            setSnackbarOpen(true);
+            setEditDialogOpen(null);
+        } else {
+            setSnackbarMessage("Failed to update lobby: " + res.message);
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
+        }
+    };
+
     if (loading) return <div className="loading">Loading...</div>;
     if (!user) {
         navigate("/login");
@@ -162,19 +206,8 @@ function GameDetail() {
 
     return (
         <Box className="game-detail-container">
-            <Box sx={{ justifyContent: "center", alignItems: "center", display: "flex" }}>
-                <Tabs value={activeTab} onChange={handleTabChange} className="game-tabs">
-                    <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Create Lobby" icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Lobbies" icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Game History" icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="How to Play" icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Settings" icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
-                </Tabs>
-            </Box>
-
             <Fade in={true} timeout={500}>
-                <Grid container spacing={3} sx={{ padding: "0 20px" }}>
+                <Grid container spacing={1}>
                     <Grid item xs={12} md={8}>
                         <Card className="game-card">
                             <CardContent>
@@ -209,17 +242,16 @@ function GameDetail() {
                                         fetchLobbies={fetchLobbies}
                                         eventLobbies={eventLobbies}
                                         activeLobbies={activeLobbies}
-                                        pastLobbies={pastLobbies}
                                         getTimeDisplay={getTimeDisplay}
-                                        onCopyLink={(lobbyId) => {
-                                            const link = `${window.location.origin}/lobbies/${lobbyId}`;
-                                            navigator.clipboard.writeText(link);
-                                            setSnackbarMessage("Lobby link copied!");
-                                            setSnackbarSeverity("success");
-                                            setSnackbarOpen(true);
-                                        }}
                                         userId={user.id}
                                         onDeleteClick={handleDeleteClick}
+                                        onEditClick={handleEditClick}
+                                        onViewDetails={(lobbyId) => {
+                                            navigate(`/lobbies/${lobbyId}`);
+                                            setSnackbarMessage("Navigating to lobby details...");
+                                            setSnackbarSeverity("info");
+                                            setSnackbarOpen(true);
+                                        }}
                                     />
                                 )}
                                 {activeTab === 3 && (
@@ -252,7 +284,6 @@ function GameDetail() {
                             </CardContent>
                         </Card>
                     </Grid>
-
                     <Grid item xs={12} md={4}>
                         <Card className="game-card sidebar-card">
                             <CardContent>
@@ -289,16 +320,27 @@ function GameDetail() {
                                     >
                                         Play
                                     </Button>
-                                    <Button
-                                        className="quick-action-button back-button"
-                                        variant="text"
-                                        onClick={() => navigate("/")}
-                                    >
-                                        Back to Home
-                                    </Button>
                                 </Box>
                             </CardContent>
                         </Card>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <Box sx={{ position: 'fixed', right: 15, top: 80, width: 80 }}>
+                            <Tabs
+                                value={activeTab}
+                                onChange={handleTabChange}
+                                className="game-tabs"
+                                orientation="vertical"
+                                variant="scrollable"
+                            >
+                                <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Create Lobby" icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Lobbies" icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Game History" icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="How to Play" icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Settings" icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
+                            </Tabs>
+                        </Box>
                     </Grid>
                 </Grid>
             </Fade>
@@ -317,6 +359,76 @@ function GameDetail() {
                     <Button onClick={() => handleDeleteLobby(deleteConfirmOpen)} color="error" variant="contained">
                         Yes
                     </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={editDialogOpen !== null}
+                onClose={() => setEditDialogOpen(null)}
+            >
+                <DialogTitle>Edit Lobby Details</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        label="Lobby Name"
+                        name="name"
+                        value={editForm.name || ""}
+                        onChange={handleEditFormChange}
+                        fullWidth
+                        margin="normal"
+                        variant="outlined"
+                        required
+                    />
+                    <TextField
+                        label="Max Players"
+                        name="max_players"
+                        type="number"
+                        value={editForm.max_players || ""}
+                        onChange={handleEditFormChange}
+                        fullWidth
+                        margin="normal"
+                        variant="outlined"
+                        inputProps={{ min: lobbies.find((l) => l.id === editDialogOpen)?.current_players || 1 }}
+                        required
+                    />
+                    <TextField
+                        label="Password (leave blank to remove)"
+                        name="password"
+                        type="password"
+                        value={editForm.password || ""}
+                        onChange={handleEditFormChange}
+                        fullWidth
+                        margin="normal"
+                        variant="outlined"
+                    />
+                    {editForm.is_event && (
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <TextField
+                                label="Start Time"
+                                name="start_time"
+                                type="datetime-local"
+                                value={editForm.start_time || ""}
+                                onChange={handleEditFormChange}
+                                fullWidth
+                                margin="normal"
+                                variant="outlined"
+                            />
+                            <TextField
+                                label="End Time"
+                                name="end_time"
+                                type="datetime-local"
+                                value={editForm.end_time || ""}
+                                onChange={handleEditFormChange}
+                                fullWidth
+                                margin="normal"
+                                variant="outlined"
+                                inputProps={{ min: editForm.start_time || undefined }}
+                            />
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEditDialogOpen(null)} color="secondary">Cancel</Button>
+                    <Button onClick={handleEditLobby} variant="contained" color="primary">Save</Button>
                 </DialogActions>
             </Dialog>
 

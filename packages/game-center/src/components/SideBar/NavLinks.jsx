@@ -16,7 +16,9 @@ function NavLinks() {
                     >
                         <img src={link.icon} alt={link.label} className="image" />
                         <span className="span">{link.label}</span>
+
                     </Link>
+
                 ))}
             </Box>
             <Box className="down">
@@ -30,6 +32,7 @@ function NavLinks() {
                             rel="noopener noreferrer"
                         >
                             {React.createElement(social.icon, { className: 'icon' })}
+                            <span className="span">{social.label}</span>
                         </a>
                     );
                 })}

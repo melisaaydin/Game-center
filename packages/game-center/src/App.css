@@ -1,22 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&family=Dosis:wght@200..800&display=swap');
 
-
 :root {
   --background-color: #fafafa;
   --background-color-secondary: #f5f5f5;
-
   --paper-color: #ffffff;
   --text-color: #2d2d2d;
   --text-secondary: rgba(0, 0, 0, 0.7);
   --shadow-color: rgba(0, 0, 0, 0.1);
-  --primary-color: rgb(86, 18, 29);
+  --primary-color: rgb(169, 29, 52);
   --accent-color: rgb(169, 29, 52);
   --secondary-color: pink;
-  --button-bg: rgb(86, 18, 29);
+  --button-bg: rgb(169, 29, 52);
   --button-text: #ffffff;
   --button-hover-bg: #ffffff;
-  --button-hover-text: rgb(86, 18, 29);
-  --subtext-color: rgba(44, 13, 18, 0.71);
+  --button-hover-text: rgb(169, 29, 52);
+  --subtext-color: rgba(24, 7, 10, 0.71);
 }
 
 [data-theme="dark"] {
@@ -25,7 +23,7 @@
   --paper-color: rgb(29, 30, 32);
   --text-color: #fff;
   --text-secondary: #b0b0b0;
-  --shadow-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(48, 48, 48, 0.247);
   --primary-color: rgb(225, 50, 75);
   --accent-color: rgb(169, 29, 52);
   --secondary-color: pink;
@@ -46,6 +44,32 @@ body {
   overflow-x: hidden;
 }
 
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--background-color);
+  border-radius: 10px !important;
+  margin: 5px 0;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: var(--secondary-color);
+  border-radius: 20px !important;
+  transition: background 0.3s ease;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--background-color);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -62,7 +86,6 @@ body {
 }
 
 .profile-container,
-.lobby-details-container,
 .game-detail-container,
 .navbar-up,
 .sideBar {
@@ -132,7 +155,6 @@ body {
   display: flex;
   justify-content: center;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-
 }
 
 .form {
@@ -141,12 +163,10 @@ body {
   border: 1rem;
   box-shadow: 10px 10px 15px rgba(200, 54, 132, 0.7), 15px 15px 25px rgba(255, 20, 147, 0.5);
   transition: box-shadow 0.6s ease-in-out;
-
 }
 
 .form:hover {
   box-shadow: 10px 10px 15px rgba(255, 20, 147, 0.9), 15px 15px 25px rgba(255, 20, 147, 0.7);
-
 }
 
 .layout-container {
@@ -216,7 +236,6 @@ body {
   background-color: var(--primary-color) !important;
   color: var(--button-text) !important;
 }
-
 
 .socialConnect {
   display: flex;
@@ -305,27 +324,7 @@ body {
   color: var(--button-hover-text) !important;
 }
 
-.chat-messages::-webkit-scrollbar {
-  width: 6px !important;
-}
 
-.chat-messages::-webkit-scrollbar-track {
-  background: var(--background-color);
-  border-radius: 20px !important;
-  margin: 5px 0;
-
-}
-
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 20px !important;
-
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-color);
-}
 
 .chat-messages {
   scrollbar-width: thin;
@@ -337,7 +336,6 @@ body {
 .coin-box {
   background: var(--background-color) !important;
 }
-
 
 .nav-btn {
   color: var(--text-color) !important;

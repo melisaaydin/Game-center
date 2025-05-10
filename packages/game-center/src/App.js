@@ -18,12 +18,11 @@ import Sidebar from './components/SideBar/SideBar';
 
 function Layout() {
   const location = useLocation();
-  const hideSidebar = location.pathname === '/profile/edit' || location.pathname.startsWith('/lobbies/');
 
   return (
     <div className="layout-container">
-      {!hideSidebar && <Sidebar />}
-      <main className={`layout-content ${hideSidebar ? 'full-width' : ''}`}>
+      <Sidebar />
+      <main className={`layout-content }`}>
         <Outlet />
       </main>
     </div>
@@ -41,9 +40,10 @@ const App = () => {
             <Route path="/users/user/:userId" element={<ProfileView />} />
             <Route path="/profile/edit" element={<ProfileSettings />} />
             <Route path="/lobbies/:id" element={<LobbyDetail />} />
+            <Route path="/games/:gameId" element={<GameDetail />} />
           </Route>
           <Route path="/games" element={<GameList />} />
-          <Route path="/games/:gameId" element={<GameDetail />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />

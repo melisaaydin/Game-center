@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { Box, Typography, List, ListItem, ListItemText, IconButton } from "@mui/material";
-import { Lock, Event, ContentCopy, Delete } from "@mui/icons-material";
-import { useUser } from "../context/UserContext";
+import React from "react";
+import { Box, Typography, List, ListItem, ListItemText, Button, IconButton } from "@mui/material";
+import { Lock, Event, Delete, Edit } from "@mui/icons-material";
+
 
 function LobbyList({
     lobbies,
@@ -9,21 +9,12 @@ function LobbyList({
     activeLobbies,
     pastLobbies,
     getTimeDisplay,
-    onCopyLink,
-    fetchLobbies,
+    onViewDetails,
     userId,
     onDeleteClick,
+    onEditClick,
 }) {
-    const { user } = useUser();
-
-    useEffect(() => {
-        const interval = setInterval(() => { }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    console.log("Current User ID:", user?.id);
-    console.log("Lobbies:", lobbies);
-
+    // Render the lobby list with event and active sections
     return (
         <Box>
             {eventLobbies.length > 0 && (
@@ -41,16 +32,30 @@ function LobbyList({
                                         </>
                                     }
                                 />
-                                {lobby.password && <Lock fontSize="small" />}
-                                <Event fontSize="small" />
-                                <IconButton onClick={() => onCopyLink(lobby.id)}>
-                                    <ContentCopy fontSize="small" />
-                                </IconButton>
-                                {parseInt(lobby.created_by) === parseInt(userId) && (
-                                    <IconButton onClick={() => onDeleteClick(lobby.id)} color="error">
-                                        <Delete fontSize="small" />
-                                    </IconButton>
-                                )}
+                                <Box className="lobby-actions">
+                                    {lobby.password && <Lock fontSize="small" />}
+                                    <Event fontSize="small" />
+
+                                    {parseInt(lobby.created_by) === parseInt(userId) && (
+                                        <>
+                                            {/* Button to open the edit dialog for the lobby */}
+                                            <IconButton onClick={() => onEditClick(lobby)} title="Edit lobby">
+                                                <Edit fontSize="small" />
+                                            </IconButton>
+                                            {/* Button to trigger the delete confirmation dialog */}
+                                            <IconButton onClick={() => onDeleteClick(lobby.id)} title="Delete lobby" color="error">
+                                                <Delete fontSize="small" />
+                                            </IconButton>
+                                        </>
+                                    )}
+                                    <Button
+                                        className="lobby-action-button"
+                                        variant="contained"
+                                        onClick={() => onViewDetails(lobby.id)}
+                                    >
+                                        View Details
+                                    </Button>
+                                </Box>
                             </ListItem>
                         ))}
                     </List>
@@ -68,15 +73,28 @@ function LobbyList({
                                 primary={lobby.name}
                                 secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
                             />
-                            {lobby.password && <Lock fontSize="small" />}
-                            <IconButton onClick={() => onCopyLink(lobby.id)}>
-                                <ContentCopy fontSize="small" />
-                            </IconButton>
-                            {parseInt(lobby.created_by) === parseInt(userId) && (
-                                <IconButton onClick={() => onDeleteClick(lobby.id)} color="--text-color">
-                                    <Delete fontSize="small" />
-                                </IconButton>
-                            )}
+                            <Box className="lobby-actions">
+                                {lobby.password && <Lock fontSize="small" />}
+                                <Button
+                                    className="lobby-action-button"
+                                    variant="contained"
+                                    onClick={() => onViewDetails(lobby.id)}
+                                >
+                                    View Details
+                                </Button>
+                                {parseInt(lobby.created_by) === parseInt(userId) && (
+                                    <>
+                                        {/* Button to open the edit dialog for the lobby */}
+                                        <IconButton onClick={() => onEditClick(lobby)} title="Edit lobby">
+                                            <Edit fontSize="small" />
+                                        </IconButton>
+                                        {/* Button to trigger the delete confirmation dialog */}
+                                        <IconButton onClick={() => onDeleteClick(lobby.id)} title="Delete lobby" color="error">
+                                            <Delete fontSize="small" />
+                                        </IconButton>
+                                    </>
+                                )}
+                            </Box>
                         </ListItem>
                     ))
                 ) : (
