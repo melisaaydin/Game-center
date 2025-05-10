@@ -9,7 +9,8 @@ import Coin from '../../assets/star.png';
 import { FaPlus } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import NotificationMenu from '../NotificaitonMenu/NotificationMenu';
-
+import { ReactComponent as Sun } from "../../assets/Sun.svg"
+import { ReactComponent as Moon } from "../../assets/Moon.svg"
 function UserMenu() {
     const { user, logout } = useUser();
     const navigate = useNavigate();
@@ -86,7 +87,17 @@ function UserMenu() {
                         </MenuItem>
                     )}
                 </Menu>
-                <Switch onChange={toggleColorMode} checked={mode === 'dark'} />
+                <div onChange={toggleColorMode} checked={mode === 'dark'} className='dark_mode'>
+                    <input
+                        className='dark_mode_input'
+                        type='checkbox'
+                        id='darkmode-toggle'
+                    />
+                    <label className='dark_mode_label' for='darkmode-toggle'>
+                        <Moon />
+                        <Sun />
+                    </label>
+                </div>
             </Box>
         </Box>
     );
