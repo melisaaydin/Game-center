@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { Box, Typography, TextField, Button, Avatar, Paper } from "@mui/material";
 
 const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJoined, handleSendMessage, handleTyping, mode, chatRef, userName }) => {
@@ -12,7 +12,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
 
     return (
         <Paper className="lobby-card chat-card">
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Typography variant="h6" className="section-title">Chat</Typography>
                 <Box ref={chatRef} className="chat-messages">
                     {chatMessages.map((msg, index) => {

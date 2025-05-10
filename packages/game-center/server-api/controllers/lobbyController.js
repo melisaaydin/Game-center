@@ -7,16 +7,13 @@ const createLobby = async (req, res) => {
     const { name, is_event, start_time, end_time, password, game_id, max_players } = req.body;
     const userId = req.user ? req.user.userId : req.body.userId;
 
-    // Validate user ID
+
     if (!userId) {
-        return res.status(401).json({ success: false, message: "Unauthorized: User ID not found! Not found!" });
+        return handleUnauthorized(res);
     }
 
-    // Validate required fields
     if (!name || !game_id || !max_players) {
-        return res.status(400).json({
-            success: false, message: "Lobby name, game ID and maximum number of players are required!"
-        });
+        return handleBadRequest(res, "Lobby name, game ID, and maximum number of players are required!");
     }
 
     try {
@@ -26,7 +23,7 @@ const createLobby = async (req, res) => {
             [userId]
         );
         if (userLobbyCheck.rows.length > 0) {
-            return res.status(400).json({ success: false, message: "You are already in a lobby!" });
+            return handleBadRequest(res, "You are already in a lobby!");
         }
 
         // Hash the password if provided
@@ -47,7 +44,7 @@ const createLobby = async (req, res) => {
 
         res.status(201).json({ success: true, message: "Lobby created.", lobby: newLobby });
     } catch (err) {
-        res.status(500).json({ success: false, message: "An error occurred while creating the lobby: " + err.message });
+        handleError(res, err, "Failed to create lobby");
     }
 };
 
@@ -79,23 +76,8 @@ const getLobbies = async (req, res) => {
                     if (endTime <= now) {
                         await db.query("UPDATE lobbies SET lobby_status = 'closed' WHERE id = $1", [lobby.id]);
                         await db.query("DELETE FROM lobby_players WHERE lobby_id = $1", [lobby.id]);
+                        req.io.to(lobby.id).emit("lobby_closed", { lobbyId: lobby.id });
                         return { ...lobby, lobby_status: "closed" };
-                    }
-                }
-
-                // Close normal lobby if owner left and it's older than 8 hours
-                if (!lobby.is_event && lobby.lobby_status === "active") {
-                    const createdBy = await db.query(
-                        "SELECT lp.id FROM lobby_players lp WHERE lp.user_id = $1 AND lp.lobby_id = $2",
-                        [lobby.created_by, lobby.id]
-                    );
-                    if (createdBy.rows.length === 0) {
-                        const diffHours = (now - new Date(lobby.updated_at)) / (1000 * 60 * 60);
-                        if (diffHours >= 8) {
-                            await db.query("UPDATE lobbies SET lobby_status = 'closed' WHERE id = $1", [lobby.id]);
-                            await db.query("DELETE FROM lobby_players WHERE lobby_id = $1", [lobby.id]);
-                            return { ...lobby, lobby_status: "closed" };
-                        }
                     }
                 }
                 return lobby;
@@ -105,6 +87,7 @@ const getLobbies = async (req, res) => {
         const filteredLobbies = updatedLobbies.filter(lobby => lobby.lobby_status !== "closed");
         res.status(200).json({ success: true, lobbies: filteredLobbies });
     } catch (err) {
+        // Use handleError for server-side errors
         handleError(res, err, "Failed to retrieve lobbies");
     }
 };
@@ -113,6 +96,7 @@ const getLobbies = async (req, res) => {
 const getLobby = async (req, res) => {
     const { id } = req.params;
     if (!id || isNaN(id)) {
+        // Use handleBadRequest for invalid lobby ID
         return handleBadRequest(res, "A valid lobby ID is required.");
     }
 
@@ -126,6 +110,7 @@ const getLobby = async (req, res) => {
             [id]
         );
         if (result.rows.length === 0) {
+            // Use handleNotFound for non-existent lobby
             return handleNotFound(res, "Lobby not found!");
         }
 
@@ -142,7 +127,7 @@ const getLobby = async (req, res) => {
         const players = playersResult.rows;
         // Send the lobby details along with its players
         res.json({ ...lobby, players });
-    } catch (error) {
+    } catch (err) {
         handleError(res, err, "Failed to retrieve lobby details");
     }
 };
@@ -150,9 +135,12 @@ const getLobby = async (req, res) => {
 // Update details of an existing lobby
 const updateLobby = async (req, res) => {
     const { id } = req.params;
-    const { name, is_event, start_time, end_time, password, gameId, max_players } = req.body;
-    // Hash the password if provided
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+    const { name, max_players, password, is_event, start_time, end_time, gameId } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+        return handleUnauthorized(res);
+    }
 
     try {
         // Update the lobby in the database
@@ -161,10 +149,56 @@ const updateLobby = async (req, res) => {
              SET name = $1, is_event = $2, start_time = $3, end_time = $4, password = $5, game_id = $6, max_players = $7, updated_at = NOW()
              WHERE id = $8 RETURNING *`,
             [name, is_event, start_time, end_time, hashedPassword, gameId, max_players, id]
+        // Check if the lobby exists and the user is the creator
+        const lobbyResult = await db.query(
+            "SELECT * FROM lobbies WHERE id = $1 AND created_by = $2",
+            [id, userId]
         );
+        if (lobbyResult.rows.length === 0) {
+            // Use handleUnauthorized for permission issues
+            return handleUnauthorized(res, "You do not have permission to update this lobby or the lobby was not found!");
+        }
+
+        const lobby = lobbyResult.rows[0];
+
+        if (max_players !== undefined && max_players < lobby.current_players) {
+            return handleBadRequest(res, "Max players cannot be less than current players!");
+        }
+
+        // Hash the password if provided, or set to null if explicitly removed
+        const hashedPassword = password ? await bcrypt.hash(password, 10) : password === null ? null : lobby.password;
+
+        // Prepare the query and values
+        const query = `
+            UPDATE lobbies
+            SET 
+                name = COALESCE($1, name),
+                max_players = COALESCE($2, max_players),
+                password = $3,
+                is_event = COALESCE($4, is_event),
+                start_time = $5,
+                end_time = $6,
+                game_id = COALESCE($7, game_id),
+                updated_at = NOW()
+            WHERE id = $8
+            RETURNING *
+        `;
+        const values = [
+            name || null,
+            max_players || null,
+            hashedPassword,
+            is_event !== undefined ? is_event : null,
+            start_time || null,
+            end_time || null,
+            gameId || null,
+            id
+        ];
+
+        const result = await db.query(query, values);
         if (result.rows.length === 0) {
             return handleNotFound(res, "Lobby not found.");
         }
+
         res.status(200).json({ success: true, lobby: result.rows[0] });
     } catch (err) {
         handleError(res, err, "Failed to update lobby");
@@ -182,7 +216,8 @@ const deleteLobby = async (req, res) => {
             [id, userId]
         );
         if (lobbyResult.rows.length === 0) {
-            return handleUnauthorized(res, "You do not have permission to delete this lobby or the lobby was not found!");
+
+            return handleUnauthorized(res, "You do not have permission to delete this lobby!");
         }
 
         // Delete related records
@@ -192,8 +227,7 @@ const deleteLobby = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Lobby deleted successfully" });
     } catch (err) {
-        console.error("Could not delete lobby:", err);
-        res.status(500).json({ success: false, message: "Could not delete lobby!" });
+        handleError(res, err, "Failed to delete lobby");
     }
 };
 
@@ -210,8 +244,7 @@ const getLobbyPlayers = async (req, res) => {
         const result = await db.query(query, [lobbyId]);
         res.status(200).json({ success: true, players: result.rows });
     } catch (err) {
-        console.error("Players could not be recruited:", err);
-        res.status(500).json({ success: false, message: "Players could not be recruited" });
+        handleError(res, err, "Failed to retrieve players");
     }
 };
 
@@ -243,10 +276,10 @@ const joinLobby = async (req, res) => {
 
         // Validate password if lobby is protected
         if (lobby.password && !password) {
-            return res.status(400).json({ success: false, message: "Password is required." });
+            return handleBadRequest(res, "Password is required.");
         }
         if (lobby.password && !(await bcrypt.compare(password, lobby.password))) {
-            return res.status(401).json({ success: false, message: "Wrong password." });
+            return handleUnauthorized(res, "Wrong password.");
         }
 
         // Check if the lobby has reached its maximum capacity
@@ -270,6 +303,48 @@ const joinLobby = async (req, res) => {
             [id]
         );
 
+        // Fetch user and lobby details for notification
+        const userResult = await db.query("SELECT name FROM users WHERE id = $1", [userId]);
+        const lobbyName = lobby.name || "Unnamed Lobby";
+        const userName = userResult.rows[0]?.name || "Unknown User";
+
+        // Fetch lobby players to notify them
+        const playersResult = await db.query(
+            "SELECT user_id FROM lobby_players WHERE lobby_id = $1 AND user_id != $2",
+            [id, userId]
+        );
+        const players = playersResult.rows;
+
+        // Create notifications for all other players in the lobby
+        for (const player of players) {
+            await db.query(
+                "INSERT INTO notifications (user_id, type, content, sender_id, created_at) VALUES ($1, $2, $3, $4, NOW())",
+                [
+                    player.user_id,
+                    "lobby_joined",
+                    JSON.stringify({
+                        lobbyId: id,
+                        lobbyName,
+                        userId,
+                        userName,
+                        message: `joined ${lobbyName}!`,
+                    }),
+                    userId,
+                ]
+            );
+
+            // Emit real-time notification to each player
+            req.io.to(player.user_id).emit("lobby_joined", {
+                lobbyId: id,
+                lobbyName,
+                userId,
+                userName,
+            });
+        }
+
+        // Emit lobby_joined event to the lobby room
+        req.io.to(id).emit("lobby_joined", { userId, userName });
+
         res.status(200).json({ success: true, message: "You have joined the lobby." });
     } catch (err) {
         handleError(res, err, "Failed to join the lobby");
@@ -286,7 +361,8 @@ const leaveLobby = async (req, res) => {
     }
 
     try {
-        await db.query("BEGIN"); // Start a database transaction
+        // Start a database transaction
+        await db.query("BEGIN");
 
         // Remove user from lobby
         const result = await db.query(
@@ -296,6 +372,7 @@ const leaveLobby = async (req, res) => {
 
         if (result.rowCount === 0) {
             await db.query("ROLLBACK");
+            // Use handleBadRequest for users not in the lobby
             return handleBadRequest(res, "You are not in this lobby.");
         }
 
@@ -343,7 +420,6 @@ const leaveLobby = async (req, res) => {
         res.status(200).json({ success: true, message: "You left the lobby." });
     } catch (err) {
         await db.query("ROLLBACK");
-        console.error("Error leaving lobby:", err);
         handleError(res, err, "Failed to leave the lobby");
     }
 };
@@ -363,6 +439,7 @@ const getLobbyMessages = async (req, res) => {
         );
         res.status(200).json({ success: true, messages: result.rows });
     } catch (err) {
+        // Use handleError for server-side errors
         handleError(res, err, "Failed to retrieve messages");
     }
 };
@@ -386,6 +463,7 @@ const sendLobbyMessage = async (req, res) => {
         handleError(res, err, "Failed to send message");
     }
 };
+
 // Invite a user to a lobby
 const inviteToLobby = async (req, res) => {
     const { id } = req.params;
@@ -393,17 +471,14 @@ const inviteToLobby = async (req, res) => {
     const senderId = req.user?.userId;
 
     if (!senderId) {
-        console.error("Unauthorized: No senderId found");
-        return res.status(401).json({ success: false, message: "Unauthorized: No user ID found!" });
+        return handleUnauthorized(res);
     }
     if (!receiverId || isNaN(receiverId)) {
-        console.error("Invalid receiverId:", receiverId);
-        return res.status(400).json({ success: false, message: "Receiver ID is required and must be a valid number!" });
+        return handleBadRequest(res, "Receiver ID is required and must be a valid number!");
     }
     const parsedLobbyId = parseInt(id);
     if (isNaN(parsedLobbyId)) {
-        console.error("Invalid lobbyId format:", id);
-        return res.status(400).json({ success: false, message: "Invalid lobby ID format!" });
+        return handleBadRequest(res, "Invalid lobby ID format!");
     }
 
     try {
@@ -487,11 +562,13 @@ const inviteToLobby = async (req, res) => {
         handleError(res, err, "Failed to send invite");
     }
 };
+
+// Accept a lobby invitation
 const acceptLobbyInvite = async (req, res) => {
     const { invitationId } = req.params;
     const userId = req.user?.userId;
     if (!userId) {
-        return res.status(401).json({ success: false, message: "Unauthorized: No user ID found!" });
+        return handleUnauthorized(res);
     }
 
     try {
@@ -500,25 +577,27 @@ const acceptLobbyInvite = async (req, res) => {
             [userId]
         );
         if (userLobbyCheck.rows.length > 0) {
-            return res.status(400).json({ success: false, message: "You are already in another active lobby!" });
+            return handleBadRequest(res, "You are already in another active lobby!");
         }
         const inviteResult = await db.query(
             "SELECT * FROM invitations WHERE id = $1 AND receiver_id = $2 AND status = 'pending'",
             [invitationId, userId]
         );
         if (inviteResult.rows.length === 0) {
-            return res.status(404).json({ success: false, message: "Invitation not found or already processed!" });
+            return handleNotFound(res, "Invitation not found or already processed!");
         }
         const { lobby_id, sender_id } = inviteResult.rows[0];
         const lobbyCheck = await db.query("SELECT * FROM lobbies WHERE id = $1", [lobby_id]);
         if (lobbyCheck.rows.length === 0) {
-            return res.status(404).json({ success: false, message: "Lobby no longer exists!" });
+            return handleNotFound(res, "Lobby no longer exists!");
         }
         const lobby = lobbyCheck.rows[0];
-        // Check if the lobby has reached its maximum capacity
+
         if (lobby.current_players >= lobby.max_players) {
-            return res.status(400).json({ success: false, message: "Lobby is full!" });
+            // Use handleBadRequest for full lobby
+            return handleBadRequest(res, "Lobby is full!");
         }
+
         // Update the invitation status to 'accepted'
         await db.query("UPDATE invitations SET status = 'accepted' WHERE id = $1", [invitationId]);
 
@@ -532,7 +611,7 @@ const acceptLobbyInvite = async (req, res) => {
             const updatedContent = {
                 ...existingContent,
                 status: 'accepted',
-                id: lobby_id, // Ensure the lobby ID is included
+                id: lobby_id,
             };
 
             // Update the notification with the new content
@@ -587,13 +666,14 @@ const acceptLobbyInvite = async (req, res) => {
         handleError(res, err, "Failed to accept invite");
     }
 };
+
 // Reject a lobby invitation
 const rejectLobbyInvite = async (req, res) => {
     const { invitationId } = req.params;
     const userId = req.user?.userId;
 
     if (!userId) {
-        return res.status(401).json({ success: false, message: "Unauthorized: No user ID found!" });
+        return handleUnauthorized(res);
     }
 
     try {
@@ -603,8 +683,9 @@ const rejectLobbyInvite = async (req, res) => {
             [invitationId, userId]
         );
         if (inviteResult.rows.length === 0) {
-            return res.status(404).json({ success: false, message: "Invitation not found or already processed!" });
+            return handleNotFound(res, "Invitation not found or already processed!");
         }
+
         // Update the invitation status to 'rejected'
         await db.query("UPDATE invitations SET status = 'rejected' WHERE id = $1", [invitationId]);
 
@@ -664,25 +745,23 @@ const rejectLobbyInvite = async (req, res) => {
         handleError(res, err, "Failed to reject invite");
     }
 };
+
+// Get invitable friends for a lobby
 const getInvitableFriends = async (req, res) => {
     const userId = req.user?.userId;
     const { lobbyId } = req.params;
 
-
     if (!userId) {
-        console.error("Unauthorized: No userId found");
-        return handleUnauthorized(res, "Unauthorized: User ID not found!");
+        return handleUnauthorized(res);
     }
     if (!lobbyId || isNaN(lobbyId)) {
-        console.error("Invalid lobbyId:", lobbyId);
         return handleBadRequest(res, "A valid lobby ID is required.");
     }
 
     try {
         const lobbyCheck = await db.query("SELECT * FROM lobbies WHERE id = $1 AND lobby_status = 'active'", [lobbyId]);
         if (lobbyCheck.rows.length === 0) {
-            console.error("Lobby not found or not active:", lobbyId);
-            return handleNotFound(res, "Lobby could not found or is not active!");
+            return handleNotFound(res, "Lobby not found or is not active!");
         }
 
         const result = await db.query(
@@ -700,11 +779,10 @@ const getInvitableFriends = async (req, res) => {
         );
         res.json({ success: true, friends: result.rows });
     } catch (err) {
-        console.error("Error fetching invitable friends:", err.message, err.stack);
         handleError(res, err, "Failed to retrieve friend list");
     }
 };
-// Export all functions
+
 module.exports = {
     createLobby,
     getLobbies,

@@ -76,8 +76,6 @@ function ProfileView() {
             return;
         }
 
-        if (friendRequestStatus === 'Friends') return;
-
         try {
             if (friendRequestStatus === 'Add Friend') {
                 await axios.post(
@@ -96,6 +94,13 @@ function ProfileView() {
                 );
                 setFriendRequestStatus('Add Friend');
                 setSnackbarMessage('Friend request canceled!');
+                setSnackbarSeverity('info');
+            } else if (friendRequestStatus === 'Friends') {
+                await axios.delete(`http://localhost:8081/users/friends/${userId}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
+                setFriendRequestStatus('Add Friend');
+                setSnackbarMessage('Friend removed!');
                 setSnackbarSeverity('info');
             }
             setSnackbarOpen(true);
@@ -136,7 +141,6 @@ function ProfileView() {
                             />
                             <Box>
                                 <Typography className="profile-name">{profile.name}</Typography>
-
                             </Box>
                         </Box>
                         {user && user.id === profile.id ? (
@@ -153,9 +157,12 @@ function ProfileView() {
                                     className="friend-request-button"
                                     variant="contained"
                                     onClick={handleFriendRequest}
-                                    disabled={friendRequestStatus === 'Friends'}
                                 >
-                                    {friendRequestStatus === 'Sent Request' ? 'Cancel Request' : friendRequestStatus}
+                                    {friendRequestStatus === 'Sent Request'
+                                        ? 'Cancel Request'
+                                        : friendRequestStatus === 'Friends'
+                                            ? 'Remove Friend'
+                                            : friendRequestStatus}
                                 </Button>
                             </motion.div>
                         )}
@@ -169,7 +176,8 @@ function ProfileView() {
                                         {profile.bio || 'No additional information provided.'}
                                     </Typography>
                                 </CardContent>
-                            </Card><Card className="games-card">
+                            </Card>
+                            <Card className="games-card">
                                 <CardContent className="games-card-content">
                                     <Typography className="card-title">Recent Games</Typography>
                                     {recentGames.length > 0 ? (
@@ -191,8 +199,6 @@ function ProfileView() {
                                 </CardContent>
                             </Card>
                         </Box>
-
-
                     </Box>
                 </Box>
                 <Snackbar

@@ -10,15 +10,16 @@ import B from "../../assets/dice.png";
 import C from "../../assets/first.png";
 import D from "../../assets/2.png";
 import E from "../../assets/6.png";
+import F from "../../assets/5.png";
 
 // Array of slide data
 const slides = [
     { id: 1, img: C, alt: "Slide 1", path: "/slide1" },
     { id: 2, img: A, alt: "Slide 2", path: "/slide2" },
     { id: 3, img: B, alt: "Slide 3", path: "/slide3" },
-    { id: 4, img: A, alt: "Slide 4", path: "/slide4" },
+    { id: 4, img: F, alt: "Slide 4", path: "/slide4" },
     { id: 5, img: E, alt: "Slide 5", path: "/slide5" },
-    { id: 6, img: D, alt: "Slide 5", path: "/slide5" },
+    { id: 6, img: D, alt: "Slide 6", path: "/slide6" },
 
 ];
 

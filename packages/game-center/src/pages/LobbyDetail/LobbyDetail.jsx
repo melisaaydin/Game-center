@@ -8,9 +8,11 @@ import { ColorModeContext } from "../../context/ThemeContext";
 import ChatSection from "../../components/LobbyDetails/ChatSection";
 import PlayersSection from "../../components/LobbyDetails/PlayersSection";
 import InviteDialog from "../../components/LobbyDetails/InviteDialog";
-import { socket, fetchLobbyDetails, leaveLobby, deleteLobby, inviteFriend, apiRequest } from "../../utils/lobbyUtils";
+// Import utility functions for lobby operations and socket communication
+import { socket, fetchLobbyDetails, leaveLobby, deleteLobby, inviteFriend, apiRequest, updateLobby } from "../../utils/lobbyUtils";
 import "./LobbyDetail.css";
 
+// LobbyDetails component displays detailed information about a specific lobby
 const LobbyDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -34,6 +36,9 @@ const LobbyDetails = () => {
     const [friendsLoading, setFriendsLoading] = useState(false);
     const [invitedUsers, setInvitedUsers] = useState(new Set());
     const [typingUser, setTypingUser] = useState(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    // Initialize editForm as null, will be set when opening edit dialog
+    const [editForm, setEditForm] = useState(null);
     const chatRef = useRef(null);
     const lastMessageRef = useRef(null);
     const [anchorEl, setAnchorEl] = useState(null); // Menü için anchor
@@ -43,6 +48,7 @@ const LobbyDetails = () => {
     useEffect(() => {
         const loadLobby = async () => {
             setLoading(true);
+            // Fetch lobby data and messages from the backend
             const messages = await fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
             setChatMessages(messages);
             setLoading(false);
@@ -50,10 +56,14 @@ const LobbyDetails = () => {
         loadLobby();
     }, [id, user, navigate]);
 
+
+    // Set up socket connections and handle real-time events
     useEffect(() => {
         if (!user) return;
+        // Handle socket connection
         const handleSocketConnect = () => {
             socket.emit("set_username", user.name);
+            // Join the lobby if the user is already in it
             if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
@@ -62,6 +72,7 @@ const LobbyDetails = () => {
         socket.on("receive_message", (message) => {
             const lastMessage = lastMessageRef.current;
             const newMessageString = `${message.user}:${message.content}:${message.timestamp}`;
+            // Add the message to the chat if it's new
             if (lastMessage !== newMessageString) {
                 setChatMessages((prev) => [...prev, { user: message.user, content: message.content, avatar_url: message.avatar_url }]);
                 lastMessageRef.current = newMessageString;
@@ -102,6 +113,7 @@ const LobbyDetails = () => {
         };
     }, [id, user, isJoined]);
 
+    // Handle joining the lobby
     const handleJoinLobby = async () => {
         if (!user) {
             setSnackbar({ open: true, message: "Please log in!", severity: "error" });
@@ -111,7 +123,6 @@ const LobbyDetails = () => {
             setPasswordDialogOpen(true);
             return;
         }
-
         const token = localStorage.getItem("token");
         const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id }, token);
         if (res.success) {
@@ -130,6 +141,7 @@ const LobbyDetails = () => {
         }
     };
 
+    // Handle submitting the password for a locked lobby
     const handlePasswordSubmit = async () => {
         const token = localStorage.getItem("token");
         const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id, password }, token);
@@ -151,6 +163,7 @@ const LobbyDetails = () => {
         }
     };
 
+    // Handle playing the game associated with the lobby
     const handlePlayGame = () => {
         if (lobby.game_id === "tombala") {
             const gameUrl = `${window.location.origin}/packages/${lobby.game_id}`;
@@ -161,12 +174,15 @@ const LobbyDetails = () => {
         }
     };
 
+
+    // Copy the lobby link to the clipboard
     const handleCopyLink = () => {
         const link = `${window.location.origin}/lobbies/${id}`;
         navigator.clipboard.writeText(link);
         setSnackbar({ open: true, message: "Lobby link copied to clipboard!", severity: "success" });
     };
 
+    // Handle sending a chat message
     const handleSendMessage = () => {
         if (newMessage.trim()) {
             socket.emit("send_message", { lobbyId: id, userId: user.id, content: newMessage, avatar_url: user.avatar_url });
@@ -175,11 +191,13 @@ const LobbyDetails = () => {
         }
     };
 
+    // Handle typing events in the chat
     const handleTyping = () => {
         if (newMessage.trim()) socket.emit("typing", { lobbyId: id, userName: user.name });
         else socket.emit("stop_typing", { lobbyId: id });
     };
 
+    // Open the invite friends dialog and load the friends list
     const handleOpenInviteDialog = async () => {
         setInviteDialogOpen(true);
         setFriendsLoading(true);
@@ -194,12 +212,15 @@ const LobbyDetails = () => {
         setFriendsLoading(false);
     };
 
+    // Invite a friend to the lobby
     const handleInviteFriend = (friendId) => {
         const token = localStorage.getItem("token");
         inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token);
     };
 
+  // Show the full date if the event is more than 24 hours away
     const handleEditClick = () => {
+      // Initialize editForm with current lobby data
         setEditForm({
             name: lobby.name,
             max_players: lobby.max_players,
@@ -214,6 +235,7 @@ const LobbyDetails = () => {
 
     const handleEditLobby = async () => {
         const token = localStorage.getItem("token");
+
         const updatedData = {
             name: editForm.name,
             max_players: parseInt(editForm.max_players, 10),
@@ -227,6 +249,7 @@ const LobbyDetails = () => {
             fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
             setSnackbar({ open: true, message: "Lobby updated successfully!", severity: "success" });
             setEditDialogOpen(false);
+
         } else {
             setSnackbar({ open: true, message: "Failed to update lobby: " + res.message, severity: "error" });
         }
@@ -235,7 +258,6 @@ const LobbyDetails = () => {
     const handleMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
     };
-
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
@@ -247,12 +269,14 @@ const LobbyDetails = () => {
     return (
         <div className="lobby-details-container">
             <Box className="lobby-content">
+                {/* Left section with lobby details and players */}
                 <Box className="lobby-left-section">
                     <Box className="lobby-header">
                         <Typography variant="h4" sx={{ fontWeight: "bold" }}>{lobby.name}</Typography>
                         <Typography variant="subtitle1" color="text.secondary">Game: {lobby.game_id}</Typography>
                         <Typography variant="subtitle2" color="text.secondary">Players: {lobby.current_players}/{lobby.max_players}</Typography>
                         <Typography variant="subtitle2" color="text.secondary">Created by: {creatorName}</Typography>
+                        {/* Show a lock icon if the lobby has a password */}
                         {lobby.password && <Lock fontSize="small" sx={{ verticalAlign: "middle", ml: 1 }} />}
                         <Box className="lobby-actions">
                             {!isJoined ? (
@@ -311,7 +335,6 @@ const LobbyDetails = () => {
                     userName={user.name}
                 />
             </Box>
-
             <InviteDialog
                 open={inviteDialogOpen}
                 onClose={() => setInviteDialogOpen(false)}
@@ -320,7 +343,6 @@ const LobbyDetails = () => {
                 invitedUsers={invitedUsers}
                 handleInvite={handleInviteFriend}
             />
-
             <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
                 <DialogTitle>Enter Lobby Password</DialogTitle>
                 <DialogContent>
@@ -339,7 +361,6 @@ const LobbyDetails = () => {
                     <Button onClick={handlePasswordSubmit} variant="contained">Submit</Button>
                 </DialogActions>
             </Dialog>
-
             <Dialog open={leaveConfirmOpen} onClose={() => setLeaveConfirmOpen(false)}>
                 <DialogTitle>Are You Sure You Want to Leave?</DialogTitle>
                 <DialogContent>
@@ -352,7 +373,6 @@ const LobbyDetails = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
                 <DialogTitle>Are You Sure You Want to Delete?</DialogTitle>
                 <DialogContent>
@@ -365,7 +385,7 @@ const LobbyDetails = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
+            {/* Dialog for editing lobby details */}
             <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
                 <DialogTitle>Edit Lobby Details</DialogTitle>
                 <DialogContent>
@@ -432,7 +452,7 @@ const LobbyDetails = () => {
                     <Button onClick={handleEditLobby} variant="contained" color="primary">Save</Button>
                 </DialogActions>
             </Dialog>
-
+            {/* Snackbar for notifications */}
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={3000}
@@ -455,5 +475,4 @@ const LobbyDetails = () => {
     );
 };
 
-// Not: "Edit" icon'u eksik, MUI'den uygun bir ikon eklenebilir (örneğin, <Edit /> yerine <EditIcon />)
 export default LobbyDetails;

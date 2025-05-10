@@ -11,7 +11,6 @@ import {
     Snackbar,
     Alert,
     Button,
-    IconButton,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -19,22 +18,23 @@ import {
     DialogActions,
     TextField,
 } from "@mui/material";
-import { Info, Group, Add, History, PlayArrow, Settings, SportsEsports, Delete } from "@mui/icons-material";
+import { Info, Group, Add, History, PlayArrow, Settings, SportsEsports } from "@mui/icons-material";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+// Import custom context and components for user data and lobby functionality
 import { useUser } from "../../context/UserContext";
-import { useTheme } from "@mui/material/styles";
 import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../../components/CreateLobby/CreateLobby";
 import LobbyList from "../../components/LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
+import { updateLobby } from "../../utils/lobbyUtils";
 
 function GameDetail() {
+    //Get gameId from the URL parameters
     const { gameId } = useParams();
     const { user, loading } = useUser();
     const navigate = useNavigate();
-    const theme = useTheme();
     const { mode } = useContext(ColorModeContext);
     const [activeTab, setActiveTab] = useState(0);
     const [game, setGame] = useState(null);
@@ -50,13 +50,12 @@ function GameDetail() {
 
     useEffect(() => {
         if (!gameId) {
-            console.error("gameId is missing!");
             navigate("/games");
         } else {
             console.log("gameId received:", gameId);
         }
     }, [gameId, navigate]);
-
+    // Fetch game data and set up a dummy interval to refresh lobbies
     useEffect(() => {
         const fetchGame = async () => {
             if (!gameId) return;
@@ -74,18 +73,21 @@ function GameDetail() {
             }
         };
         fetchGame();
+        // Set up an interval to trigger a re-render every second
         const interval = setInterval(() => {
             setLobbies((prevLobbies) => [...prevLobbies]);
         }, 1000);
         return () => clearInterval(interval);
     }, [gameId, navigate]);
-
+    // Function to fetch lobbies for the current game
     const fetchLobbies = async () => {
         if (!gameId) return;
         try {
             const res = await axios.get(`http://localhost:8081/lobbies?gameId=${gameId}`);
             if (res.data.success) {
+                // Update the lobbies state with the fetched data
                 setLobbies(res.data.lobbies || []);
+                // Calculate the total number of players across all lobbies
                 const total = (res.data.lobbies || []).reduce((sum, lobby) => sum + (lobby.current_players || 0), 0);
                 setTotalPlayers(total);
             } else {
@@ -97,7 +99,7 @@ function GameDetail() {
             console.error("Could not fetch lobbies:", err);
         }
     };
-
+    // Fetch lobbies when the component mounts and periodically refresh them
     useEffect(() => {
         fetchLobbies();
         const interval = setInterval(fetchLobbies, 30000);
@@ -155,6 +157,7 @@ function GameDetail() {
         }
     };
 
+    // Handle opening the edit dialog
     const handleEditClick = (lobby) => {
         setEditForm({
             name: lobby.name,
@@ -167,13 +170,17 @@ function GameDetail() {
         setEditDialogOpen(lobby.id);
     };
 
+
+    // Handle form input changes
     const handleEditFormChange = (e) => {
         const { name, value } = e.target;
         setEditForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    // Handle submitting the updated lobby details
     const handleEditLobby = async () => {
         const token = localStorage.getItem("token");
+        // Prepare the updated data
         const updatedData = {
             name: editForm.name,
             max_players: parseInt(editForm.max_players, 10),
@@ -182,6 +189,7 @@ function GameDetail() {
             end_time: editForm.end_time || null,
             gameId: gameId,
         };
+
         const res = await updateLobby(editDialogOpen, updatedData, token);
         if (res.success) {
             fetchLobbies();
@@ -252,6 +260,7 @@ function GameDetail() {
                                             setSnackbarSeverity("info");
                                             setSnackbarOpen(true);
                                         }}
+
                                     />
                                 )}
                                 {activeTab === 3 && (
@@ -266,9 +275,7 @@ function GameDetail() {
                                     <Box>
                                         <Typography variant="h5" className="section-title">How to Play?</Typography>
                                         <Typography component="ul" className="section-text how-to-play-list">
-                                            <li>Mode of play will be standard Entite.</li>
-                                            <li>All players must be logged in to Entite.</li>
-                                            <li>Players have 5 minutes to join the pre-game lobby.</li>
+                                            Not defined yet.
                                         </Typography>
                                     </Box>
                                 )}
@@ -276,8 +283,7 @@ function GameDetail() {
                                     <Box>
                                         <Typography variant="h5" className="section-title">Game Settings</Typography>
                                         <Typography className="section-text">
-                                            <strong>Card Size:</strong> 5x5 (Fixed)<br />
-                                            <strong>Game Speed:</strong> Medium (Constant)
+                                            No game settings yet.
                                         </Typography>
                                     </Box>
                                 )}
@@ -345,7 +351,11 @@ function GameDetail() {
                 </Grid>
             </Fade>
 
-            <Dialog className="dialog-for-delete" open={deleteConfirmOpen !== null} onClose={() => setDeleteConfirmOpen(null)}>
+            <Dialog
+                className="dialog-for-delete"
+                open={deleteConfirmOpen !== null}
+                onClose={() => setDeleteConfirmOpen(null)}
+            >
                 <DialogTitle>Are You Sure?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
@@ -400,6 +410,7 @@ function GameDetail() {
                         margin="normal"
                         variant="outlined"
                     />
+                    {/* Show start_time and end_time fields only for event lobbies */}
                     {editForm.is_event && (
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <TextField

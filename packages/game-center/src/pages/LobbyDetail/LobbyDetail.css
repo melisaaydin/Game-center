@@ -51,6 +51,7 @@
     padding: 16px;
     margin-top: 100px;
     max-height: calc(100vh - 195px);
+
 }
 
 .chat-messages {
@@ -87,8 +88,8 @@
 }
 
 .chat-message.received .message-content {
-    background-color: var(--primary-color);
-    color: var(--text-color);
+    background-color: var(--accent-color);
+    color: var(--button-text);
 }
 
 .chat-message.sent .message-content {
@@ -102,7 +103,6 @@
     height: 40px;
     margin-left: 10px;
     border-radius: 50%;
-    background-color: #1976d2;
     display: flex;
     align-items: center;
     justify-content: center;

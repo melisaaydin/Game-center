@@ -17,7 +17,7 @@ function NotificationItem({
     deleteNotification,
     navigate,
     processingInvites,
-    processingFriendRequests
+    processingFriendRequests,
 }) {
     // Validate the notification object to ensure it has an ID
     if (!notification || !notification.id) {
@@ -51,15 +51,22 @@ function NotificationItem({
             <Box className="notification-content" sx={{ position: 'relative' }}>
                 {/* Delete button for the notification */}
                 <IconButton
+                    disableRipple
                     className="delete-icon"
                     onClick={(e) => {
                         e.stopPropagation();
                         deleteNotification(notification.id);
                     }}
                     aria-label="Delete notification"
-                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                    sx={{
+                        position: 'absolute',
+                        top: 1,
+                        right: 1,
+                        paddingTop: '3px',
+                        paddingRight: '2px',
+                    }}
                 >
-                    <Close />
+                    <Close sx={{ fontSize: '14px' }} />
                 </IconButton>
 
                 {/* Avatar of the sender or system */}
@@ -243,7 +250,7 @@ function NotificationItem({
                                 </Box>
                             )}
                         </>
-                    ) : notification.type === 'lobby_invite_accepted' ? (
+                    ) : notification.type === 'lobby_invite_accepted' || notification.type === 'lobby_joined' ? (
                         <>
                             <Box className="notification-header">
                                 <MdGroup className="notification-icon" />
@@ -254,7 +261,7 @@ function NotificationItem({
                                     sx={{ cursor: 'pointer' }}
                                 >
                                     <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
-                                    {notification.content?.message || 'accepted your lobby invite'}
+                                    {notification.content?.message || 'joined the lobby'}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">

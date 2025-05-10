@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import "./ProfileSetting.css";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -20,11 +20,13 @@ import { useContext } from "react";
 import { ColorModeContext } from "../../context/ThemeContext";
 
 function ProfileSettings() {
+    //Get user data,setUser function,and loading state from the UserContext.
     const { user, setUser, loading } = useUser();
     const navigate = useNavigate();
     const { mode } = useContext(ColorModeContext);
     const theme = useTheme();
 
+    // State to store user data like name, email, bio, and profile image.
     const [userData, setUserData] = useState({ name: "", email: "", bio: "", profileImage: "" });
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -37,9 +39,10 @@ function ProfileSettings() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-
+    // useEffect to fetch user data when the component mounts or user/loading state changes.
     useEffect(() => {
         if (loading) return;
+        // If no user is logged in, show an error and redirect to login.
         if (!user) {
             setErrorMessage("Please log in to edit your profile.");
             setSnackbarMessage("Please log in to edit your profile.");
@@ -48,16 +51,19 @@ function ProfileSettings() {
             setTimeout(() => navigate("/login"), 2000);
             return;
         }
-
+        // Function to fetch user data from the backend.
         const fetchUserData = async () => {
             try {
+                // Make a GET request to fetch user profile details.
                 const response = await axios.get(`http://localhost:8081/users/user/${user.id}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
+                // Update userData state with the fetched data.
                 setUserData({
                     name: response.data.name || "",
                     email: response.data.email || "",
                     profileImage: response.data.avatar_url || "",
+                    bio: response.data.bio || "",
                 });
             } catch (error) {
                 const errorMsg = error.response?.status === 401
@@ -75,7 +81,7 @@ function ProfileSettings() {
 
         fetchUserData();
     }, [user, loading, navigate]);
-
+    // Handle file selection for profile image upload.
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file && !["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
@@ -88,7 +94,7 @@ function ProfileSettings() {
         setSelectedFile(file);
         setPreview(file ? URL.createObjectURL(file) : "");
     };
-
+    // Handle form submission to update the user profile.
     const handleUpdateProfile = async (event) => {
         event.preventDefault();
         if (newPassword && newPassword !== confirmNewPassword) {
@@ -101,10 +107,12 @@ function ProfileSettings() {
         const formData = new FormData();
         formData.append("name", userData.name);
         formData.append("email", userData.email);
+        formData.append("bio", userData.bio);
         if (currentPassword && newPassword) {
             formData.append("oldPassword", currentPassword);
             formData.append("newPassword", newPassword);
         }
+        // Include the profile image if a new one is selected.
         if (selectedFile) {
             formData.append("avatar", selectedFile);
         }
@@ -117,10 +125,12 @@ function ProfileSettings() {
                     "Content-Type": "multipart/form-data",
                 },
             });
+            // Update the user context with the new profile data.
             setUser((prev) => ({
                 ...prev,
                 name: response.data.user.name,
                 email: response.data.user.email,
+                bio: response.data.user.bio,
                 avatar_url: response.data.user.avatar_url,
             }));
             setSnackbarMessage("Profile updated successfully!");
@@ -203,7 +213,20 @@ function ProfileSettings() {
                             InputProps={{ style: { color: theme.palette.text.primary } }}
                         />
                     </div>
-
+                    <div className="input-group">
+                        <TextField
+                            label="Biography"
+                            name="bio"
+                            value={userData.bio}
+                            onChange={(e) => setUserData({ ...userData, bio: e.target.value })}
+                            fullWidth
+                            margin="normal"
+                            variant="outlined"
+                            multiline
+                            rows={4}
+                            InputProps={{ style: { color: theme.palette.text.primary } }}
+                        />
+                    </div>
                     <div className="input-group">
                         <TextField
                             label="Old Password"

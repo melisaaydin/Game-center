@@ -53,24 +53,31 @@ const closeExpiredLobbies = async () => {
       RETURNING id;
       `
         );
-        console.log(`${eventLobbiesResult.rowCount} lobby closed.`);
         // Notify clients in the affected lobbies about the event start
         if (eventLobbiesResult.rows.length > 0) {
             eventLobbiesResult.rows.forEach((lobby) => {
-                io.to(lobby.id).emit("event_started", { lobbyId: lobby.id });
+                io.to(lobby.id).emit("lobby_closed", { lobbyId: lobby.id });
             });
         }
+        // Close normal lobbies where the owner has left and 8 hours have passed
         const normalLobbiesResult = await db.query(
             `
-      UPDATE lobbies 
+    UPDATE lobbies 
       SET lobby_status = 'closed' 
       WHERE is_event = false 
       AND lobby_status = 'active' 
-      AND updated_at < NOW() - INTERVAL '8 hours' 
+      AND updated_at < NOW() - INTERVAL '8 hours'
+      AND NOT EXISTS (
+          SELECT 1 
+          FROM lobby_players lp 
+          JOIN lobbies l ON lp.lobby_id = l.id 
+          WHERE lp.lobby_id = lobbies.id 
+          AND lp.user_id = l.created_by
+      )
       RETURNING id;
       `
         );
-        console.log(`${normalLobbiesResult.rowCount} normal lobi kapatıldı.`);
+        // Clean up lobby_players and notify clients for closed normal lobbies
         if (normalLobbiesResult.rows.length > 0) {
             for (const lobby of normalLobbiesResult.rows) {
                 await db.query("DELETE FROM lobby_players WHERE lobby_id = $1", [lobby.id]);
@@ -111,15 +118,11 @@ io.on("connection", (socket) => {
             };
             await db.query(
                 "INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)",
-                [lobbyId, userId || null, joinMessage.content]
+                [lobbyId, null, joinMessage.content]
             );
             io.to(lobbyId).emit("receive_message", joinMessage);
             io.to(lobbyId).emit("lobby_joined", { userId });
-            // Create a notification for the user joining the lobby
-            await db.query(
-                "INSERT INTO notifications (user_id, type, content) VALUES ($1, 'lobby_joined', $2)",
-                [userId, JSON.stringify({ lobbyId })]
-            );
+
         }
     });
     // Handle sending a message to a specific lobby

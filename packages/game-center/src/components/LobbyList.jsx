@@ -1,13 +1,13 @@
 import React from "react";
+
 import { Box, Typography, List, ListItem, ListItemText, Button, IconButton } from "@mui/material";
 import { Lock, Event, Delete, Edit } from "@mui/icons-material";
 
 
+// LobbyList component displays a list of lobbies categorized as event or active lobbies
 function LobbyList({
-    lobbies,
     eventLobbies,
     activeLobbies,
-    pastLobbies,
     getTimeDisplay,
     onViewDetails,
     userId,
@@ -17,12 +17,14 @@ function LobbyList({
     // Render the lobby list with event and active sections
     return (
         <Box>
+            {/* Display event lobbies if there are any */}
             {eventLobbies.length > 0 && (
                 <>
-                    <Typography variant="h6" className="section-title">Event Lobbies</Typography>
+                    <Typography variant="h6" className="section-title">Event lobbies</Typography>
                     <List>
+                        {/* Iterate over event lobbies and render each one */}
                         {eventLobbies.map((lobby) => (
-                            <ListItem key={lobby.id}>
+                            <ListItem key={lobby.id} sx={{ display: "flex", alignItems: "center" }}>
                                 <ListItemText
                                     primary={lobby.name}
                                     secondary={
@@ -63,17 +65,19 @@ function LobbyList({
             )}
 
             <Typography variant="h6" className="section-title" sx={{ mt: eventLobbies.length > 0 ? 2 : 0 }}>
-                Active Lobbies
+                Active lobbies
             </Typography>
             <List>
+                {/* Display active lobbies or a message if there are none */}
                 {activeLobbies.length > 0 ? (
                     activeLobbies.map((lobby) => (
-                        <ListItem key={lobby.id}>
+                        <ListItem key={lobby.id} sx={{ display: "flex", alignItems: "center" }}>
                             <ListItemText
                                 primary={lobby.name}
                                 secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
                             />
                             <Box className="lobby-actions">
+                               {/* Show a lock icon if the lobby has a password */}
                                 {lobby.password && <Lock fontSize="small" />}
                                 <Button
                                     className="lobby-action-button"
@@ -82,6 +86,7 @@ function LobbyList({
                                 >
                                     View Details
                                 </Button>
+ {/* Show edit and delete buttons only if the user is the lobby creator */}
                                 {parseInt(lobby.created_by) === parseInt(userId) && (
                                     <>
                                         {/* Button to open the edit dialog for the lobby */}
