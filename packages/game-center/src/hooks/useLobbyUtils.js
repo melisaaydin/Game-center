@@ -16,8 +16,8 @@ const useLobbyUtils = (lobbies) => {
             const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
             return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
         } else {
-            // Show the full date if the event is more than 24 hours away
-            return `Starts: ${start.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+          // Show the full date if the event is more than 24 hours away
+            return `Start: ${start.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
         }
     };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Box,
     Typography,
@@ -16,7 +17,7 @@ import {
     Snackbar,
     Alert,
 } from "@mui/material";
-import { Lock, Event, ContentCopy } from "@mui/icons-material";
+import { Lock, Event } from "@mui/icons-material";
 import axios from "axios";
 import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../CreateLobby/CreateLobby";
@@ -34,6 +35,8 @@ function LobbySection() {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("");
     const { getTimeDisplay, eventLobbies, activeLobbies } = useLobbyUtils(lobbies);
+    const navigate = useNavigate();
+
     // Fetch lobbies and games on initial load
     useEffect(() => {
         const fetchLobbies = async () => {
@@ -95,14 +98,6 @@ function LobbySection() {
         setSnackbarOpen(true);
     };
 
-    const handleCopyLink = (lobbyId) => {
-        const link = `${window.location.origin}/lobbies/${lobbyId}`;
-        navigator.clipboard.writeText(link);
-        setSnackbarMessage("Lobby link copied to clipboard!");
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-    };
-
     const handleSnackbarClose = (event, reason) => {
         if (reason === "clickaway") return;
         setSnackbarOpen(false);
@@ -133,9 +128,13 @@ function LobbySection() {
                                 />
                                 {lobby.password && <Lock fontSize="small" className="lobby-icon" />}
                                 <Event fontSize="small" className="lobby-icon" />
-                                <IconButton onClick={() => handleCopyLink(lobby.id)}>
-                                    <ContentCopy fontSize="small" />
-                                </IconButton>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => navigate(`/lobbies/${lobby.id}`)}
+                                    sx={{ ml: 1 }}
+                                >
+                                    Go to lobby
+                                </Button>
                             </ListItem>
                         ))}
                     </List>
@@ -165,16 +164,19 @@ function LobbySection() {
                                 secondaryTypographyProps={{ className: "lobby-info" }}
                             />
                             {lobby.password && <Lock fontSize="small" className="lobby-icon" />}
-                            <IconButton onClick={() => handleCopyLink(lobby.id)}>
-                                <ContentCopy fontSize="small" />
-                            </IconButton>
+                            <Button
+                                variant="contained"
+                                onClick={() => navigate(`/lobbies/${lobby.id}`)}
+                                sx={{ ml: 1 }}
+                            >
+                                Go to lobby
+                            </Button>
                         </ListItem>
                     ))
                 ) : (
                     <Typography className="no-lobbies">No active lobbies yet.</Typography>
                 )}
             </List>
-            {/* Placeholder sections */}
             <Box className="dummy-section" sx={{ mt: 3 }}>
                 <Typography variant="h6" className="dummy-title">
                     Chat

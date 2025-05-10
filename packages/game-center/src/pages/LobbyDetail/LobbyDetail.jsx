@@ -1,19 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-    Box,
-    Typography,
-    Button,
-    Snackbar,
-    Alert,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    TextField,
-} from "@mui/material";
-import { Lock, ContentCopy, ExitToApp, SportsEsports, Delete, Edit } from "@mui/icons-material";
+import { Box, Typography, Button, Snackbar, Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, IconButton, Menu, MenuItem } from "@mui/material";
+import { Lock, ContentCopy, ExitToApp, PlayArrow, SportsEsports, Delete, MoreVert, Edit } from "@mui/icons-material";
 import { FcInvite } from "react-icons/fc";
 import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
@@ -31,7 +19,6 @@ const LobbyDetails = () => {
     const { user } = useUser();
     const { mode } = useContext(ColorModeContext);
 
-    // State for managing lobby data, loading status, and UI interactions
     const [lobby, setLobby] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -54,8 +41,10 @@ const LobbyDetails = () => {
     const [editForm, setEditForm] = useState(null);
     const chatRef = useRef(null);
     const lastMessageRef = useRef(null);
+    const [anchorEl, setAnchorEl] = useState(null); // Menü için anchor
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editForm, setEditForm] = useState({});
 
-    // Effect to load lobby details and messages on component mount or when user changes
     useEffect(() => {
         const loadLobby = async () => {
             setLoading(true);
@@ -66,6 +55,7 @@ const LobbyDetails = () => {
         };
         loadLobby();
     }, [id, user, navigate]);
+
 
     // Set up socket connections and handle real-time events
     useEffect(() => {
@@ -78,7 +68,6 @@ const LobbyDetails = () => {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
         };
-        // Register socket event listeners
         socket.on("connect", handleSocketConnect);
         socket.on("receive_message", (message) => {
             const lastMessage = lastMessageRef.current;
@@ -108,7 +97,9 @@ const LobbyDetails = () => {
         });
         socket.on("typing", ({ userName }) => setTypingUser(userName));
         socket.on("stop_typing", () => setTypingUser(null));
+
         if (socket.connected) handleSocketConnect();
+
         return () => {
             socket.off("connect", handleSocketConnect);
             socket.off("receive_message");
@@ -183,6 +174,7 @@ const LobbyDetails = () => {
         }
     };
 
+
     // Copy the lobby link to the clipboard
     const handleCopyLink = () => {
         const link = `${window.location.origin}/lobbies/${id}`;
@@ -226,67 +218,56 @@ const LobbyDetails = () => {
         inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token);
     };
 
-    // Open the edit lobby dialog and initialize the form with lobby data
-    const handleOpenEditDialog = () => {
-        // Initialize editForm with current lobby data
+  // Show the full date if the event is more than 24 hours away
+    const handleEditClick = () => {
+      // Initialize editForm with current lobby data
         setEditForm({
-            name: lobby.name || "",
-            max_players: lobby.max_players || "",
+            name: lobby.name,
+            max_players: lobby.max_players,
             password: "",
             start_time: lobby.start_time ? new Date(lobby.start_time).toISOString().slice(0, 16) : "",
             end_time: lobby.end_time ? new Date(lobby.end_time).toISOString().slice(0, 16) : "",
-        });
-        // Log the initialized editForm for debugging
-        console.log("Initialized editForm:", {
-            name: lobby.name || "",
-            max_players: lobby.max_players || "",
-            password: "",
-            start_time: lobby.start_time ? new Date(lobby.start_time).toISOString().slice(0, 16) : "",
-            end_time: lobby.end_time ? new Date(lobby.end_time).toISOString().slice(0, 16) : "",
+            is_event: lobby.is_event,
         });
         setEditDialogOpen(true);
+        setAnchorEl(null); // Menüyü kapat
     };
 
-    // Update the edit form when the user types
-    const handleEditFormChange = (e) => {
-        const { name, value } = e.target;
-        setEditForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    // Submit the updated lobby details
     const handleEditLobby = async () => {
         const token = localStorage.getItem("token");
-        // Prepare the updated data
+
         const updatedData = {
             name: editForm.name,
             max_players: parseInt(editForm.max_players, 10),
             password: editForm.password || null,
             start_time: editForm.start_time || null,
             end_time: editForm.end_time || null,
+            gameId: lobby.game_id, // gameId'ı ekledik
         };
-        // Log the data being sent for debugging
-        console.log("Updating lobby with data:", updatedData);
-        // Send the update request
-        const res = await updateLobby(id, updatedData, token);
+        const res = await apiRequest("put", `http://localhost:8081/lobbies/${id}`, updatedData, token);
         if (res.success) {
-            setLobby((prev) => ({ ...prev, ...res.data.lobby }));
+            fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
             setSnackbar({ open: true, message: "Lobby updated successfully!", severity: "success" });
             setEditDialogOpen(false);
-            socket.emit("lobby_updated", { lobbyId: id, updatedData: res.data.lobby });
-            // Log the backend response
-            console.log("Lobby update response:", res.data);
+
         } else {
             setSnackbar({ open: true, message: "Failed to update lobby: " + res.message, severity: "error" });
         }
     };
 
-    // Render loading, error, or no-data states
+    const handleMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
     if (loading) return <Typography>Loading...</Typography>;
     if (error) return <Typography color="error">{error}</Typography>;
     if (!lobby || !user) return <Typography>Lobby or user data not found.</Typography>;
 
     return (
-        <Box className="lobby-details-container">
+        <div className="lobby-details-container">
             <Box className="lobby-content">
                 {/* Left section with lobby details and players */}
                 <Box className="lobby-left-section">
@@ -309,29 +290,34 @@ const LobbyDetails = () => {
                                 </Button>
                             ) : (
                                 <>
-                                    <Button variant="contained" color="secondary" onClick={() => setLeaveConfirmOpen(true)} startIcon={<ExitToApp />}>
-                                        Leave Lobby
-                                    </Button>
-                                    <Button variant="contained" color="primary" onClick={handlePlayGame} startIcon={<SportsEsports />}>
-                                        Play
-                                    </Button>
-                                    <Button variant="outlined" onClick={handleOpenInviteDialog} startIcon={<FcInvite />}>
-                                        Invite Friends
-                                    </Button>
-                                    {lobby.created_by === user.id && (
-                                        <>
-                                            <Button variant="contained" color="error" onClick={() => setDeleteConfirmOpen(true)} startIcon={<Delete />}>
-                                                Delete Lobby
-                                            </Button>
-                                            <Button variant="contained" color="warning" onClick={handleOpenEditDialog} startIcon={<Edit />}>
-                                                Edit Lobby
-                                            </Button>
-                                        </>
-                                    )}
+                                    <IconButton
+                                        aria-label="more"
+                                        aria-controls="lobby-menu"
+                                        aria-haspopup="true"
+                                        onClick={handleMenuOpen}
+                                        color="inherit"
+                                    >
+                                        <MoreVert />
+                                    </IconButton>
+                                    <Menu
+                                        id="lobby-menu"
+                                        anchorEl={anchorEl}
+                                        open={Boolean(anchorEl)}
+                                        onClose={handleMenuClose}
+                                    >
+                                        <MenuItem onClick={() => { handleMenuClose(); setLeaveConfirmOpen(true); }}><ExitToApp />  Leave Lobby</MenuItem>
+                                        <MenuItem onClick={handlePlayGame}><SportsEsports />  Play</MenuItem>
+                                        <MenuItem onClick={handleOpenInviteDialog}><FcInvite />  Invite Friends</MenuItem>
+                                        {lobby.created_by === user.id && (
+                                            <>
+                                                <MenuItem onClick={handleEditClick}><Edit /> Edit Lobby</MenuItem>
+                                                <MenuItem onClick={() => { handleMenuClose(); setDeleteConfirmOpen(true); }}><Delete />  Delete Lobby</MenuItem>
+                                            </>
+                                        )}
+                                        <MenuItem onClick={handleCopyLink}><ContentCopy /> Copy Lobby Link</MenuItem>
+                                    </Menu>
                                 </>
                             )}
-                            <Button variant="outlined" onClick={handleCopyLink} startIcon={<ContentCopy />}>Copy Lobby Link</Button>
-                            <Button variant="outlined" onClick={() => navigate("/")}>Back to Home</Button>
                         </Box>
                     </Box>
                     <PlayersSection lobby={lobby} />
@@ -406,8 +392,8 @@ const LobbyDetails = () => {
                     <TextField
                         label="Lobby Name"
                         name="name"
-                        value={editForm?.name || ""}
-                        onChange={handleEditFormChange}
+                        value={editForm.name || ""}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                         fullWidth
                         margin="normal"
                         variant="outlined"
@@ -417,47 +403,46 @@ const LobbyDetails = () => {
                         label="Max Players"
                         name="max_players"
                         type="number"
-                        value={editForm?.max_players || ""}
-                        onChange={handleEditFormChange}
+                        value={editForm.max_players || ""}
+                        onChange={(e) => setEditForm({ ...editForm, max_players: e.target.value })}
                         fullWidth
                         margin="normal"
                         variant="outlined"
-                        inputProps={{ min: lobby?.current_players || 1 }}
+                        inputProps={{ min: lobby.current_players || 1 }}
                         required
                     />
                     <TextField
                         label="Password (leave blank to remove)"
                         name="password"
                         type="password"
-                        value={editForm?.password || ""}
-                        onChange={handleEditFormChange}
+                        value={editForm.password || ""}
+                        onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
                         fullWidth
                         margin="normal"
                         variant="outlined"
                     />
-                    {/* Show start_time and end_time fields only for event lobbies */}
-                    {lobby?.is_event && (
+                    {editForm.is_event && (
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <TextField
-                                label="Start Time (optional)"
+                                label="Start Time"
                                 name="start_time"
                                 type="datetime-local"
-                                value={editForm?.start_time || ""}
-                                onChange={handleEditFormChange}
+                                value={editForm.start_time || ""}
+                                onChange={(e) => setEditForm({ ...editForm, start_time: e.target.value })}
                                 fullWidth
                                 margin="normal"
                                 variant="outlined"
                             />
                             <TextField
-                                label="End Time (optional)"
+                                label="End Time"
                                 name="end_time"
                                 type="datetime-local"
-                                value={editForm?.end_time || ""}
-                                onChange={handleEditFormChange}
+                                value={editForm.end_time || ""}
+                                onChange={(e) => setEditForm({ ...editForm, end_time: e.target.value })}
                                 fullWidth
                                 margin="normal"
                                 variant="outlined"
-                                inputProps={{ min: editForm?.start_time || undefined }}
+                                inputProps={{ min: editForm.start_time || undefined }}
                             />
                         </Box>
                     )}
@@ -486,7 +471,7 @@ const LobbyDetails = () => {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-        </Box>
+        </div>
     );
 };
 

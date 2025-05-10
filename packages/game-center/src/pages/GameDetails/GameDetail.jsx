@@ -46,8 +46,7 @@ function GameDetail() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(null);
     const [editDialogOpen, setEditDialogOpen] = useState(null);
     const [editForm, setEditForm] = useState({});
-    // Get utility functions and filtered lobby lists from the useLobbyUtils hook
-    const { getTimeDisplay, eventLobbies, activeLobbies } = useLobbyUtils(lobbies);
+    const { getTimeDisplay, eventLobbies, activeLobbies, updateLobby } = useLobbyUtils(lobbies);
 
     useEffect(() => {
         if (!gameId) {
@@ -171,6 +170,7 @@ function GameDetail() {
         setEditDialogOpen(lobby.id);
     };
 
+
     // Handle form input changes
     const handleEditFormChange = (e) => {
         const { name, value } = e.target;
@@ -187,8 +187,9 @@ function GameDetail() {
             password: editForm.password || null,
             start_time: editForm.start_time || null,
             end_time: editForm.end_time || null,
+            gameId: gameId,
         };
-        // Send the update request
+
         const res = await updateLobby(editDialogOpen, updatedData, token);
         if (res.success) {
             fetchLobbies();
@@ -213,21 +214,8 @@ function GameDetail() {
 
     return (
         <Box className="game-detail-container">
-            {/* Center the tabs for navigation */}
-            <Box sx={{ justifyContent: "center", alignItems: "center", display: "flex" }}>
-                {/* Tabs for switching between different sections */}
-                <Tabs value={activeTab} onChange={handleTabChange} className="game-tabs">
-                    <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Create Lobby" icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Lobbies" icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Game History" icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="How to Play" icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
-                    <Tab label="Settings" icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
-                </Tabs>
-            </Box>
-            {/* Fade animation for the main content */}
             <Fade in={true} timeout={500}>
-                <Grid container spacing={3} sx={{ padding: "0 20px" }}>
+                <Grid container spacing={1}>
                     <Grid item xs={12} md={8}>
                         <Card className="game-card">
                             <CardContent>
@@ -263,16 +251,16 @@ function GameDetail() {
                                         eventLobbies={eventLobbies}
                                         activeLobbies={activeLobbies}
                                         getTimeDisplay={getTimeDisplay}
-                                        onCopyLink={(lobbyId) => {
-                                            const link = `${window.location.origin}/lobbies/${lobbyId}`;
-                                            navigator.clipboard.writeText(link);
-                                            setSnackbarMessage("Lobby link copied!");
-                                            setSnackbarSeverity("success");
-                                            setSnackbarOpen(true);
-                                        }}
                                         userId={user.id}
                                         onDeleteClick={handleDeleteClick}
                                         onEditClick={handleEditClick}
+                                        onViewDetails={(lobbyId) => {
+                                            navigate(`/lobbies/${lobbyId}`);
+                                            setSnackbarMessage("Navigating to lobby details...");
+                                            setSnackbarSeverity("info");
+                                            setSnackbarOpen(true);
+                                        }}
+
                                     />
                                 )}
                                 {activeTab === 3 && (
@@ -302,7 +290,6 @@ function GameDetail() {
                             </CardContent>
                         </Card>
                     </Grid>
-
                     <Grid item xs={12} md={4}>
                         <Card className="game-card sidebar-card">
                             <CardContent>
@@ -339,16 +326,27 @@ function GameDetail() {
                                     >
                                         Play
                                     </Button>
-                                    <Button
-                                        className="quick-action-button back-button"
-                                        variant="text"
-                                        onClick={() => navigate("/")}
-                                    >
-                                        Back to Home
-                                    </Button>
                                 </Box>
                             </CardContent>
                         </Card>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                        <Box sx={{ position: 'fixed', right: 15, top: 80, width: 80 }}>
+                            <Tabs
+                                value={activeTab}
+                                onChange={handleTabChange}
+                                className="game-tabs"
+                                orientation="vertical"
+                                variant="scrollable"
+                            >
+                                <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Create Lobby" icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Lobbies" icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Game History" icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="How to Play" icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label="Settings" icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
+                            </Tabs>
+                        </Box>
                     </Grid>
                 </Grid>
             </Fade>

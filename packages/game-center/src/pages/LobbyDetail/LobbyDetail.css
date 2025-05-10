@@ -1,14 +1,12 @@
 .lobby-details-container {
-    min-height: 100vh !important;
-    padding: 30px !important;
-    margin: 0 auto;
     display: flex;
-    flex-direction: column;
-    padding-left: 30px !important;
+    margin-left: 90px;
 
+    flex-direction: column;
 }
 
 .lobby-header {
+
     border-radius: 16px;
     padding: 10px;
     text-align: left;
@@ -20,12 +18,10 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    height: 100%;
 }
 
 .lobby-actions {
     display: flex;
-    justify-content: flex-start;
     align-items: center;
     gap: 5px;
     padding: 6px 0;
@@ -43,16 +39,15 @@
 .players-card {
     max-height: 300px;
     overflow-y: auto;
-    background: var(--background-color) !important;
+    background: var(--background-color);
     margin-top: 20px;
 }
 
 .chat-card {
-    max-width: 990px;
+    max-width: 940px;
     display: flex;
     flex-direction: column;
-    background: var(--background-color) !important;
-    border-radius: 16px;
+    background: var(--background-color);
     padding: 16px;
     margin-top: 100px;
     max-height: calc(100vh - 195px);
@@ -98,8 +93,8 @@
 }
 
 .chat-message.sent .message-content {
-    background-color: var(--secondary-color);
-    color: var(--text-color);
+    background-color: var(--primary-color);
+    color: var(--button-text);
     padding: 8px 16px;
 }
 
@@ -157,10 +152,18 @@
         margin-top: 0;
     }
 
+    .lobby-details-container {
+        margin-top: 80px;
+    }
 }
 
 @media (min-width: 900px) {
+    .lobby-details-container {
+        margin-top: 90px;
+    }
+
     .lobby-content {
+
         flex-direction: row;
         height: calc(100vh - 200px);
     }
@@ -176,7 +179,6 @@
 
     .chat-card {
         width: 60%;
-
     }
 
     .chat-messages {

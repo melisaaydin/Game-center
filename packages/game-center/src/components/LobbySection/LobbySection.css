@@ -10,15 +10,15 @@
 }
 
 .create-lobby-button {
-    background-color: var(--button-bg) !important;
-    color: var(--button-text) !important;
-    border-radius: 50px !important;
-    text-transform: none !important;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border-radius: 50px;
+    text-transform: none;
 }
 
 .create-lobby-button:hover {
-    background-color: var(--button-hover-bg) !important;
-    color: var(--button-hover-text) !important;
+    background-color: var(--button-hover-bg);
+    color: var(--button-hover-text);
 }
 
 .lobby-list {
@@ -28,6 +28,7 @@
 }
 
 .lobby-item {
+    border: 2px 0 0 var(--secondary-color);
     border-bottom: 1px solid var(--shadow-color);
     padding: 10px 0;
     display: flex;

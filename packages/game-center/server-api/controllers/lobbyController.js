@@ -143,6 +143,12 @@ const updateLobby = async (req, res) => {
     }
 
     try {
+        // Update the lobby in the database
+        const result = await db.query(
+            `UPDATE lobbies
+             SET name = $1, is_event = $2, start_time = $3, end_time = $4, password = $5, game_id = $6, max_players = $7, updated_at = NOW()
+             WHERE id = $8 RETURNING *`,
+            [name, is_event, start_time, end_time, hashedPassword, gameId, max_players, id]
         // Check if the lobby exists and the user is the creator
         const lobbyResult = await db.query(
             "SELECT * FROM lobbies WHERE id = $1 AND created_by = $2",

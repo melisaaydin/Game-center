@@ -29,15 +29,15 @@ export const ThemeContextProvider = ({ children }) => {
                     mode,
                     ...(mode === "light"
                         ? {
-                            primary: { main: "rgb(86, 18, 29)" },
+                            primary: { main: "rgb(169, 29, 52)" },
                             secondary: { main: pink[300] },
                             accent: { main: "rgb(169, 29, 52)" },
                             background: { default: "#fafafa", paper: "#ffffff" },
                             text: { primary: "#2d2d2d", secondary: "rgba(0, 0, 0, 0.7)", subtext: "rgba(44, 13, 18, 0.71)" },
-                            buttonBg: "rgb(86, 18, 29)",
+                            buttonBg: "rgb(169, 29, 52)",
                             buttonText: "#ffffff",
                             buttonHoverBg: "#ffffff",
-                            buttonHoverText: "rgb(86, 18, 29)",
+                            buttonHoverText: "rgb(169, 29, 52)",
                         }
                         : {
                             primary: { main: "rgb(225, 50, 75)" },
