@@ -78,8 +78,8 @@ Projeyi kendi bilgisayarınızda çalıştırmak isterseniz:
 
 1. Bu repoyu klonlayın:
    ```bash
-   git clone https://github.com/kullanici-adi/proje-adi.git
-   cd proje-adi
+   git clone https://github.com/melisaaydin/Game-center.git
+   cd Game-center
    ```
 
 2. Bağımlılıkları yükleyin:
