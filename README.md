@@ -93,6 +93,11 @@ Projeyi kendi bilgisayarınızda çalıştırmak isterseniz:
    ```bash
    npm run dev
    ```
+   
+5. Uygulamaya giriş yapmak için aşağıdaki hesap bilgilerini kullanabilirsiniz:
+
+E-mail: deneme@gmail.com
+
+Şifre: Deneme123
 
 ---
-
