@@ -1,6 +1,3 @@
-[submodule "packages/packages/tombala"]
-	path = packages/packages/tombala
-	url = https://github.com/melisaaydin/tombala.git
 [submodule "packages/tombala"]
 	path = packages/tombala
 	url = https://github.com/melisaaydin/tombala.git
