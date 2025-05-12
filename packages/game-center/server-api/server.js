@@ -91,6 +91,108 @@ const closeExpiredLobbies = async () => {
 setInterval(closeExpiredLobbies, 10 * 60 * 1000);
 
 io.on("connection", (socket) => {
+    const gameRooms = {};
+    socket.on("create_game_room", ({ gameId, roomId, userId }) => {
+        if (!gameRooms[roomId]) {
+            gameRooms[roomId] = {
+                gameId,
+                board: Array(15).fill(null),
+                selectedCells: {},
+                turn: null, started: false,
+                winner: null,
+                players: [],
+                currentNumber: 1,
+            };
+        }
+        socket.join(roomId);
+        const userResult = db.query("SELECT name FROM users WHERE id = $1", [userId]);
+        const username = userResult.rows[0]?.name || socket.username;
+        gameRooms[roomId].players.push({ id: userId, name: username });
+        io.to(roomId).emit("player_joined", { playerName: username });
+    });
+    socket.on("join_game", ({ gameName, gameType, id, userId }) => {
+        socket.join(id);
+        const userResult = db.query("SELET name FROM users WHERE id = $1", [userId]);
+        const username = userResult.rows[0]?.name || socket.username;
+        if (gameType === "lobby") {
+            // Get players in the lobby
+            const playersResult = db.query(
+                "SELECT u.id, u.name FROM lobby_players lp JOIN users u ON lp.user_id = u.id WHERE lp.lobby_id = $1", [id]
+            );
+            const players = playersResult.rows;
+            if (!gameRooms[id]) {
+                gameRooms[id] = {
+                    gameId: gameName,
+                    board: Array(15).fill(null),
+                    selectedCells: {},
+                    turn: null,
+                    started: false,
+                    winner: null,
+                    players: players.map(p => ({ id: p.id, name: p.name })),
+                    currentNumber: 1,
+
+                };
+            } else {
+                gameRooms[id].players.push({ id: userId, name: username });
+            }
+
+        } else {
+            if (gameRooms[id]) {
+                gameRooms[id].players.push({ id: userId, name: username });
+            }
+        }
+        io.to(id).emit("player_joined", { playerName: username });
+    })
+    socket.on("start_game", ({ gameName, gameType, id, userId }) => {
+        const game = gameRooms[id];
+        if (game && !game.started && game.players.length > 1) {
+            game.started = true;
+            game.turn = game.players[0].name;
+            io.to(id).emit("game_started");
+        }
+    })
+    socket.on("draw_number", ({ id, number }) => {
+        const game = gameRooms[id];
+        if (game && game.started && !game.winner) {
+            game.currentNumber = number;
+            io.to(id).emit("number_drawn", { number });
+        }
+    });
+    socket.on("make_move", ({ id, cellId, userId }) => {
+        const game = gameRooms[id];
+        if (game && game.started && !game.winner && game.turn === socket.username) {
+            if (!game.selectedCells[userId]) game.selectedCells[userId] = [];
+            if (game.selectedCells[userId].includes(cellId)) return;
+            game.selectedCells[userId].push(cellId);
+            const nextPlayerIndex = (game.players.findIndex(p => p.name === game.turn) + 1) % game.players.length;
+            game.turn = game.players[nextPlayerIndex].name;
+            io.to(id).emit("game_state", game);
+        }
+    });
+
+    socket.on("game_won", ({ id, winner }) => {
+        const game = gameRooms[id];
+        if (game && !game.winner) {
+            game.winner = winner;
+            io.to(id).emit("game_won", { winner });
+        }
+    });
+
+    socket.on("reset_game", ({ id }) => {
+        if (gameRooms[id]) {
+            gameRooms[id] = {
+                gameId: gameRooms[id].gameId,
+                board: Array(15).fill(null),
+                selectedCells: {},
+                turn: null,
+                started: false,
+                winner: null,
+                players: gameRooms[id].players,
+                currentNumber: 1,
+            };
+            io.to(id).emit("game_state", gameRooms[id]);
+        }
+    })
     // Set a username for the socket connection
     socket.on("set_username", (username) => {
         socket.username = username;
@@ -233,6 +335,16 @@ io.on("connection", (socket) => {
     // Handle client disconnection
     socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.username || socket.id}`);
+        for (const roomId in gameRooms) {
+            gameRooms[roomId].players = gameRooms[roomId].players.filter(
+                (p) => p.id !== socket.id
+            );
+            if (gameRooms[roomId].players.length === 0) {
+                delete gameRooms[roomId];
+            } else {
+                io.to(roomId).emit("game_state", gameRooms[roomId]);
+            }
+        }
     });
 });
 

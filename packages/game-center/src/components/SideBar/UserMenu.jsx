@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Box, IconButton, Avatar, Menu, MenuItem, Switch, Typography, Button } from '@mui/material';
+import { Box, IconButton, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { MdLogout, MdLogin, MdSettings } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
-import { useTheme } from '@mui/material/styles';
 import { ColorModeContext } from '../../context/ThemeContext';
 import Coin from '../../assets/star.png';
 import { FaPlus } from 'react-icons/fa6';
@@ -14,7 +13,6 @@ import { ReactComponent as Moon } from "../../assets/Moon.svg"
 function UserMenu() {
     const { user, logout } = useUser();
     const navigate = useNavigate();
-    const theme = useTheme();
     const { toggleColorMode, mode } = React.useContext(ColorModeContext);
     const [anchorEl, setAnchorEl] = useState(null);
 

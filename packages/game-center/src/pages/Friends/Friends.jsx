@@ -24,7 +24,6 @@ import "./Friends.css";
 
 // Component for managing friends and friend requests
 function Friends() {
-    const { user } = useUser();
     const [friendRequests, setFriendRequests] = useState([]);
     const [friends, setFriends] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);

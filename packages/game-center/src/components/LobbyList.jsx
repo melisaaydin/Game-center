@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Box, Typography, List, ListItem, ListItemText, Button, IconButton } from "@mui/material";
 import { Lock, Event, Delete, Edit } from "@mui/icons-material";
 
@@ -77,7 +75,7 @@ function LobbyList({
                                 secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
                             />
                             <Box className="lobby-actions">
-                               {/* Show a lock icon if the lobby has a password */}
+                                {/* Show a lock icon if the lobby has a password */}
                                 {lobby.password && <Lock fontSize="small" />}
                                 <Button
                                     className="lobby-action-button"
@@ -86,7 +84,7 @@ function LobbyList({
                                 >
                                     View Details
                                 </Button>
- {/* Show edit and delete buttons only if the user is the lobby creator */}
+                                {/* Show edit and delete buttons only if the user is the lobby creator */}
                                 {parseInt(lobby.created_by) === parseInt(userId) && (
                                     <>
                                         {/* Button to open the edit dialog for the lobby */}

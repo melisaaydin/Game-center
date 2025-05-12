@@ -1,4 +1,3 @@
-import React from 'react';
 import { Route, Routes, Outlet, useLocation } from 'react-router-dom';
 import Login from './pages/Login/Login';
 import SignUp from './pages/Signup/SignUp';
@@ -17,7 +16,6 @@ import Friends from './pages/Friends/Friends';
 import Sidebar from './components/SideBar/SideBar';
 
 function Layout() {
-  const location = useLocation();
 
   return (
     <div className="layout-container">

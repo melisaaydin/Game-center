@@ -3,12 +3,10 @@ import './Home.css';
 import GameList from '../../components/GameList/GameList';
 import LobbySection from '../../components/LobbySection/LobbySection';
 import { ColorModeContext } from "../../context/ThemeContext";
-import { useTheme } from "@mui/material/styles";
 import Slides from '../../components/Slides/Slides';
 
 const Home = () => {
     const { mode } = useContext(ColorModeContext);
-    const theme = useTheme();
 
     return (
         <div className={`home-container ${mode === "dark" ? "profile-dark" : "profile-light"}`}>
