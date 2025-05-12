@@ -1,24 +1,27 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, Snackbar, Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, IconButton, Menu, MenuItem } from "@mui/material";
-import { Lock, ContentCopy, ExitToApp, PlayArrow, SportsEsports, Delete, MoreVert, Edit } from "@mui/icons-material";
-import { FcInvite } from "react-icons/fc";
+import { Lock, MoreVert } from "@mui/icons-material";
 import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
 import ChatSection from "../../components/LobbyDetails/ChatSection";
 import PlayersSection from "../../components/LobbyDetails/PlayersSection";
 import InviteDialog from "../../components/LobbyDetails/InviteDialog";
 // Import utility functions for lobby operations and socket communication
-import { socket, fetchLobbyDetails, leaveLobby, deleteLobby, inviteFriend, apiRequest, updateLobby } from "../../utils/lobbyUtils";
+import { socket, fetchLobbyDetails, leaveLobby, deleteLobby, inviteFriend, apiRequest } from "../../utils/lobbyUtils";
 import "./LobbyDetail.css";
-
+import Copy from "../../assets/copy.png"
+import Invitation from "../../assets/invitation.png"
+import JoyStick from "../../assets/joystick.png"
+import LogOut from "../../assets/log-out.png"
+import Pencil from "../../assets/pencil.png"
+import Trash from "../../assets/trash-bin.png"
 // LobbyDetails component displays detailed information about a specific lobby
 const LobbyDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useUser();
     const { mode } = useContext(ColorModeContext);
-
     const [lobby, setLobby] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -299,16 +302,17 @@ const LobbyDetails = () => {
                                         open={Boolean(anchorEl)}
                                         onClose={handleMenuClose}
                                     >
-                                        <MenuItem onClick={() => { handleMenuClose(); setLeaveConfirmOpen(true); }}><ExitToApp />  Leave Lobby</MenuItem>
-                                        <MenuItem onClick={handlePlayGame}><SportsEsports />  Play</MenuItem>
-                                        <MenuItem onClick={handleOpenInviteDialog}><FcInvite />  Invite Friends</MenuItem>
+                                        <MenuItem onClick={() => { handleMenuClose(); setLeaveConfirmOpen(true); }}><img src={LogOut} alt="JoyStick" className="lobby-detail-img" /> Leave Lobby</MenuItem>
+
+                                        <MenuItem onClick={handlePlayGame}> <img src={JoyStick} alt="Play" className="lobby-detail-img" />   Play</MenuItem>
+                                        <MenuItem onClick={handleOpenInviteDialog}><img src={Invitation} alt="Invitation" className="lobby-detail-img" />  Invite Friends</MenuItem>
                                         {lobby.created_by === user.id && (
                                             <>
-                                                <MenuItem onClick={handleEditClick}><Edit /> Edit Lobby</MenuItem>
-                                                <MenuItem onClick={() => { handleMenuClose(); setDeleteConfirmOpen(true); }}><Delete />  Delete Lobby</MenuItem>
+                                                <MenuItem onClick={handleEditClick}><img src={Pencil} alt="Pencil" className="lobby-detail-img" /> Edit Lobby</MenuItem>
+                                                <MenuItem onClick={() => { handleMenuClose(); setDeleteConfirmOpen(true); }}><img src={Trash} alt="Trash" className="lobby-detail-img" />  Delete Lobby</MenuItem>
                                             </>
                                         )}
-                                        <MenuItem onClick={handleCopyLink}><ContentCopy /> Copy Lobby Link</MenuItem>
+                                        <MenuItem onClick={handleCopyLink}><img src={Copy} alt="Copy" className="lobby-detail-img" /> Copy Lobby Link</MenuItem>
                                     </Menu>
                                 </>
                             )}
