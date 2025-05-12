@@ -147,6 +147,12 @@
     font-style: italic;
 }
 
+.lobby-detail-img {
+    width: 23px;
+    height: 23px;
+    margin-right: 10px;
+}
+
 @media(max-width:1200px) {
     .chat-card {
         margin-top: 0;
