@@ -164,10 +164,12 @@ const LobbyDetails = () => {
 
     // Handle playing the game associated with the lobby
     const handlePlayGame = () => {
-        if (lobby.game_id === "tombala") {
-            const gameUrl = `${window.location.origin}/packages/${lobby.game_id}`;
+        if (lobby && lobby.game_id) {
+            const gameName = lobby.game_id.toLowerCase();
+            const gameUrl = `${window.location.origin}/games/${gameName}/lobby/${id}`; // Dynamic URL
             window.open(gameUrl, "_blank");
-            setSnackbar({ open: true, message: `Opening ${lobby.game_id} game...`, severity: "info" });
+            setSnackbar({ open: true, message: `Starting ${gameName} game in lobby ${id}...`, severity: "info" });
+            socket.emit("start_game_in_lobby", { id, userId: user.id, gameId: lobby.game_id });
         } else {
             setSnackbar({ open: true, message: "Game not available yet!", severity: "warning" });
         }

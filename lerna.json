@@ -1,8 +1,10 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-  "version": "1.0.0",
+  "version": "independent",
+  "useWorkspaces": true,
   "useNx": false,
   "packages": [
     "packages/*"
-  ]
+  ],
+  "start": "lerna run start --scope=game-center"
 }

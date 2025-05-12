@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, Button, CircularProgress, Avatar, Link as MuiLink } from '@mui/material';
 import { IoSearch } from 'react-icons/io5';
 import { Link } from 'react-router-dom';

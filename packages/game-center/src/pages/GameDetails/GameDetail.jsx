@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import {
     Box,
     Typography,
@@ -28,8 +28,8 @@ import CreateLobby from "../../components/CreateLobby/CreateLobby";
 import LobbyList from "../../components/LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
-import { updateLobby } from "../../utils/lobbyUtils";
 
+import { socket } from "../../utils/lobbyUtils";
 function GameDetail() {
     //Get gameId from the URL parameters
     const { gameId } = useParams();
@@ -80,15 +80,16 @@ function GameDetail() {
         return () => clearInterval(interval);
     }, [gameId, navigate]);
     // Function to fetch lobbies for the current game
-    const fetchLobbies = async () => {
+    const fetchLobbies = useCallback(async () => {
         if (!gameId) return;
         try {
             const res = await axios.get(`http://localhost:8081/lobbies?gameId=${gameId}`);
             if (res.data.success) {
-                // Update the lobbies state with the fetched data
                 setLobbies(res.data.lobbies || []);
-                // Calculate the total number of players across all lobbies
-                const total = (res.data.lobbies || []).reduce((sum, lobby) => sum + (lobby.current_players || 0), 0);
+                const total = (res.data.lobbies || []).reduce(
+                    (sum, lobby) => sum + (lobby.current_players || 0),
+                    0
+                );
                 setTotalPlayers(total);
             } else {
                 setLobbies([]);
@@ -98,7 +99,7 @@ function GameDetail() {
             setLobbies([]);
             console.error("Could not fetch lobbies:", err);
         }
-    };
+    }, [gameId]);
     // Fetch lobbies when the component mounts and periodically refresh them
     useEffect(() => {
         fetchLobbies();
@@ -116,12 +117,15 @@ function GameDetail() {
     };
 
     const handlePlayGame = () => {
-        if (gameId === "tombala") {
-            const gameUrl = `${window.location.origin}/games/tombala`;
+        if (game && gameId) {
+            const gameName = gameId.toLowerCase();
+            const roomId = Math.random.toString(36).substr(2, 8); //random room code
+            const gameUrl = `${window.location.origin}/games/${gameName}/random/${roomId}`; // Dynamic URL
             window.open(gameUrl, "_blank");
-            setSnackbarMessage("Opening Tombala game...");
+            setSnackbarMessage(`Joining random ${gameId} game with room code: ${roomId}...`);
             setSnackbarSeverity("info");
             setSnackbarOpen(true);
+            socket.emit("create_game_room", { gameId, roomId, userId: user.id });
         } else {
             setSnackbarMessage("Game not available yet!");
             setSnackbarSeverity("warning");
