@@ -29,7 +29,6 @@ import LobbyList from "../../components/LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
 
-import { socket } from "../../utils/lobbyUtils";
 function GameDetail() {
     //Get gameId from the URL parameters
     const { gameId } = useParams();
@@ -93,22 +92,20 @@ function GameDetail() {
                 setTotalPlayers(total);
             } else {
                 setLobbies([]);
-                console.error("Could not fetch lobbies:", res.data.message);
             }
         } catch (err) {
             setLobbies([]);
-            console.error("Could not fetch lobbies:", err);
         }
     }, [gameId]);
     // Fetch lobbies when the component mounts and periodically refresh them
     useEffect(() => {
-        fetchLobbies();
-        const interval = setInterval(fetchLobbies, 30000);
-        return () => clearInterval(interval);
+        fetchLobbies(); // Initial fetch
+        const interval = setInterval(fetchLobbies, 30000); // Refresh every 30 seconds
+        return () => clearInterval(interval); // Clean up interval on unmount
     }, [gameId]);
 
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
+        setActiveTab(newValue); // Update active tab
     };
 
     const handleSnackbarClose = (event, reason) => {
@@ -116,23 +113,78 @@ function GameDetail() {
         setSnackbarOpen(false);
     };
 
-    const handlePlayGame = () => {
-        if (game && gameId) {
-            const gameName = gameId.toLowerCase();
-            const roomId = Math.random.toString(36).substr(2, 8); //random room code
-            const gameUrl = `${window.location.origin}/games/${gameName}/random/${roomId}`; // Dynamic URL
-            window.open(gameUrl, "_blank");
-            setSnackbarMessage(`Joining random ${gameId} game with room code: ${roomId}...`);
-            setSnackbarSeverity("info");
+    // packages/game-center/src/pages/GameDetail/GameDetail.jsx
+    const handlePlayGame = async () => {
+        if (!user) {
+            setSnackbarMessage('Please log in!');
+            setSnackbarSeverity('error');
             setSnackbarOpen(true);
-            socket.emit("create_game_room", { gameId, roomId, userId: user.id });
-        } else {
-            setSnackbarMessage("Game not available yet!");
-            setSnackbarSeverity("warning");
+            navigate('/login');
+            return;
+        }
+        if (!game || !gameId) {
+            setSnackbarMessage('Game not available yet!');
+            setSnackbarSeverity('warning');
+            setSnackbarOpen(true);
+            return;
+        }
+        // Check for active lobbies
+        const activeLobby = lobbies.find(
+            (lobby) => lobby.game_id === gameId && lobby.lobby_status === 'active' && lobby.current_players > 0
+        );
+
+        if (activeLobby) {
+            // Join existing active lobby
+            const gameUrl = `http://localhost:3001/games/${gameId}/lobby/${activeLobby.id}`;
+            window.open(gameUrl, '_blank'); // Open in new tab
+            setSnackbarMessage(`${gameId} game is starting for lobby ${activeLobby.id}...`);
+            setSnackbarSeverity('info');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        // Create a new lobby if no active one exists
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(
+                'http://localhost:8081/lobbies',
+                {
+                    name: `${user.name}'s Lobby`,
+                    max_players: 10,
+                    password: null,
+                    start_time: null,
+                    end_time: null,
+                    gameId,
+                    created_by: user.id,
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (res.data.success) {
+                const newLobby = res.data.lobby;
+                // Join the new lobby
+                await axios.post(
+                    `http://localhost:8081/lobbies/${newLobby.id}/join`,
+                    { userId: user.id },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                // Redirect to game
+                const gameUrl = `http://localhost:3001/games/${gameId}/lobby/${newLobby.id}`;
+                window.open(gameUrl, '_blank');
+                setSnackbarMessage('New lobby created and game is starting...');
+                setSnackbarSeverity('success');
+                setSnackbarOpen(true);
+                fetchLobbies(); // Refresh lobby list
+            } else {
+                setSnackbarMessage('Could not create lobby: ' + res.data.message);
+                setSnackbarSeverity('error');
+                setSnackbarOpen(true);
+            }
+        } catch (err) {
+            setSnackbarMessage('Could not create lobby!');
+            setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
     };
-
     const handleDeleteClick = (lobbyId) => {
         setDeleteConfirmOpen(lobbyId);
     };

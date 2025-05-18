@@ -10,7 +10,7 @@ function NavLinks() {
             <Box sx={{ flexGrow: 1 }}>
                 {NAV_LINKS.map((link) => (
                     <Link
-                        key={link.path}
+                        key={link.key}
                         className={`link ${location.pathname === link.path ? 'active' : ''}`}
                         to={link.path}
                     >

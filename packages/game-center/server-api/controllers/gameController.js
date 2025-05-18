@@ -37,7 +37,6 @@ const searchGames = async (req, res) => {
             "SELECT id, title, image_url FROM games WHERE title ILIKE $1",
             [`%${q}%`]
         );
-        console.log(`Search query "${q}" returned:`, result.rows);
         res.json({ games: result.rows });
     } catch (err) {
         console.error("Search games error:", err.message, err.stack);

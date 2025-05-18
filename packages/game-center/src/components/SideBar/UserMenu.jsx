@@ -69,6 +69,7 @@ function UserMenu() {
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
+
                 >
                     {user ? (
                         [
@@ -85,14 +86,14 @@ function UserMenu() {
                         </MenuItem>
                     )}
                 </Menu>
-                <div onChange={toggleColorMode} className='dark_mode'>
+                <div className='dark_mode'>
                     <input
                         className='dark_mode_input'
                         type='checkbox'
                         id='darkmode-toggle'
-                        checked={mode === 'dark'}
+                        onChange={toggleColorMode}
                     />
-                    <label className='dark_mode_label' for='darkmode-toggle'>
+                    <label className='dark_mode_label' htmlFor='darkmode-toggle'>
                         <Sun />
                         <Moon />
 

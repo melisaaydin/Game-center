@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@TOYOTA/game-center": [
+                "packages/game-center/src/index"
+            ],
+            "@TOYOTA/tombala": [
+                "packages/tombala/src/index"
+            ]
+        }
+    },
+    "include": [
+        "packages"
+    ]
+}

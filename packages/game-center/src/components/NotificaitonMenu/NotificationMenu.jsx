@@ -75,50 +75,48 @@ function NotificationMenu() {
                 onClose={handleClose}
                 PaperProps={{
                     className: 'notification-menu',
-                    elevation: 3,
+                    elevation: 2,
                     sx: { width: '400px', maxHeight: '500px', overflowY: 'auto' },
                 }}
                 aria-live="polite"
             >
-                {user ? (
-                    <>
-                        {loading ? (
-                            <MenuItem className="notification-loading">
-                                <CircularProgress size={24} />
-                                <Typography variant="body2" sx={{ ml: 2 }}>
-                                    Loading notifications...
-                                </Typography>
-                            </MenuItem>
-                        ) : notifications.length === 0 ? (
-                            <MenuItem className="notification-empty">
-                                <Typography variant="body2">No new notifications</Typography>
-                            </MenuItem>
-                        ) : (
-                            <>
-                                {notifications.map((notification, index) => (
-                                    <NotificationItem
-                                        key={notification.id}
-                                        notification={notification}
-                                        index={index}
-                                        markAsRead={markAsRead}
-                                        acceptFriendRequest={acceptFriendRequest}
-                                        rejectFriendRequest={rejectFriendRequest}
-                                        acceptLobbyInvite={acceptLobbyInvite}
-                                        rejectLobbyInvite={rejectLobbyInvite}
-                                        deleteNotification={deleteNotification}
-                                        navigate={navigate}
-                                        processingInvites={processingInvites}
-                                        processingFriendRequests={processingFriendRequests}
-                                    />
-                                ))}
-                            </>
-                        )}
-                    </>
-                ) : (
+                {!user && (
                     <MenuItem onClick={handleLogin} className="notification-login">
                         <MdLogin style={{ marginRight: 8 }} /> Login to see notifications
                     </MenuItem>
                 )}
+                {user && loading && (
+                    <MenuItem className="notification-loading">
+                        <CircularProgress size={24} />
+                        <Typography variant="body2" sx={{ ml: 2 }}>
+                            Loading notifications...
+                        </Typography>
+                    </MenuItem>
+                )}
+                {user && !loading && notifications.length === 0 && (
+                    <MenuItem className="notification-empty">
+                        <Typography variant="body2">No new notifications</Typography>
+                    </MenuItem>
+                )}
+                {user &&
+                    !loading &&
+                    notifications.length > 0 &&
+                    notifications.map((notification, index) => (
+                        <NotificationItem
+                            key={notification.id}
+                            notification={notification}
+                            index={index}
+                            markAsRead={markAsRead}
+                            acceptFriendRequest={acceptFriendRequest}
+                            rejectFriendRequest={rejectFriendRequest}
+                            acceptLobbyInvite={acceptLobbyInvite}
+                            rejectLobbyInvite={rejectLobbyInvite}
+                            deleteNotification={deleteNotification}
+                            navigate={navigate}
+                            processingInvites={processingInvites}
+                            processingFriendRequests={processingFriendRequests}
+                        />
+                    ))}
             </Menu>
 
             {/* Snackbar for displaying success or error messages */}

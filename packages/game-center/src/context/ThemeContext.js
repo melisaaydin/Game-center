@@ -51,19 +51,16 @@ export const ThemeContextProvider = ({ children }) => {
                             text: { primary: "#e0e0e0", secondary: "#b0b0b0", subtext: "rgba(44, 13, 18, 0.71)" },
                         }),
                 },
-                shadows: {
-                    ...(mode === "light"
-                        ? {
-                            1: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                            2: "4px 4px 20px rgba(0, 0, 0, 0.2)",
-                            3: "2px 1px 0 rgba(0, 0, 0, 0.1)",
-                        }
-                        : {
-                            1: "0 2px 5px rgba(255, 255, 255, 0.1)",
-                            2: "0 4px 12px rgba(255, 255, 255, 0.1)",
-                            3: "2px 1px 0 rgba(255, 255, 255, 0.1)",
-                        }),
-                },
+                shadows: Array(25)
+                    .fill('none')
+                    .map((_, i) => {
+                        if (i === 0) return 'none';
+                        if (i === 1) return mode === 'light' ? '0 2px 5px rgba(0, 0, 0, 0.1)' : '0 2px 5px rgba(255, 255, 255, 0)';
+                        if (i === 2) return mode === 'light' ? '4px 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 12px rgba(255, 255, 255, 0)';
+                        if (i === 3) return mode === 'light' ? '2px 1px 0 rgba(0, 0, 0, 0.1)' : '2px 1px 0 rgba(255, 255, 255, 0)';
+                        if (i === 8) return mode === 'light' ? '0px 3px 6px rgba(0, 0, 0, 0.3)' : '0px 3px 6px rgba(255, 255, 255, 0)';
+                        return mode === 'light' ? `0px ${i}px ${i * 2}px rgba(0, 0, 0, 0.2)` : `0px ${i}px ${i * 2}px rgba(255, 255, 255, 0)`;
+                    }),
                 components: {
                     MuiButton: {
                         styleOverrides: {

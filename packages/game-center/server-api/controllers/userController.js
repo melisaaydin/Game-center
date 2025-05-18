@@ -97,7 +97,6 @@ const updateProfile = async (req, res) => {
 const searchUsers = async (req, res) => {
     const query = req.query.q ? `%${req.query.q}%` : "%";
     try {
-        console.log("Searching users with query:", query);
         const result = await db.query(
             "SELECT id, name, avatar_url FROM users WHERE name ILIKE $1 LIMIT 10",
             [query]

@@ -1,12 +1,23 @@
 {
-  "name": "root",
+  "name": "TOYOTA",
   "private": true,
   "version": "1.0.0",
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
-    "lerna": "^6.6.2"
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "css-loader": "^7.1.2",
+    "file-loader": "^6.2.0",
+    "lerna": "^6.6.2",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.8",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
   },
   "scripts": {
     "start": "lerna run start --scope=TOYOTA",
@@ -15,13 +26,13 @@
     "diff": "lerna diff"
   },
   "dependencies": {
-    "pg": "^8.13.3",
-    "axios": "^1.8.2",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
-    "@mui/icons-material": "^6.4.6"
+    "axios": "^1.8.2",
+    "pg": "^8.13.3",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   }
 }

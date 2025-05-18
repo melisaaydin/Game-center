@@ -18,7 +18,6 @@ function SearchBar({ searchRef }) {
             setSearchResults({ games: [], users: [] });
             setLoading(false);
             setError(null);
-            console.log('Search query empty, resetting results');
             return;
         }
 
@@ -30,10 +29,9 @@ function SearchBar({ searchRef }) {
                 searchGames(searchQuery) || [],
                 searchUsers(searchQuery) || [],
             ]);
-            console.log('Search results:', { games, users });
+
             setSearchResults({ games, users });
         } catch (err) {
-            console.error('Search error:', err);
             setError(err.message || 'An error occurred while searching');
             setSearchResults({ games: [], users: [] });
         } finally {
@@ -44,7 +42,7 @@ function SearchBar({ searchRef }) {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             handleSearch();
-            console.log('Enter pressed, triggering search');
+
         }
     };
 
@@ -56,7 +54,6 @@ function SearchBar({ searchRef }) {
         if (inputRef.current) {
             inputRef.current.focus();
         }
-        console.log('Result clicked, resetting search');
     };
 
     const handleClear = () => {
@@ -67,7 +64,6 @@ function SearchBar({ searchRef }) {
         if (inputRef.current) {
             inputRef.current.focus();
         }
-        console.log('Clear button clicked');
     };
 
     const toggleSearch = () => {
@@ -76,7 +72,6 @@ function SearchBar({ searchRef }) {
             if (!isExpanded && inputRef.current) {
                 setTimeout(() => {
                     inputRef.current.focus();
-                    console.log('Search bar expanded, focusing input');
                 }, 300);
             } else {
                 console.log('Search bar collapsed');
@@ -92,13 +87,11 @@ function SearchBar({ searchRef }) {
             if (window.innerWidth <= 1200) {
                 setIsExpanded(false);
             }
-            console.log('Search query cleared, resetting state');
             return;
         }
 
         if (window.innerWidth <= 1200) {
             setIsExpanded(true);
-            console.log('Typing detected, keeping search bar expanded');
         }
 
         const delayDebounceFn = setTimeout(() => {
@@ -115,7 +108,6 @@ function SearchBar({ searchRef }) {
                 setSearchQuery('');
                 setIsExpanded(false);
                 setError(null);
-                console.log('Clicked outside, resetting search');
             }
         };
 
@@ -127,7 +119,6 @@ function SearchBar({ searchRef }) {
         const handleResize = () => {
             if (window.innerWidth > 1200) {
                 setIsExpanded(false);
-                console.log('Screen resized to >1200px, collapsing search bar');
             }
         };
 

@@ -19,58 +19,59 @@ import Trash from "../../assets/trash-bin.png"
 // LobbyDetails component displays detailed information about a specific lobby
 const LobbyDetails = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
-    const { user } = useUser();
-    const { mode } = useContext(ColorModeContext);
-    const [lobby, setLobby] = useState(null);
+    const navigate = useNavigate(); // Hook to navigate between routes
+    const { user } = useUser(); // Get user data from context
+    const { mode } = useContext(ColorModeContext); // Get current theme mode
+    const [lobby, setLobby] = useState(null); // State to hold lobby data
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isJoined, setIsJoined] = useState(false);
+    const [isJoined, setIsJoined] = useState(false); // Track if user is joined
     const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
     const [password, setPassword] = useState("");
-    const [chatMessages, setChatMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState("");
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+    const [chatMessages, setChatMessages] = useState([]); // Store chat messages
+    const [newMessage, setNewMessage] = useState(""); // New message input
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" }); // Snackbar state for notifications
     const [creatorName, setCreatorName] = useState("");
     const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [friends, setFriends] = useState([]);
     const [friendsLoading, setFriendsLoading] = useState(false);
-    const [invitedUsers, setInvitedUsers] = useState(new Set());
-    const [typingUser, setTypingUser] = useState(null);
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [editForm, setEditForm] = useState({});
+    const [invitedUsers, setInvitedUsers] = useState(new Set()); // Track invited users
+    const [typingUser, setTypingUser] = useState(null); // Track who is typing
+    const [editDialogOpen, setEditDialogOpen] = useState(false); // Control edit dialog visibility
+    const [editForm, setEditForm] = useState({}); // Form data for editing lobby
     const chatRef = useRef(null);
-    const lastMessageRef = useRef(null);
-    const [anchorEl, setAnchorEl] = useState(null);
+    const lastMessageRef = useRef(null); // Reference to last message for deduplication
+    const [anchorEl, setAnchorEl] = useState(null); // Anchor for the menu
 
+    // Fetch lobby details when the component mounts
     useEffect(() => {
         const loadLobby = async () => {
             setLoading(true);
             // Fetch lobby data and messages from the backend
             const messages = await fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
-            setChatMessages(messages);
-            setLoading(false);
+            setChatMessages(messages); // Update chat messages
+            setLoading(false); // Stop loading
         };
         loadLobby();
     }, [id, user, navigate]);
 
     // Set up socket connections and handle real-time events
     useEffect(() => {
-        if (!user) return;
+        if (!user) return; // Exit if no user is logged in
         // Handle socket connection
         const handleSocketConnect = () => {
-            socket.emit("set_username", user.name);
+            socket.emit("set_username", user.name); // Set the user's name for socket
             // Join the lobby if the user is already in it
             if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
         };
-        socket.on("connect", handleSocketConnect);
+        socket.on("connect", handleSocketConnect); // Listen for socket connection
         socket.on("receive_message", (message) => {
             const lastMessage = lastMessageRef.current;
-            const newMessageString = `${message.user}:${message.content}:${message.timestamp}`;
+            const newMessageString = `${message.user}:${message.content}:${message.timestamp}`; // Unique identifier for deduplication
             // Add the message to the chat if it's new
             if (lastMessage !== newMessageString) {
                 setChatMessages((prev) => [...prev, { user: message.user, content: message.content, avatar_url: message.avatar_url }]);
@@ -94,13 +95,13 @@ const LobbyDetails = () => {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
         });
-        socket.on("typing", ({ userName }) => setTypingUser(userName));
-        socket.on("stop_typing", () => setTypingUser(null));
+        socket.on("typing", ({ userName }) => setTypingUser(userName)); // Update typing user
+        socket.on("stop_typing", () => setTypingUser(null)); // Clear typing user
 
-        if (socket.connected) handleSocketConnect();
+        if (socket.connected) handleSocketConnect(); // Initial connection handling
 
         return () => {
-            socket.off("connect", handleSocketConnect);
+            socket.off("connect", handleSocketConnect); // Clean up listeners on unmount
             socket.off("receive_message");
             socket.off("lobby_invite");
             socket.off("lobby_invite_accepted");
@@ -119,7 +120,7 @@ const LobbyDetails = () => {
             return;
         }
         if (lobby.password && !isJoined) {
-            setPasswordDialogOpen(true);
+            setPasswordDialogOpen(true); // Open password dialog for locked lobbies
             return;
         }
         const token = localStorage.getItem("token");
@@ -156,7 +157,7 @@ const LobbyDetails = () => {
                 if (lobbyRes.success) setLobby(lobbyRes.data);
                 setSnackbar({ open: true, message: "You have joined the lobby!", severity: "success" });
             }
-            setPasswordDialogOpen(false);
+            setPasswordDialogOpen(false); // Close the dialog
         } else {
             setSnackbar({ open: true, message: res.message || "Incorrect password or an error occurred!", severity: "error" });
         }
@@ -164,21 +165,26 @@ const LobbyDetails = () => {
 
     // Handle playing the game associated with the lobby
     const handlePlayGame = () => {
+        if (!user) {
+            setSnackbar({ open: true, message: 'Please log in!', severity: 'error' });
+            navigate('/login');
+            return;
+        }
         if (lobby && lobby.game_id) {
-            const gameName = lobby.game_id.toLowerCase();
-            const gameUrl = `${window.location.origin}/games/${gameName}/lobby/${id}`; // Dynamic URL
-            window.open(gameUrl, "_blank");
-            setSnackbar({ open: true, message: `Starting ${gameName} game in lobby ${id}...`, severity: "info" });
-            socket.emit("start_game_in_lobby", { id, userId: user.id, gameId: lobby.game_id });
+            const token = localStorage.getItem('token');
+            const gameUrl = `http://localhost:3001/games/${lobby.game_id}/lobby/${id}?token=${token}`;
+            window.open(gameUrl, '_blank'); // Open game in a new tab
+            setSnackbar({ open: true, message: `${lobby.game_id} game is starting for lobby ${id}...`, severity: 'info' });
+            socket.emit('join_game', { gameName: lobby.game_id, id, userId: user.id });
         } else {
-            setSnackbar({ open: true, message: "Game not available yet!", severity: "warning" });
+            setSnackbar({ open: true, message: 'Game not available yet!', severity: 'warning' });
         }
     };
 
     // Copy the lobby link to the clipboard
     const handleCopyLink = () => {
-        const link = `${window.location.origin}/lobbies/${id}`;
-        navigator.clipboard.writeText(link);
+        const link = `${window.location.origin}/lobbies/${id}`; // Construct the lobby URL
+        navigator.clipboard.writeText(link); // Copy to clipboard
         setSnackbar({ open: true, message: "Lobby link copied to clipboard!", severity: "success" });
     };
 
@@ -186,36 +192,36 @@ const LobbyDetails = () => {
     const handleSendMessage = () => {
         if (newMessage.trim()) {
             socket.emit("send_message", { lobbyId: id, userId: user.id, content: newMessage, avatar_url: user.avatar_url });
-            socket.emit("stop_typing", { lobbyId: id });
-            setNewMessage("");
+            socket.emit("stop_typing", { lobbyId: id }); // Notify others typing has stopped
+            setNewMessage(""); // Clear input
         }
     };
 
     // Handle typing events in the chat
     const handleTyping = () => {
-        if (newMessage.trim()) socket.emit("typing", { lobbyId: id, userName: user.name });
-        else socket.emit("stop_typing", { lobbyId: id });
+        if (newMessage.trim()) socket.emit("typing", { lobbyId: id, userName: user.name }); // Notify others of typing
+        else socket.emit("stop_typing", { lobbyId: id }); // Notify stop if input is empty
     };
 
     // Open the invite friends dialog and load the friends list
     const handleOpenInviteDialog = async () => {
-        setInviteDialogOpen(true);
-        setFriendsLoading(true);
+        setInviteDialogOpen(true); // Open the invite dialog
+        setFriendsLoading(true); // Start loading friends
         const token = localStorage.getItem("token");
         const res = await apiRequest("get", `http://localhost:8081/lobbies/${id}/friends`, null, token);
         if (res.success) {
-            setFriends(res.data.friends || []);
-            setInvitedUsers(new Set());
+            setFriends(res.data.friends || []); // Update friends list
+            setInvitedUsers(new Set()); // Reset invited users
         } else {
             setSnackbar({ open: true, message: "Failed to load friends: " + res.message, severity: "error" });
         }
-        setFriendsLoading(false);
+        setFriendsLoading(false); // Stop loading
     };
 
     // Invite a friend to the lobby
     const handleInviteFriend = (friendId) => {
         const token = localStorage.getItem("token");
-        inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token);
+        inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token); // Send invite request
     };
 
     // Show the full date if the event is more than 24 hours away
@@ -229,8 +235,8 @@ const LobbyDetails = () => {
             end_time: lobby.end_time ? new Date(lobby.end_time).toISOString().slice(0, 16) : "",
             is_event: lobby.is_event,
         });
-        setEditDialogOpen(true);
-        setAnchorEl(null);
+        setEditDialogOpen(true); // Open edit dialog
+        setAnchorEl(null); // Close the menu
     };
 
     const handleEditLobby = async () => {
@@ -246,24 +252,24 @@ const LobbyDetails = () => {
         };
         const res = await apiRequest("put", `http://localhost:8081/lobbies/${id}`, updatedData, token);
         if (res.success) {
-            fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
+            fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate); // Refresh lobby data
             setSnackbar({ open: true, message: "Lobby updated successfully!", severity: "success" });
-            setEditDialogOpen(false);
+            setEditDialogOpen(false); // Close dialog
         } else {
             setSnackbar({ open: true, message: "Failed to update lobby: " + res.message, severity: "error" });
         }
     };
 
     const handleMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget);
+        setAnchorEl(event.currentTarget); // Open the menu
     };
     const handleMenuClose = () => {
-        setAnchorEl(null);
+        setAnchorEl(null); // Close the menu
     };
 
-    if (loading) return <Typography>Loading...</Typography>;
-    if (error) return <Typography color="error">{error}</Typography>;
-    if (!lobby || !user) return <Typography>Lobby or user data not found.</Typography>;
+    if (loading) return <Typography>Loading...</Typography>; // Show loading state
+    if (error) return <Typography color="error">{error}</Typography>; // Show error if any
+    if (!lobby || !user) return <Typography>Lobby or user data not found.</Typography>; // Fallback if data is missing
 
     return (
         <div className="lobby-details-container">
@@ -304,17 +310,28 @@ const LobbyDetails = () => {
                                         open={Boolean(anchorEl)}
                                         onClose={handleMenuClose}
                                     >
-                                        <MenuItem onClick={() => { handleMenuClose(); setLeaveConfirmOpen(true); }}><img src={LogOut} alt="JoyStick" className="lobby-detail-img" /> Leave Lobby</MenuItem>
-
-                                        <MenuItem onClick={handlePlayGame}> <img src={JoyStick} alt="Play" className="lobby-detail-img" />   Play</MenuItem>
-                                        <MenuItem onClick={handleOpenInviteDialog}><img src={Invitation} alt="Invitation" className="lobby-detail-img" />  Invite Friends</MenuItem>
-                                        {lobby.created_by === user.id && (
-                                            <>
-                                                <MenuItem onClick={handleEditClick}><img src={Pencil} alt="Pencil" className="lobby-detail-img" /> Edit Lobby</MenuItem>
-                                                <MenuItem onClick={() => { handleMenuClose(); setDeleteConfirmOpen(true); }}><img src={Trash} alt="Trash" className="lobby-detail-img" />  Delete Lobby</MenuItem>
-                                            </>
-                                        )}
-                                        <MenuItem onClick={handleCopyLink}><img src={Copy} alt="Copy" className="lobby-detail-img" /> Copy Lobby Link</MenuItem>
+                                        {[
+                                            <MenuItem key="leave" onClick={() => { handleMenuClose(); setLeaveConfirmOpen(true); }}>
+                                                <img src={LogOut} alt="LogOut" className="lobby-detail-img" /> Leave Lobby
+                                            </MenuItem>,
+                                            <MenuItem key="play" onClick={handlePlayGame}>
+                                                <img src={JoyStick} alt="Play" className="lobby-detail-img" /> Play
+                                            </MenuItem>,
+                                            <MenuItem key="invite" onClick={handleOpenInviteDialog}>
+                                                <img src={Invitation} alt="Invitation" className="lobby-detail-img" /> Invite Friends
+                                            </MenuItem>,
+                                            ...(lobby.created_by === user.id ? [
+                                                <MenuItem key="edit" onClick={handleEditClick}>
+                                                    <img src={Pencil} alt="Pencil" className="lobby-detail-img" /> Edit Lobby
+                                                </MenuItem>,
+                                                <MenuItem key="delete" onClick={() => { handleMenuClose(); setDeleteConfirmOpen(true); }}>
+                                                    <img src={Trash} alt="Trash" className="lobby-detail-img" /> Delete Lobby
+                                                </MenuItem>,
+                                            ] : []),
+                                            <MenuItem key="copy" onClick={handleCopyLink}>
+                                                <img src={Copy} alt="Copy" className="lobby-detail-img" /> Copy Lobby Link
+                                            </MenuItem>,
+                                        ]}
                                     </Menu>
                                 </>
                             )}

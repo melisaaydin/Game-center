@@ -1,8 +1,11 @@
 {
-  "name": "game-center",
+  "name": "@TOYOTA/game-center",
   "version": "0.1.0",
+  "main": "src/index.js",
   "private": true,
   "dependencies": {
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.6",
@@ -12,6 +15,7 @@
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
     "@toolpad/core": "^0.13.0",
+    "@TOYOTA/tombala": "*",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.9",
     "@types/react": "^19.0.10",
@@ -51,10 +55,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "echo testing React App",
-    "eject": "react-scripts eject"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
   },
   "eslintConfig": {
     "extends": [
@@ -75,6 +78,7 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@types/crypto-js": "^4.2.2",
     "typescript": "^5.8.2"
   }
