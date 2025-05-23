@@ -8,8 +8,10 @@ import UserMenu from './UserMenu';
 import { useUser } from '../../context/UserContext';
 import './SideBar.css';
 import { TABS } from '../../utils/constants';
+import { useTranslation } from 'react-i18next';
 
 function SideBar() {
+    const { t } = useTranslation('sideBar');
     const theme = useTheme();
     const { loading } = useUser();
     const [activeTab, setActiveTab] = useState('games');
@@ -17,7 +19,7 @@ function SideBar() {
     const searchRef = useRef(null);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div>{t('loading')}</div>;
     }
 
     return (
@@ -33,7 +35,6 @@ function SideBar() {
                     transition: 'width 0.3s',
                 }}
             >
-
                 <NavLinks />
             </Box>
             <Box sx={{ flexGrow: 1, ml: '80px' }}>
@@ -64,14 +65,13 @@ function SideBar() {
                                     onClick={() => setActiveTab(tab.id)}
                                 >
                                     {React.createElement(tab.icon)}
-                                    <span>{tab.label}</span>
+                                    <span>{t(tab.id, { ns: 'navLinks' })}</span>
                                 </Button>
                             ))}
                         </Box>
                     </Box>
                     <UserMenu />
                 </Box>
-
             </Box>
         </Box>
     );

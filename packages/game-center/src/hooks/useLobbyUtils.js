@@ -1,35 +1,31 @@
 import { apiRequest } from "../utils/lobbyUtils";
+import { useTranslation } from 'react-i18next';
 
-// Custom hook to provide utility functions and filtered lobby lists
 const useLobbyUtils = (lobbies) => {
-    // Format the start time of a lobby for display
+    const { t } = useTranslation('lobbyList');
     const getTimeDisplay = (startTime) => {
         const now = new Date();
         const start = new Date(startTime);
         const timeDiff = start - now;
 
-        // If the event has started, show a message
-        if (timeDiff <= 0) return "Event started!";
+        if (timeDiff <= 0) return t('eventStarted');
         const hoursLeft = timeDiff / (1000 * 60 * 60);
-        // Show a countdown if the event is within 24 hours
         if (hoursLeft < 24) {
             const hours = Math.floor(timeDiff / (1000 * 60 * 60));
             const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
             return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
         } else {
-            return `Start: ${start.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+            return t('startTime', { date: start.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }) });
         }
     };
 
-    // Update a lobby by sending a PUT request to the backend
     const updateLobby = async (lobbyId, updatedData, token) => {
         return await apiRequest("put", `http://localhost:8081/lobbies/${lobbyId}`, updatedData, token);
     };
 
     const now = new Date();
 
-    // Filter lobbies that are events and haven't ended yet
     const eventLobbies = lobbies
         .filter((lobby) =>
             lobby.is_event &&

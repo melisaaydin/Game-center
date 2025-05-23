@@ -16,8 +16,10 @@ import JoyStick from "../../assets/joystick.png"
 import LogOut from "../../assets/log-out.png"
 import Pencil from "../../assets/pencil.png"
 import Trash from "../../assets/trash-bin.png"
+import { useTranslation } from 'react-i18next';
 // LobbyDetails component displays detailed information about a specific lobby
 const LobbyDetails = () => {
+    const { t } = useTranslation('lobby');
     const { id } = useParams();
     const navigate = useNavigate(); // Hook to navigate between routes
     const { user } = useUser(); // Get user data from context
@@ -274,14 +276,12 @@ const LobbyDetails = () => {
     return (
         <div className="lobby-details-container">
             <Box className="lobby-content">
-                {/* Left section with lobby details and players */}
                 <Box className="lobby-left-section">
                     <Box className="lobby-header">
-                        <Typography variant="h4" sx={{ fontWeight: "bold" }}>{lobby.name}</Typography>
-                        <Typography variant="subtitle1" color="text.secondary">Game: {lobby.game_id}</Typography>
-                        <Typography variant="subtitle2" color="text.secondary">Players: {lobby.current_players}/{lobby.max_players}</Typography>
-                        <Typography variant="subtitle2" color="text.secondary">Created by: {creatorName}</Typography>
-                        {/* Show a lock icon if the lobby has a password */}
+                        <Typography variant="h4" sx={{ fontWeight: "bold" }}>{t('lobbyName', { name: lobby.name })}</Typography>
+                        <Typography variant="subtitle1" color="text.secondary">{t('game', { game_id: lobby.game_id })}</Typography>
+                        <Typography variant="subtitle2" color="text.secondary">{t('players', { current_players: lobby.current_players, max_players: lobby.max_players })}</Typography>
+                        <Typography variant="subtitle2" color="text.secondary">{t('createdBy', { creatorName })}</Typography>
                         {lobby.password && <Lock fontSize="small" sx={{ verticalAlign: "middle", ml: 1 }} />}
                         <Box className="lobby-actions">
                             {!isJoined ? (
@@ -291,7 +291,7 @@ const LobbyDetails = () => {
                                     onClick={handleJoinLobby}
                                     disabled={lobby.current_players >= lobby.max_players}
                                 >
-                                    Join Lobby
+                                    {t('joinLobby')}
                                 </Button>
                             ) : (
                                 <>
@@ -312,24 +312,24 @@ const LobbyDetails = () => {
                                     >
                                         {[
                                             <MenuItem key="leave" onClick={() => { handleMenuClose(); setLeaveConfirmOpen(true); }}>
-                                                <img src={LogOut} alt="LogOut" className="lobby-detail-img" /> Leave Lobby
+                                                <img src={LogOut} alt="LogOut" className="lobby-detail-img" /> {t('leaveLobby')}
                                             </MenuItem>,
                                             <MenuItem key="play" onClick={handlePlayGame}>
-                                                <img src={JoyStick} alt="Play" className="lobby-detail-img" /> Play
+                                                <img src={JoyStick} alt="Play" className="lobby-detail-img" /> {t('play')}
                                             </MenuItem>,
                                             <MenuItem key="invite" onClick={handleOpenInviteDialog}>
-                                                <img src={Invitation} alt="Invitation" className="lobby-detail-img" /> Invite Friends
+                                                <img src={Invitation} alt="Invitation" className="lobby-detail-img" /> {t('inviteFriends')}
                                             </MenuItem>,
                                             ...(lobby.created_by === user.id ? [
                                                 <MenuItem key="edit" onClick={handleEditClick}>
-                                                    <img src={Pencil} alt="Pencil" className="lobby-detail-img" /> Edit Lobby
+                                                    <img src={Pencil} alt="Pencil" className="lobby-detail-img" /> {t('editLobby')}
                                                 </MenuItem>,
                                                 <MenuItem key="delete" onClick={() => { handleMenuClose(); setDeleteConfirmOpen(true); }}>
-                                                    <img src={Trash} alt="Trash" className="lobby-detail-img" /> Delete Lobby
+                                                    <img src={Trash} alt="Trash" className="lobby-detail-img" /> {t('deleteLobby')}
                                                 </MenuItem>,
                                             ] : []),
                                             <MenuItem key="copy" onClick={handleCopyLink}>
-                                                <img src={Copy} alt="Copy" className="lobby-detail-img" /> Copy Lobby Link
+                                                <img src={Copy} alt="Copy" className="lobby-detail-img" /> {t('copyLink')}
                                             </MenuItem>,
                                         ]}
                                     </Menu>
@@ -361,10 +361,10 @@ const LobbyDetails = () => {
                 handleInvite={handleInviteFriend}
             />
             <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
-                <DialogTitle>Enter Lobby Password</DialogTitle>
+                <DialogTitle>{t('passwordPrompt')}</DialogTitle>
                 <DialogContent>
                     <TextField
-                        label="Password"
+                        label={t('passwordLabel')}
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -374,40 +374,39 @@ const LobbyDetails = () => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setPasswordDialogOpen(false)} color="secondary">Cancel</Button>
-                    <Button onClick={handlePasswordSubmit} variant="contained">Submit</Button>
+                    <Button onClick={() => setPasswordDialogOpen(false)} color="secondary">{t('cancel')}</Button>
+                    <Button onClick={handlePasswordSubmit} variant="contained">{t('submit')}</Button>
                 </DialogActions>
             </Dialog>
             <Dialog open={leaveConfirmOpen} onClose={() => setLeaveConfirmOpen(false)}>
-                <DialogTitle>Are You Sure You Want to Leave?</DialogTitle>
+                <DialogTitle>{t('leaveConfirm')}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>Are you sure you want to leave the lobby?</DialogContentText>
+                    <DialogContentText>{t('leaveConfirm')}</DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setLeaveConfirmOpen(false)} color="primary">No</Button>
+                    <Button onClick={() => setLeaveConfirmOpen(false)} color="primary">{t('no')}</Button>
                     <Button onClick={() => leaveLobby(id, user.id, setIsJoined, setLobby, setSnackbar, localStorage.getItem("token"), setLeaveConfirmOpen)} color="secondary" variant="contained">
-                        Yes
+                        {t('yes')}
                     </Button>
                 </DialogActions>
             </Dialog>
             <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
-                <DialogTitle>Are You Sure You Want to Delete?</DialogTitle>
+                <DialogTitle>{t('deleteConfirm')}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>Are you sure you want to delete this lobby? This action cannot be undone.</DialogContentText>
+                    <DialogContentText>{t('deleteConfirm')}</DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDeleteConfirmOpen(false)} color="primary">No</Button>
+                    <Button onClick={() => setDeleteConfirmOpen(false)} color="primary">{t('no')}</Button>
                     <Button onClick={() => deleteLobby(id, setSnackbar, navigate, localStorage.getItem("token"))} color="error" variant="contained">
-                        Yes
+                        {t('yes')}
                     </Button>
                 </DialogActions>
             </Dialog>
-            {/* Dialog for editing lobby details */}
             <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-                <DialogTitle>Edit Lobby Details</DialogTitle>
+                <DialogTitle>{t('editLobbyTitle')}</DialogTitle>
                 <DialogContent>
                     <TextField
-                        label="Lobby Name"
+                        label={t('lobbyNameLabel')}
                         name="name"
                         value={editForm.name || ""}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
@@ -417,7 +416,7 @@ const LobbyDetails = () => {
                         required
                     />
                     <TextField
-                        label="Max Players"
+                        label={t('maxPlayersLabel')}
                         name="max_players"
                         type="number"
                         value={editForm.max_players || ""}
@@ -429,7 +428,7 @@ const LobbyDetails = () => {
                         required
                     />
                     <TextField
-                        label="Password (leave blank to remove)"
+                        label={t('passwordLabel')}
                         name="password"
                         type="password"
                         value={editForm.password || ""}
@@ -441,7 +440,7 @@ const LobbyDetails = () => {
                     {editForm.is_event && (
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <TextField
-                                label="Start Time"
+                                label={t('startTimeLabel')}
                                 name="start_time"
                                 type="datetime-local"
                                 value={editForm.start_time || ""}
@@ -451,7 +450,7 @@ const LobbyDetails = () => {
                                 variant="outlined"
                             />
                             <TextField
-                                label="End Time"
+                                label={t('endTimeLabel')}
                                 name="end_time"
                                 type="datetime-local"
                                 value={editForm.end_time || ""}
@@ -465,11 +464,10 @@ const LobbyDetails = () => {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)} color="secondary">Cancel</Button>
-                    <Button onClick={handleEditLobby} variant="contained" color="primary">Save</Button>
+                    <Button onClick={() => setEditDialogOpen(false)} color="secondary">{t('cancel')}</Button>
+                    <Button onClick={handleEditLobby} variant="contained" color="primary">{t('save')}</Button>
                 </DialogActions>
             </Dialog>
-            {/* Snackbar for notifications */}
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={3000}
@@ -485,7 +483,7 @@ const LobbyDetails = () => {
                     severity={snackbar.severity}
                     sx={{ width: "100%", bgcolor: snackbar.severity === "success" ? "green" : snackbar.severity === "error" ? "red" : "blue", color: "white" }}
                 >
-                    {snackbar.message}
+                    {t(snackbar.message, { ns: 'lobby', defaultValue: snackbar.message })}
                 </Alert>
             </Snackbar>
         </div>

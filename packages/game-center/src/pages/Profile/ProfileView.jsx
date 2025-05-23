@@ -16,17 +16,19 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '../../context/UserContext';
 import './ProfileView.css';
 
 function ProfileView() {
+    const { t } = useTranslation('profile');
     const { userId } = useParams();
     const { user } = useUser();
     const [profile, setProfile] = useState(null);
     const [recentGames, setRecentGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [friendRequestStatus, setFriendRequestStatus] = useState('Add Friend');
+    const [friendRequestStatus, setFriendRequestStatus] = useState(t('addFriend'));
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -45,11 +47,11 @@ function ProfileView() {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                     });
                     if (statusRes.data.status === 'pending') {
-                        setFriendRequestStatus('Sent Request');
+                        setFriendRequestStatus(t('cancelRequest'));
                     } else if (statusRes.data.status === 'friends') {
-                        setFriendRequestStatus('Friends');
+                        setFriendRequestStatus(t('removeFriend'));
                     } else {
-                        setFriendRequestStatus('Add Friend');
+                        setFriendRequestStatus(t('addFriend'));
                     }
                 }
 
@@ -60,16 +62,16 @@ function ProfileView() {
 
                 setLoading(false);
             } catch (err) {
-                setError('Failed to load profile.');
+                setError(t('failedToLoadProfile'));
                 setLoading(false);
             }
         };
         fetchProfile();
-    }, [userId, user]);
+    }, [userId, user, t]);
 
     const handleFriendRequest = async () => {
         if (!user) {
-            setSnackbarMessage('Please log in to manage friend requests.');
+            setSnackbarMessage(t('loginToManageFriends'));
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
             navigate('/login');
@@ -77,35 +79,35 @@ function ProfileView() {
         }
 
         try {
-            if (friendRequestStatus === 'Add Friend') {
+            if (friendRequestStatus === t('addFriend')) {
                 await axios.post(
                     'http://localhost:8081/users/friend-requests',
                     { friendId: userId },
                     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
                 );
-                setFriendRequestStatus('Sent Request');
-                setSnackbarMessage('Friend request sent!');
+                setFriendRequestStatus(t('cancelRequest'));
+                setSnackbarMessage(t('friendRequestSent'));
                 setSnackbarSeverity('success');
-            } else if (friendRequestStatus === 'Sent Request') {
+            } else if (friendRequestStatus === t('cancelRequest')) {
                 await axios.post(
                     `http://localhost:8081/users/friend-requests/${userId}/cancel`,
                     {},
                     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
                 );
-                setFriendRequestStatus('Add Friend');
-                setSnackbarMessage('Friend request canceled!');
+                setFriendRequestStatus(t('addFriend'));
+                setSnackbarMessage(t('friendRequestCanceled'));
                 setSnackbarSeverity('info');
-            } else if (friendRequestStatus === 'Friends') {
+            } else if (friendRequestStatus === t('removeFriend')) {
                 await axios.delete(`http://localhost:8081/users/friends/${userId}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
-                setFriendRequestStatus('Add Friend');
-                setSnackbarMessage('Friend removed!');
+                setFriendRequestStatus(t('addFriend'));
+                setSnackbarMessage(t('friendRemoved'));
                 setSnackbarSeverity('info');
             }
             setSnackbarOpen(true);
         } catch (err) {
-            const message = err.response?.data?.message || 'Failed to manage friend request.';
+            const message = err.response?.data?.message || t('failedToLoadProfile');
             setSnackbarMessage(message);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -123,7 +125,7 @@ function ProfileView() {
 
     if (loading) return <CircularProgress className="profile-loading" />;
     if (error) return <Typography className="profile-error">{error}</Typography>;
-    if (!profile) return <Typography className="profile-not-found">Profile not found.</Typography>;
+    if (!profile) return <Typography className="profile-not-found">{t('profileNotFound')}</Typography>;
 
     return (
         <div className="main-content-profile-view">
@@ -145,7 +147,7 @@ function ProfileView() {
                         </Box>
                         {user && user.id === profile.id ? (
                             <Button className="edit-profile-button" variant="contained" onClick={handleEditProfile}>
-                                Edit Profile
+                                {t('editProfile')}
                             </Button>
                         ) : (
                             <motion.div
@@ -158,11 +160,7 @@ function ProfileView() {
                                     variant="contained"
                                     onClick={handleFriendRequest}
                                 >
-                                    {friendRequestStatus === 'Sent Request'
-                                        ? 'Cancel Request'
-                                        : friendRequestStatus === 'Friends'
-                                            ? 'Remove Friend'
-                                            : friendRequestStatus}
+                                    {friendRequestStatus}
                                 </Button>
                             </motion.div>
                         )}
@@ -171,15 +169,15 @@ function ProfileView() {
                         <Box className="low-cards">
                             <Card className="about-card">
                                 <CardContent className="about-card-content">
-                                    <Typography className="card-title">About</Typography>
+                                    <Typography className="card-title">{t('about')}</Typography>
                                     <Typography className="card-text">
-                                        {profile.bio || 'No additional information provided.'}
+                                        {profile.bio || t('noBio')}
                                     </Typography>
                                 </CardContent>
                             </Card>
                             <Card className="games-card">
                                 <CardContent className="games-card-content">
-                                    <Typography className="card-title">Recent Games</Typography>
+                                    <Typography className="card-title">{t('recentGames')}</Typography>
                                     {recentGames.length > 0 ? (
                                         <List>
                                             {recentGames.slice(0, 3).map((game, index) => (
@@ -194,7 +192,7 @@ function ProfileView() {
                                             ))}
                                         </List>
                                     ) : (
-                                        <Typography className="card-text">No recent games.</Typography>
+                                        <Typography className="card-text">{t('noRecentGames')}</Typography>
                                     )}
                                 </CardContent>
                             </Card>

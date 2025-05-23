@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./GameList.css";
+import { useTranslation } from 'react-i18next';
 
 const GameList = () => {
+    const { t } = useTranslation('gameList');
     const [games, setGames] = useState([]);
     const navigate = useNavigate();
 
@@ -15,14 +17,13 @@ const GameList = () => {
                 setGames(res.data);
             })
             .catch((err) => {
-                console.error("Error occured while fetching games:", err);
+                console.error("Error occurred while fetching games:", err);
             });
     }, []);
 
     return (
         <div className="gamelist-div">
-            <span className="section-title">
-                Games</span>
+            <span className="section-title">{t('games')}</span>
             <div className="games-grid">
                 {games.map((game) => (
                     <div

@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Box, TextField, Button, Typography, Switch, FormControlLabel, Snackbar, Alert } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import axios from "axios";
+import { useTranslation } from 'react-i18next';
 
 function CreateLobby({ gameId, onLobbyCreated }) {
+    const { t } = useTranslation('createLobby');
     const [loading, setLoading] = useState(false);
     // State for managing form input data
     const [formData, setFormData] = useState({
@@ -19,6 +21,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
     // Handle changes in form inputs
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -27,18 +30,19 @@ function CreateLobby({ gameId, onLobbyCreated }) {
             [name]: type === "checkbox" ? checked : value,
         });
     };
+
     // Handle form submission to create a new lobby
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
 
         if (!gameId) {
-            setError("Please select a game!");
+            setError(t('selectGameError'));
             return;
         }
 
         if (!formData.name || !formData.max_players) {
-            setError("Lobby name and maximum number of players are required!");
+            setError(t('requiredFieldsError'));
             return;
         }
 
@@ -64,14 +68,14 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                 const link = `${window.location.origin}/lobbies/${lobbyId}`;
                 setLobbyLink(link);
                 onLobbyCreated();
-                setSnackbarMessage("Lobby created successfully!");
+                setSnackbarMessage(t('lobbyCreated'));
                 setSnackbarSeverity("success");
                 setSnackbarOpen(true);
             } else {
-                setError(res.data.message || "Failed to create lobby.");
+                setError(t('failedToCreate', { message: res.data.message || 'Unknown error' }));
             }
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to create lobby: " + err.message);
+            setError(t('failedToCreate', { message: err.response?.data?.message || err.message }));
         } finally {
             setLoading(false);
         }
@@ -79,7 +83,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(lobbyLink);
-        setSnackbarMessage("Lobby link copied!");
+        setSnackbarMessage(t('linkCopied'));
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
     };
@@ -94,9 +98,9 @@ function CreateLobby({ gameId, onLobbyCreated }) {
             {error && <Typography className="error-text" color="error">{error}</Typography>}
             {lobbyLink ? (
                 <Box className="lobby-success">
-                    <Typography className="success-text">Lobby created successfully!</Typography>
+                    <Typography className="success-text">{t('lobbyCreated')}</Typography>
                     <Typography className="lobby-link" sx={{ mt: 1 }}>
-                        Lobby link: {lobbyLink}
+                        {t('lobbyLink', { link: lobbyLink })}
                     </Typography>
                     <Button
                         className="copy-button"
@@ -105,14 +109,14 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                         onClick={handleCopyLink}
                         sx={{ mt: 2 }}
                     >
-                        Copy link
+                        {t('copyLink')}
                     </Button>
                 </Box>
             ) : (
                 <form className="lobby-form" onSubmit={handleSubmit}>
                     <TextField
                         className="text-property lobby-input"
-                        label="Lobby Name"
+                        label={t('lobbyName')}
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
@@ -130,14 +134,14 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                                 className="lobby-switch"
                             />
                         }
-                        label="Is Event?"
+                        label={t('isEvent')}
                         className="lobby-switch-label"
                     />
                     {formData.is_event && (
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <TextField
                                 className="text-property lobby-input"
-                                label="Start Time"
+                                label={t('startTime')}
                                 name="start_time"
                                 type="datetime-local"
                                 value={formData.start_time}
@@ -147,7 +151,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                             />
                             <TextField
                                 className="text-property lobby-input"
-                                label="End Time"
+                                label={t('endTime')}
                                 name="end_time"
                                 type="datetime-local"
                                 value={formData.end_time}
@@ -159,7 +163,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                     )}
                     <TextField
                         className="text-property lobby-input"
-                        label="Password"
+                        label={t('password')}
                         name="password"
                         type="password"
                         value={formData.password}
@@ -170,7 +174,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                     />
                     <TextField
                         className="text-property lobby-input"
-                        label="Max Players"
+                        label={t('maxPlayers')}
                         name="max_players"
                         type="number"
                         value={formData.max_players}
@@ -185,7 +189,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                         className="create-button"
                         sx={{ mt: 2 }}
                     >
-                        {loading ? "Creating..." : "Create Lobby"}
+                        {loading ? t('creating') : t('createLobby')}
                     </Button>
                 </form>
             )}
