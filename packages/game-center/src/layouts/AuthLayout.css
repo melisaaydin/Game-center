@@ -1,15 +1,28 @@
 .auth-image-container {
     width: 100%;
-    height: 100%;
+    height: 100vh;
     display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    align-items: center;
+    justify-content: flex-start;
     overflow: hidden;
-
 }
 
 .auth-image {
     width: 100%;
-    height: 10vh;
-    object-fit: cover;
+    height: 100vh;
+    object-fit: fill;
+    object-position: left;
+
+}
+
+@media (max-width: 1200px) {
+    .auth-image-container {
+        justify-content: flex-start;
+    }
+
+    .auth-image {
+        width: 100%;
+        margin-bottom: 0 !important;
+        max-height: 100vh;
+    }
 }

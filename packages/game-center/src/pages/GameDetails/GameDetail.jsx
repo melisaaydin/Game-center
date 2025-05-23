@@ -21,16 +21,16 @@ import {
 import { Info, Group, Add, History, PlayArrow, Settings, SportsEsports } from "@mui/icons-material";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-// Import custom context and components for user data and lobby functionality
 import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../../components/CreateLobby/CreateLobby";
 import LobbyList from "../../components/LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
+import { useTranslation } from 'react-i18next';
 
 function GameDetail() {
-    //Get gameId from the URL parameters
+    const { t } = useTranslation('gameDetail');
     const { gameId } = useParams();
     const { user, loading } = useUser();
     const navigate = useNavigate();
@@ -54,7 +54,7 @@ function GameDetail() {
             console.log("gameId received:", gameId);
         }
     }, [gameId, navigate]);
-    // Fetch game data and set up a dummy interval to refresh lobbies
+
     useEffect(() => {
         const fetchGame = async () => {
             if (!gameId) return;
@@ -72,13 +72,12 @@ function GameDetail() {
             }
         };
         fetchGame();
-        // Set up an interval to trigger a re-render every second
         const interval = setInterval(() => {
             setLobbies((prevLobbies) => [...prevLobbies]);
         }, 1000);
         return () => clearInterval(interval);
     }, [gameId, navigate]);
-    // Function to fetch lobbies for the current game
+
     const fetchLobbies = useCallback(async () => {
         if (!gameId) return;
         try {
@@ -97,15 +96,15 @@ function GameDetail() {
             setLobbies([]);
         }
     }, [gameId]);
-    // Fetch lobbies when the component mounts and periodically refresh them
+
     useEffect(() => {
-        fetchLobbies(); // Initial fetch
-        const interval = setInterval(fetchLobbies, 30000); // Refresh every 30 seconds
-        return () => clearInterval(interval); // Clean up interval on unmount
+        fetchLobbies();
+        const interval = setInterval(fetchLobbies, 30000);
+        return () => clearInterval(interval);
     }, [gameId]);
 
     const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue); // Update active tab
+        setActiveTab(newValue);
     };
 
     const handleSnackbarClose = (event, reason) => {
@@ -113,37 +112,33 @@ function GameDetail() {
         setSnackbarOpen(false);
     };
 
-    // packages/game-center/src/pages/GameDetail/GameDetail.jsx
     const handlePlayGame = async () => {
         if (!user) {
-            setSnackbarMessage('Please log in!');
+            setSnackbarMessage(t('pleaseLogin'));
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
             navigate('/login');
             return;
         }
         if (!game || !gameId) {
-            setSnackbarMessage('Game not available yet!');
+            setSnackbarMessage(t('gameNotAvailable'));
             setSnackbarSeverity('warning');
             setSnackbarOpen(true);
             return;
         }
-        // Check for active lobbies
         const activeLobby = lobbies.find(
             (lobby) => lobby.game_id === gameId && lobby.lobby_status === 'active' && lobby.current_players > 0
         );
 
         if (activeLobby) {
-            // Join existing active lobby
             const gameUrl = `http://localhost:3001/games/${gameId}/lobby/${activeLobby.id}`;
-            window.open(gameUrl, '_blank'); // Open in new tab
-            setSnackbarMessage(`${gameId} game is starting for lobby ${activeLobby.id}...`);
+            window.open(gameUrl, '_blank');
+            setSnackbarMessage(t('gameStarting', { gameId, lobbyId: activeLobby.id }));
             setSnackbarSeverity('info');
             setSnackbarOpen(true);
             return;
         }
 
-        // Create a new lobby if no active one exists
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(
@@ -161,30 +156,29 @@ function GameDetail() {
             );
             if (res.data.success) {
                 const newLobby = res.data.lobby;
-                // Join the new lobby
                 await axios.post(
                     `http://localhost:8081/lobbies/${newLobby.id}/join`,
                     { userId: user.id },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
-                // Redirect to game
                 const gameUrl = `http://localhost:3001/games/${gameId}/lobby/${newLobby.id}`;
                 window.open(gameUrl, '_blank');
-                setSnackbarMessage('New lobby created and game is starting...');
+                setSnackbarMessage(t('lobbyCreated'));
                 setSnackbarSeverity('success');
                 setSnackbarOpen(true);
-                fetchLobbies(); // Refresh lobby list
+                fetchLobbies();
             } else {
-                setSnackbarMessage('Could not create lobby: ' + res.data.message);
+                setSnackbarMessage(t('lobbyCreateFailed', { message: res.data.message }));
                 setSnackbarSeverity('error');
                 setSnackbarOpen(true);
             }
         } catch (err) {
-            setSnackbarMessage('Could not create lobby!');
+            setSnackbarMessage(t('lobbyCreateFailed', { message: '' }));
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
     };
+
     const handleDeleteClick = (lobbyId) => {
         setDeleteConfirmOpen(lobbyId);
     };
@@ -197,23 +191,22 @@ function GameDetail() {
             });
             if (res.data.success) {
                 fetchLobbies();
-                setSnackbarMessage("Lobby deleted successfully!");
+                setSnackbarMessage(t('lobbyDeleted'));
                 setSnackbarSeverity("success");
                 setSnackbarOpen(true);
                 setDeleteConfirmOpen(null);
             } else {
-                setSnackbarMessage(res.data.message);
+                setSnackbarMessage(t('lobbyDeleteFailed', { message: res.data.message }));
                 setSnackbarSeverity("error");
                 setSnackbarOpen(true);
             }
         } catch (err) {
-            setSnackbarMessage("Could not delete lobby!");
+            setSnackbarMessage(t('lobbyDeleteFailed'));
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         }
     };
 
-    // Handle opening the edit dialog
     const handleEditClick = (lobby) => {
         setEditForm({
             name: lobby.name,
@@ -226,17 +219,13 @@ function GameDetail() {
         setEditDialogOpen(lobby.id);
     };
 
-
-    // Handle form input changes
     const handleEditFormChange = (e) => {
         const { name, value } = e.target;
         setEditForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Handle submitting the updated lobby details
     const handleEditLobby = async () => {
         const token = localStorage.getItem("token");
-        // Prepare the updated data
         const updatedData = {
             name: editForm.name,
             max_players: parseInt(editForm.max_players, 10),
@@ -249,24 +238,24 @@ function GameDetail() {
         const res = await updateLobby(editDialogOpen, updatedData, token);
         if (res.success) {
             fetchLobbies();
-            setSnackbarMessage("Lobby updated successfully!");
+            setSnackbarMessage(t('lobbyUpdated'));
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
             setEditDialogOpen(null);
         } else {
-            setSnackbarMessage("Failed to update lobby: " + res.message);
+            setSnackbarMessage(t('lobbyUpdateFailed', { message: res.message }));
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
         }
     };
 
-    if (loading) return <div className="loading">Loading...</div>;
+    if (loading) return <div className="loading">{t('loading')}</div>;
     if (!user) {
         navigate("/login");
         return null;
     }
-    if (!gameId) return <div className="error">Game ID is missing! Please select a game.</div>;
-    if (!game) return <div className="loading">Loading game...</div>;
+    if (!gameId) return <div className="error">{t('gameIdMissing')}</div>;
+    if (!game) return <div className="loading">{t('loadingGame')}</div>;
 
     return (
         <Box className="game-detail-container">
@@ -277,7 +266,7 @@ function GameDetail() {
                             <CardContent>
                                 {activeTab === 0 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">About Game</Typography>
+                                        <Typography variant="h5" className="section-title">{t('aboutGame')}</Typography>
                                         <Typography className="section-text">{game.description}</Typography>
                                         {game.image_url && (
                                             <img
@@ -293,7 +282,7 @@ function GameDetail() {
                                         gameId={gameId}
                                         onLobbyCreated={() => {
                                             fetchLobbies();
-                                            setSnackbarMessage("Lobby created successfully!");
+                                            setSnackbarMessage(t('lobbyCreated'));
                                             setSnackbarSeverity("success");
                                             setSnackbarOpen(true);
                                         }}
@@ -312,35 +301,28 @@ function GameDetail() {
                                         onEditClick={handleEditClick}
                                         onViewDetails={(lobbyId) => {
                                             navigate(`/lobbies/${lobbyId}`);
-                                            setSnackbarMessage("Navigating to lobby details...");
+                                            setSnackbarMessage(t('navigatingToLobby'));
                                             setSnackbarSeverity("info");
                                             setSnackbarOpen(true);
                                         }}
-
                                     />
                                 )}
                                 {activeTab === 3 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">Game History</Typography>
-                                        <Typography className="section-text">
-                                            You don't have any gaming history yet.
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">{t('gameHistory')}</Typography>
+                                        <Typography className="section-text">{t('noGameHistory')}</Typography>
                                     </Box>
                                 )}
                                 {activeTab === 4 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">How to Play?</Typography>
-                                        <Typography component="ul" className="section-text how-to-play-list">
-                                            Not defined yet.
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">{t('howToPlay')}</Typography>
+                                        <Typography component="ul" className="section-text how-to-play-list">{t('howToPlayNotDefined')}</Typography>
                                     </Box>
                                 )}
                                 {activeTab === 5 && (
                                     <Box>
-                                        <Typography variant="h5" className="section-title">Game Settings</Typography>
-                                        <Typography className="section-text">
-                                            No game settings yet.
-                                        </Typography>
+                                        <Typography variant="h5" className="section-title">{t('gameSettings')}</Typography>
+                                        <Typography className="section-text">{t('noGameSettings')}</Typography>
                                     </Box>
                                 )}
                             </CardContent>
@@ -349,30 +331,30 @@ function GameDetail() {
                     <Grid item xs={12} md={4}>
                         <Card className="game-card sidebar-card">
                             <CardContent>
-                                <Typography variant="h6" className="section-title">Players</Typography>
+                                <Typography variant="h6" className="section-title">{t('players')}</Typography>
                                 <Typography className="section-text">
-                                    <strong>Confirmed:</strong> {totalPlayers} Players<br />
-                                    <strong>Active Lobbies:</strong> {lobbies.length}
+                                    <strong>{t('confirmedPlayers', { count: totalPlayers })}</strong><br />
+                                    <strong>{t('activeLobbies', { count: lobbies.length })}</strong>
                                 </Typography>
                             </CardContent>
                         </Card>
                         <Card className="game-card sidebar-card">
                             <CardContent>
-                                <Typography variant="h6" className="section-title">Quick Actions</Typography>
+                                <Typography variant="h6" className="section-title">{t('quickActions')}</Typography>
                                 <Box className="quick-actions-container">
                                     <Button
                                         className="quick-action-button"
                                         variant="contained"
                                         onClick={() => setActiveTab(1)}
                                     >
-                                        Create Lobby
+                                        {t('createLobby')}
                                     </Button>
                                     <Button
                                         className="quick-action-button"
                                         variant="contained"
                                         onClick={() => setActiveTab(2)}
                                     >
-                                        View Lobbies
+                                        {t('viewLobbies')}
                                     </Button>
                                     <Button
                                         className="quick-action-button play-button"
@@ -380,7 +362,7 @@ function GameDetail() {
                                         onClick={handlePlayGame}
                                         startIcon={<SportsEsports className="play-icon" />}
                                     >
-                                        Play
+                                        {t('play')}
                                     </Button>
                                 </Box>
                             </CardContent>
@@ -395,12 +377,12 @@ function GameDetail() {
                                 orientation="vertical"
                                 variant="scrollable"
                             >
-                                <Tab label="Overview" icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
-                                <Tab label="Create Lobby" icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
-                                <Tab label="Lobbies" icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
-                                <Tab label="Game History" icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
-                                <Tab label="How to Play" icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
-                                <Tab label="Settings" icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label={t('navOverview')} icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label={t('navCreateLobby')} icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label={t('navLobbies')} icon={<Group />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label={t('navGameHistory')} icon={<History />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label={t('navHowToPlay')} icon={<PlayArrow />} className="game-tab" sx={{ textTransform: "initial" }} />
+                                <Tab label={t('navSettings')} icon={<Settings />} className="game-tab" sx={{ textTransform: "initial" }} />
                             </Tabs>
                         </Box>
                     </Grid>
@@ -412,19 +394,13 @@ function GameDetail() {
                 open={deleteConfirmOpen !== null}
                 onClose={() => setDeleteConfirmOpen(null)}
             >
-                <DialogTitle>Are You Sure?</DialogTitle>
+                <DialogTitle>{t('areYouSure')}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete this lobby?
-                    </DialogContentText>
+                    <DialogContentText>{t('deleteLobbyConfirm')}</DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDeleteConfirmOpen(null)} color="primary">
-                        No
-                    </Button>
-                    <Button onClick={() => handleDeleteLobby(deleteConfirmOpen)} color="error" variant="contained">
-                        Yes
-                    </Button>
+                    <Button onClick={() => setDeleteConfirmOpen(null)} color="primary">{t('no')}</Button>
+                    <Button onClick={() => handleDeleteLobby(deleteConfirmOpen)} color="error" variant="contained">{t('yes')}</Button>
                 </DialogActions>
             </Dialog>
 
@@ -432,10 +408,10 @@ function GameDetail() {
                 open={editDialogOpen !== null}
                 onClose={() => setEditDialogOpen(null)}
             >
-                <DialogTitle>Edit Lobby Details</DialogTitle>
+                <DialogTitle>{t('editLobbyTitle')}</DialogTitle>
                 <DialogContent>
                     <TextField
-                        label="Lobby Name"
+                        label={t('lobbyNameLabel')}
                         name="name"
                         value={editForm.name || ""}
                         onChange={handleEditFormChange}
@@ -445,7 +421,7 @@ function GameDetail() {
                         required
                     />
                     <TextField
-                        label="Max Players"
+                        label={t('maxPlayersLabel')}
                         name="max_players"
                         type="number"
                         value={editForm.max_players || ""}
@@ -457,7 +433,7 @@ function GameDetail() {
                         required
                     />
                     <TextField
-                        label="Password (leave blank to remove)"
+                        label={t('passwordLabel')}
                         name="password"
                         type="password"
                         value={editForm.password || ""}
@@ -466,11 +442,10 @@ function GameDetail() {
                         margin="normal"
                         variant="outlined"
                     />
-                    {/* Show start_time and end_time fields only for event lobbies */}
                     {editForm.is_event && (
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <TextField
-                                label="Start Time"
+                                label={t('startTimeLabel')}
                                 name="start_time"
                                 type="datetime-local"
                                 value={editForm.start_time || ""}
@@ -480,7 +455,7 @@ function GameDetail() {
                                 variant="outlined"
                             />
                             <TextField
-                                label="End Time"
+                                label={t('endTimeLabel')}
                                 name="end_time"
                                 type="datetime-local"
                                 value={editForm.end_time || ""}
@@ -494,8 +469,8 @@ function GameDetail() {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(null)} color="secondary">Cancel</Button>
-                    <Button onClick={handleEditLobby} variant="contained" color="primary">Save</Button>
+                    <Button onClick={() => setEditDialogOpen(null)} color="secondary">{t('cancel')}</Button>
+                    <Button onClick={handleEditLobby} variant="contained" color="primary">{t('save')}</Button>
                 </DialogActions>
             </Dialog>
 

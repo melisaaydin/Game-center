@@ -7,7 +7,9 @@ import 'animate.css';
 import CryptoJS from "crypto-js";
 import AuthLayout from "../../layouts/AuthLayout";
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './Login.css';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 import SocialConnect from '../../components/SocialConnect/SocialConnect';
 import { jwtDecode } from "jwt-decode";
 import Visibility from '@mui/icons-material/Visibility';
@@ -16,11 +18,13 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff'
 const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
 
 function Login() {
+    const { t } = useTranslation('login');
     const [values, setValues] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
+
     const [error, setError] = useState("");
     const navigate = useNavigate();
     const { login } = useUser();
@@ -28,11 +32,15 @@ function Login() {
     useEffect(() => {
         const savedUser = localStorage.getItem("rememberedUser");
         const token = localStorage.getItem("token");
-
         if (token) {
             try {
                 const decoded = jwtDecode(token);
-                login({ email: decoded.email, avatar: decoded.avatar }, token);
+                login({
+                    email: decoded.email,
+                    avatar: decoded.avatar,
+                    id: decoded.userId,
+                    language: decoded.language || 'tr'
+                }, token);
                 navigate("/");
             } catch (err) {
                 localStorage.removeItem("token");
@@ -107,23 +115,24 @@ function Login() {
     };
     return (
         <div className='loginBody container-fluid p-0 loginWrapper'>
+            <LanguageSwitcher />
             <div className='col-12 col-md-6 login-left'>
                 <AuthLayout />
             </div>
             <div className='col-12 col-md-6 d-flex align-items-center justify-content-center'>
                 <div className='card-shadow w-100 px-4 py-5 form'>
                     <div className='mb-4'>
-                        <span className='title text-center'> Welcome Back!</span>
+                        <span className='title text-center'> {t('welcome')}</span>
                     </div>
                     <div className='d-flex align-items-center justify-content-center'>
-                        <span style={{ fontFamily: 'Poppins' }} className='articleOnSocialnetwork'>Login using social networks</span>
+                        <span style={{ fontFamily: 'Poppins' }} className='articleOnSocialnetwork'>{t('socialLogin')}</span>
                     </div>
                     <div style={{ margin: 0, padding: 0 }}>
                         <SocialConnect />
                     </div>
                     <div className="hr-with-text">
                         <hr />
-                        <span style={{ fontFamily: 'Poppins' }} className="hr-text">OR</span>
+                        <span style={{ fontFamily: 'Poppins' }} className="hr-text">{t('or')}</span>
                         <hr />
                     </div>
 
@@ -131,7 +140,7 @@ function Login() {
                         <div className='mb-3'>
                             <TextField
                                 className='text-property'
-                                label="Email"
+                                label={t('emailLabel')}
                                 name="email"
                                 type="email"
                                 fullWidth
@@ -141,13 +150,14 @@ function Login() {
                                 onChange={handleInput}
                                 variant="outlined"
                                 error={!!error}
-                                helperText={error && !values.email ? "Enter e-mail address!" : ""}
+                                helperText={error && !values.email ? t('emailError') : ""}
                                 fontFamily={'Poppins'}
+
                             />
                             <TextField
                                 fontFamily={'Poppins'}
                                 className='text-property'
-                                label="Password"
+                                label={t('passwordLabel')}
                                 name="password"
                                 type={showPassword ? "text" : "password"}
                                 fullWidth
@@ -158,11 +168,12 @@ function Login() {
                                 variant="outlined"
                                 color="primary"
                                 error={!!error}
-                                helperText={error && !values.password ? "Enter password!" : ""}
+                                helperText={error && !values.password ? t('passwordError') : ""}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton style={{ color: 'var(--primary-color)' }}
+                                            <IconButton
+                                                style={{ color: 'var(--primary-color)' }}
                                                 aria-label="toggle password visibility"
                                                 onClick={handleClickShowPassword}
                                                 edge="end"
@@ -172,34 +183,44 @@ function Login() {
                                         </InputAdornment>
                                     ),
                                 }}
+
                             />
                         </div>
                         <div className='bottomSide'>
-                            <label >
-                                <input className='checkbox' type="checkbox" checked={values.rememberMe} onChange={handleRememberMe} /> Remember Me
+                            <label>
+                                <input
+                                    className='checkbox'
+                                    type="checkbox"
+                                    checked={values.rememberMe}
+                                    onChange={handleRememberMe}
+                                /> {t('rememberMe')}
                             </label>
                             <MuiLink
                                 className='forgotPass'
                                 href="/forgotpassword"
                                 variant="body2"
                                 fontFamily={'Poppins'}
-                            >Forgot Password?</MuiLink>
+                            >{t('forgotPassword')}</MuiLink>
                         </div>
-                        <Button className='loginButton mt-3'
+                        <Button
+                            className='loginButton mt-3'
                             type="submit"
                             variant="contained"
-                            fullWidth>Log In</Button>
+                            fullWidth
+                        >{t('loginButton')}</Button>
                     </form>
                     <div className='d-flex justify-content-center mt-3'>
-                        <MuiLink className='signUpLink'
+                        <MuiLink
+                            className='signUpLink'
                             component={Link}
                             to="/signup"
                             variant="body2"
                             fontFamily={'Poppins'}
                         >
-                            Don't have an account? Sign Up
+                            {t('noAccount')}
                         </MuiLink>
                     </div>
+
                 </div>
             </div>
         </div>

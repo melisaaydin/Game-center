@@ -4,7 +4,7 @@ import { IoPersonAdd, IoNotifications } from 'react-icons/io5';
 import { MdCheck, MdClose, MdGroup } from 'react-icons/md';
 import { Close } from '@mui/icons-material';
 import moment from 'moment';
-
+import { useTranslation } from 'react-i18next';
 // Component to render a single notification item in the notification menu
 function NotificationItem({
     notification,
@@ -19,6 +19,7 @@ function NotificationItem({
     processingInvites,
     processingFriendRequests,
 }) {
+    const { t } = useTranslation('notifications');
     // Validate the notification object to ensure it has an ID
     if (!notification || !notification.id) {
         return null;
@@ -57,7 +58,7 @@ function NotificationItem({
                         e.stopPropagation();
                         deleteNotification(notification.id);
                     }}
-                    aria-label="Delete notification"
+                    aria-label={t('deleteNotification')}
                     sx={{
                         position: 'absolute',
                         top: 1,
@@ -98,7 +99,7 @@ function NotificationItem({
                                     onClick={() => notification.sender_id && handleProfileClick(notification.sender_id)}
                                 >
                                     <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
-                                    {notification.content?.message || 'sent you a friend request'}
+                                    {notification.content?.message || t('friendRequestMessage', { senderName: notification.sender_name })}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">
@@ -116,10 +117,10 @@ function NotificationItem({
                                             e.stopPropagation();
                                             acceptFriendRequest(notification.id, notification.request_id);
                                         }}
-                                        aria-label="Accept friend request"
+                                        aria-label={t('accept')}
                                         sx={{ mr: 1 }}
                                     >
-                                        <MdCheck style={{ marginRight: 4 }} /> Accept
+                                        <MdCheck style={{ marginRight: 4 }} /> {t('accept')}
                                     </Button>
                                     <Button
                                         className="action-button reject"
@@ -131,22 +132,22 @@ function NotificationItem({
                                             e.stopPropagation();
                                             rejectFriendRequest(notification.id, notification.request_id);
                                         }}
-                                        aria-label="Reject friend request"
+                                        aria-label={t('reject')}
                                         sx={{ mr: 1 }}
                                     >
-                                        <MdClose style={{ marginRight: 4 }} /> Reject
+                                        <MdClose style={{ marginRight: 4 }} /> {t('reject')}
                                     </Button>
                                 </Box>
                             ) : (
                                 <Box className="notification-actions">
                                     {notification.content?.status === 'accepted' && (
                                         <Typography variant="caption" color="success.main">
-                                            Friend request accepted
+                                            {t('friendRequestAccepted')}
                                         </Typography>
                                     )}
                                     {notification.content?.status === 'rejected' && (
                                         <Typography variant="caption" color="error">
-                                            Friend request rejected
+                                            {t('friendRequestRejected')}
                                         </Typography>
                                     )}
                                 </Box>
@@ -162,7 +163,7 @@ function NotificationItem({
                                     onClick={() => notification.sender_id && handleProfileClick(notification.sender_id)}
                                 >
                                     <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
-                                    {notification.content?.message || 'accepted your friend request'}
+                                    {notification.content?.message || t('friendAcceptedMessage', { senderName: notification.sender_name })}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">
@@ -180,7 +181,7 @@ function NotificationItem({
                                     sx={{ cursor: 'pointer' }}
                                 >
                                     <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
-                                    {notification.content?.message || 'invited you to a lobby'}
+                                    {notification.content?.message || t('lobbyInviteMessage', { senderName: notification.sender_name })}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">
@@ -199,10 +200,10 @@ function NotificationItem({
                                             console.log('Accepting lobby invite with invitationId:', notification.content.invitationId);
                                             handleAcceptLobbyInvite(notification.id, notification.content.invitationId);
                                         }}
-                                        aria-label="Join lobby"
+                                        aria-label={t('joinLobby')}
                                         sx={{ mr: 1, bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
                                     >
-                                        <MdCheck style={{ marginRight: 4 }} /> Join Lobby
+                                        <MdCheck style={{ marginRight: 4 }} /> {t('joinLobby')}
                                     </Button>
                                     <Button
                                         className="action-button decline-lobby"
@@ -215,10 +216,10 @@ function NotificationItem({
                                             console.log('Rejecting lobby invite with invitationId:', notification.content.invitationId);
                                             handleRejectLobbyInvite(notification.id, notification.content.invitationId);
                                         }}
-                                        aria-label="Decline lobby invite"
+                                        aria-label={t('decline')}
                                         sx={{ mr: 1 }}
                                     >
-                                        <MdClose style={{ marginRight: 4 }} /> Decline
+                                        <MdClose style={{ marginRight: 4 }} /> {t('decline')}
                                     </Button>
                                 </Box>
                             ) : (
@@ -233,18 +234,18 @@ function NotificationItem({
                                                 e.stopPropagation();
                                                 navigate(`/lobbies/${notification.content.id}`);
                                             }}
-                                            aria-label="View lobby"
+                                            aria-label={t('viewLobby')}
                                             sx={{ mr: 1 }}
                                         >
-                                            View Lobby
+                                            {t('viewLobby')}
                                         </Button>
                                     ) : notification.content?.status === 'rejected' ? (
                                         <Typography variant="caption" color="error">
-                                            Lobby invitation rejected
+                                            {t('lobbyInviteRejected')}
                                         </Typography>
                                     ) : (
                                         <Typography variant="caption" color="error">
-                                            Invitation status unknown or expired
+                                            {t('invitationNotFound')}
                                         </Typography>
                                     )}
                                 </Box>
@@ -261,7 +262,7 @@ function NotificationItem({
                                     sx={{ cursor: 'pointer' }}
                                 >
                                     <strong>{notification.sender_name || 'Unknown User'}</strong>{' '}
-                                    {notification.content?.message || 'joined the lobby'}
+                                    {notification.content?.message || t('lobbyJoinedMessage', { senderName: notification.sender_name })}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">
@@ -277,10 +278,10 @@ function NotificationItem({
                                         e.stopPropagation();
                                         navigate(`/lobbies/${notification.content.lobbyId}`);
                                     }}
-                                    aria-label="View lobby"
+                                    aria-label={t('viewLobby')}
                                     sx={{ mr: 1 }}
                                 >
-                                    View Lobby
+                                    {t('viewLobby')}
                                 </Button>
                             </Box>
                         </>
@@ -289,7 +290,7 @@ function NotificationItem({
                             <Box className="notification-header">
                                 <IoNotifications className="notification-icon" />
                                 <Typography variant="body2" className="notification-message">
-                                    {notification.content?.message || 'New notification'}
+                                    {notification.content?.message || t('newNotification', { ns: 'common' }) || 'New notification'}
                                 </Typography>
                             </Box>
                             <Typography variant="caption" className="notification-timestamp">

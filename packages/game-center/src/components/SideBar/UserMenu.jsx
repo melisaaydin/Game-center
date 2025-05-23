@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Box, IconButton, Avatar, Menu, MenuItem, Button } from '@mui/material';
 import { MdLogout, MdLogin, MdSettings } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
@@ -8,12 +8,15 @@ import Coin from '../../assets/star.png';
 import { FaPlus } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import NotificationMenu from '../NotificaitonMenu/NotificationMenu';
-import { ReactComponent as Sun } from "../../assets/Sun.svg"
-import { ReactComponent as Moon } from "../../assets/Moon.svg"
+import { ReactComponent as Sun } from "../../assets/Sun.svg";
+import { ReactComponent as Moon } from "../../assets/Moon.svg";
+import { useTranslation } from 'react-i18next';
+
 function UserMenu() {
+    const { t } = useTranslation('userMenu');
     const { user, logout } = useUser();
     const navigate = useNavigate();
-    const { toggleColorMode, mode } = React.useContext(ColorModeContext);
+    const { toggleColorMode, mode } = useContext(ColorModeContext);
     const [anchorEl, setAnchorEl] = useState(null);
 
     const handleAvatarClick = (event) => {
@@ -49,10 +52,10 @@ function UserMenu() {
         <Box className="nav-right">
             <Box className="coin-box">
                 <img src={Coin} alt="coin" className="img" />
-                <span>{user?.coins || 125363}</span>
+                <span>{t('coins', { count: user?.coins || 125363 })}</span>
                 <Button size="small" className="deposit-btn" disableRipple>
                     <Link to="/deposit">
-                        <FaPlus /> Deposit
+                        <FaPlus /> {t('deposit')}
                     </Link>
                 </Button>
             </Box>
@@ -69,20 +72,19 @@ function UserMenu() {
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
-
                 >
                     {user ? (
                         [
                             <MenuItem key="profile-settings" onClick={handleProfileSettings}>
-                                <MdSettings style={{ marginRight: 8 }} /> Profile Settings
+                                <MdSettings style={{ marginRight: 8 }} /> {t('profileSettings')}
                             </MenuItem>,
                             <MenuItem key="logout" onClick={handleLogout}>
-                                <MdLogout style={{ marginRight: 8 }} /> Logout
+                                <MdLogout style={{ marginRight: 8 }} /> {t('logout')}
                             </MenuItem>,
                         ]
                     ) : (
                         <MenuItem key="login" onClick={handleLogin}>
-                            <MdLogin style={{ marginRight: 8 }} /> Login
+                            <MdLogin style={{ marginRight: 8 }} /> {t('login')}
                         </MenuItem>
                     )}
                 </Menu>
@@ -96,7 +98,6 @@ function UserMenu() {
                     <label className='dark_mode_label' htmlFor='darkmode-toggle'>
                         <Sun />
                         <Moon />
-
                     </label>
                 </div>
             </Box>

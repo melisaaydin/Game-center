@@ -23,7 +23,10 @@ import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../CreateLobby/CreateLobby";
 import "./LobbySection.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
+import { useTranslation } from 'react-i18next';
+
 function LobbySection() {
+    const { t } = useTranslation('lobbySection');
     const { mode } = useContext(ColorModeContext);
     const [lobbies, setLobbies] = useState([]);
     const [games, setGames] = useState([]);
@@ -62,14 +65,13 @@ function LobbySection() {
                 setLoadingGames(false);
             } catch (err) {
                 console.error("Games could not be received:", err);
-                setErrorGames("Error occured while games loading.");
+                setErrorGames(t('errorLoadingGames'));
                 setLoadingGames(false);
             }
         };
 
         fetchLobbies();
         fetchGames();
-
 
         const interval = setInterval(() => {
             setLobbies((prevLobbies) => [...prevLobbies]);
@@ -85,6 +87,7 @@ function LobbySection() {
     const handleGameSelect = (event) => {
         setSelectedGameId(event.target.value);
     };
+
     // After a lobby is created, close dialog and fetch lobbies again
     const handleLobbyCreated = () => {
         setOpenDialog(false);
@@ -93,7 +96,7 @@ function LobbySection() {
         axios.get("http://localhost:8081/lobbies").then((res) => {
             if (res.data.success) setLobbies(res.data.lobbies || []);
         });
-        setSnackbarMessage("Lobbby created successfully!");
+        setSnackbarMessage(t('lobbyCreated'));
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
     };
@@ -103,14 +106,13 @@ function LobbySection() {
         setSnackbarOpen(false);
     };
 
-
     return (
         <Box className="lobby-section">
             {/* Event Lobbies */}
             {eventLobbies.length > 0 && (
                 <>
                     <Typography variant="h6" className="lobby-section-title">
-                        Event Lobbies
+                        {t('eventLobbies')}
                     </Typography>
                     <List className="lobby-list">
                         {eventLobbies.map((lobby) => (
@@ -119,7 +121,7 @@ function LobbySection() {
                                     primary={lobby.name}
                                     secondary={
                                         <>
-                                            {`Players: ${lobby.current_players}/${lobby.max_players}`} <br />
+                                            {t('players', { current: lobby.current_players, max: lobby.max_players })} <br />
                                             {lobby.start_time && getTimeDisplay(lobby.start_time)}
                                         </>
                                     }
@@ -133,7 +135,7 @@ function LobbySection() {
                                     onClick={() => navigate(`/lobbies/${lobby.id}`)}
                                     sx={{ ml: 1 }}
                                 >
-                                    Go to lobby
+                                    {t('goToLobby')}
                                 </Button>
                             </ListItem>
                         ))}
@@ -142,7 +144,7 @@ function LobbySection() {
             )}
             {/* Active Lobbies */}
             <Typography variant="h6" className="lobby-section-title" sx={{ mt: eventLobbies.length > 0 ? 3 : 0 }}>
-                Active Lobbies
+                {t('activeLobbies')}
             </Typography>
             {/* Button to open create lobby dialog */}
             <Button
@@ -151,7 +153,7 @@ function LobbySection() {
                 onClick={handleCreateLobby}
                 sx={{ mb: 2 }}
             >
-                Create New Lobby
+                {t('createNewLobby')}
             </Button>
             <List className="lobby-list">
                 {activeLobbies.length > 0 ? (
@@ -159,7 +161,7 @@ function LobbySection() {
                         <ListItem key={lobby.id} className="lobby-item">
                             <ListItemText
                                 primary={lobby.name}
-                                secondary={`Players: ${lobby.current_players}/${lobby.max_players}`}
+                                secondary={t('players', { current: lobby.current_players, max: lobby.max_players })}
                                 primaryTypographyProps={{ className: "lobby-name" }}
                                 secondaryTypographyProps={{ className: "lobby-info" }}
                             />
@@ -169,36 +171,30 @@ function LobbySection() {
                                 onClick={() => navigate(`/lobbies/${lobby.id}`)}
                                 sx={{ ml: 1 }}
                             >
-                                Go to lobby
+                                {t('goToLobby')}
                             </Button>
                         </ListItem>
                     ))
                 ) : (
-                    <Typography className="no-lobbies">No active lobbies yet.</Typography>
+                    <Typography className="no-lobbies">{t('noActiveLobbies')}</Typography>
                 )}
             </List>
-            <Box className="dummy-section" sx={{ mt: 3 }}>
-                <Typography variant="h6" className="dummy-title">
-                    Chat
-                </Typography>
-                <Typography className="dummy-text">Coming soon...</Typography>
-            </Box>
             <Box className="dummy-section" sx={{ mt: 2 }}>
                 <Typography variant="h6" className="dummy-title">
-                    Statistics
+                    {t('statistics')}
                 </Typography>
-                <Typography className="dummy-text">Wins: 0 | Losses: 0</Typography>
+                <Typography className="dummy-text">{t('winsLosses', { wins: 0, losses: 0 })}</Typography>
             </Box>
 
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Create a New Lobby</DialogTitle>
+                <DialogTitle>{t('createLobbyTitle')}</DialogTitle>
                 <DialogContent>
                     {loadingGames ? (
-                        <Typography>Loading...</Typography>
+                        <Typography>{t('loadingGames')}</Typography>
                     ) : errorGames ? (
                         <Typography color="error">{errorGames}</Typography>
                     ) : games.length === 0 ? (
-                        <Typography>No games found.</Typography>
+                        <Typography>{t('noGamesFound')}</Typography>
                     ) : (
                         <>
                             <Select
@@ -209,7 +205,7 @@ function LobbySection() {
                                 sx={{ mb: 2 }}
                             >
                                 <MenuItem value="" disabled>
-                                    Select a Game
+                                    {t('selectGame')}
                                 </MenuItem>
                                 {games.map((game) => (
                                     <MenuItem key={game.id} value={game.id}>
@@ -224,7 +220,7 @@ function LobbySection() {
                     )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+                    <Button onClick={() => setOpenDialog(false)}>{t('cancel')}</Button>
                 </DialogActions>
             </Dialog>
             <Snackbar

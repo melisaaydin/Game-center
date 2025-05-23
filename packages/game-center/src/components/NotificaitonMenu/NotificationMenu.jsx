@@ -8,8 +8,10 @@ import useNotifications from './useNotifications';
 import NotificationItem from './NotificationItem';
 import './NotificationMenu.css';
 import { debounce } from 'lodash';
+import { useTranslation } from 'react-i18next';
 
 function NotificationMenu() {
+    const { t } = useTranslation('notifications');
     // Access the current user from the UserContext
     const { user } = useUser();
     // Hook to navigate to other routes
@@ -61,7 +63,7 @@ function NotificationMenu() {
                 className="right-icon notification-icon"
                 disableRipple
                 onClick={handleNotificationClick}
-                aria-label="Notifications"
+                aria-label={t('notifications')}
             >
                 <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0}>
                     <IoNotifications />
@@ -82,20 +84,20 @@ function NotificationMenu() {
             >
                 {!user && (
                     <MenuItem onClick={handleLogin} className="notification-login">
-                        <MdLogin style={{ marginRight: 8 }} /> Login to see notifications
+                        <MdLogin style={{ marginRight: 8 }} /> {t('loginToSeeNotifications')}
                     </MenuItem>
                 )}
                 {user && loading && (
                     <MenuItem className="notification-loading">
                         <CircularProgress size={24} />
                         <Typography variant="body2" sx={{ ml: 2 }}>
-                            Loading notifications...
+                            {t('loadingNotifications')}
                         </Typography>
                     </MenuItem>
                 )}
                 {user && !loading && notifications.length === 0 && (
                     <MenuItem className="notification-empty">
-                        <Typography variant="body2">No new notifications</Typography>
+                        <Typography variant="body2">{t('noNotifications')}</Typography>
                     </MenuItem>
                 )}
                 {user &&

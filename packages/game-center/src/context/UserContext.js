@@ -1,6 +1,8 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { resetLanguage } from '../i18n';
+import { toast } from 'react-toastify';
 
 const UserContext = createContext();
 
@@ -9,11 +11,11 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-    const [user, setUser] = useState(null); // State to hold user data
-    const [loading, setLoading] = useState(true); // Loading state for user data
-    const [preferredLanguage, setPreferredLanguage] = useState('en');
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const fetchUserData = useCallback(async (token, userId) => {
+        console.log('fetchUserData called with userId:', userId);
         try {
             if (!userId) {
                 throw new Error('User ID is undefined');
@@ -30,58 +32,66 @@ export const UserProvider = ({ children }) => {
                 email: res.data.email,
                 avatar_url: res.data.avatar_url,
             });
-            setPreferredLanguage(res.data.language || 'en');
         } catch (err) {
+            console.error('fetchUserData error:', err);
             localStorage.removeItem('token');
             setUser(null);
-            setPreferredLanguage('en');
         }
     }, []);
 
     useEffect(() => {
+        let isMounted = true;
+
         const initializeUser = async () => {
+            console.log('initializeUser called');
+            if (!isMounted) return;
+
             const token = localStorage.getItem('token');
             if (token) {
                 try {
                     const decodedToken = jwtDecode(token);
+                    console.log('Decoded token:', decodedToken);
                     await fetchUserData(token, decodedToken.userId);
                 } catch (err) {
+                    console.error('initializeUser error:', err);
                     localStorage.removeItem('token');
                     setUser(null);
-                    setPreferredLanguage('en');
                 }
-            } else {
-                setUser(null);
-                setPreferredLanguage('en');
             }
-            setLoading(false);
+            if (isMounted) setLoading(false);
         };
 
         initializeUser();
+
+        return () => {
+            isMounted = false;
+        };
     }, [fetchUserData]);
 
     const login = async (userData, token) => {
+        console.log('login called with userData:', userData);
         localStorage.setItem('token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         try {
             const decoded = jwtDecode(token);
+            console.log('Login decoded token:', decoded);
             await fetchUserData(token, decoded.userId);
         } catch (err) {
+            console.error('login error:', err);
             localStorage.removeItem('token');
             setUser(null);
-            setPreferredLanguage('en');
         }
     };
 
     const logout = () => {
+        console.log('logout called');
         localStorage.removeItem('token');
         delete axios.defaults.headers.common['Authorization'];
         setUser(null);
-        setPreferredLanguage('en');
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser, login, logout, loading, preferredLanguage, setPreferredLanguage }}>
+        <UserContext.Provider value={{ user, setUser, login, logout, loading }}>
             {children}
         </UserContext.Provider>
     );

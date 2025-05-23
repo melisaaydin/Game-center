@@ -4,7 +4,6 @@ const db = require("../models/db");
 const getAllGames = async (req, res) => {
     try {
         const result = await db.query("SELECT * FROM games");
-        console.log("Fetched games:", result.rows);
         res.json(result.rows);
     } catch (err) {
         console.error("Game fetch error:", err);
@@ -31,7 +30,6 @@ const getGameDetails = async (req, res) => {
 // Search games by title
 const searchGames = async (req, res) => {
     const { q } = req.query;
-    console.log("searchGames hit with query:", q); // Debug
     try {
         const result = await db.query(
             "SELECT id, title, image_url FROM games WHERE title ILIKE $1",

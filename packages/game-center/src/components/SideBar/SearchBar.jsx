@@ -4,8 +4,10 @@ import { IoSearch } from 'react-icons/io5';
 import { Link } from 'react-router-dom';
 import { searchGames, searchUsers } from '../../utils/api';
 import './SideBar.css';
+import { useTranslation } from 'react-i18next';
 
 function SearchBar({ searchRef }) {
+    const { t } = useTranslation('sideBar');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState({ games: [], users: [] });
     const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ function SearchBar({ searchRef }) {
 
             setSearchResults({ games, users });
         } catch (err) {
-            setError(err.message || 'An error occurred while searching');
+            setError(t('searchError', { message: err.message || '' }));
             setSearchResults({ games: [], users: [] });
         } finally {
             setLoading(false);
@@ -42,7 +44,6 @@ function SearchBar({ searchRef }) {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             handleSearch();
-
         }
     };
 
@@ -123,14 +124,14 @@ function SearchBar({ searchRef }) {
         };
 
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return () => window.addEventListener('resize', handleResize);
     }, []);
 
     return (
         <Box className={`headerSearch ${isExpanded ? 'expanded' : ''}`} ref={searchRef}>
             <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -140,9 +141,7 @@ function SearchBar({ searchRef }) {
                 ref={inputRef}
             />
             {searchQuery ? (
-                <Button className="clear-btn" onClick={handleClear} disableRipple>
-                    Clear
-                </Button>
+                <Button className="clear-btn" onClick={handleClear} disableRipple>{t('clear')}</Button>
             ) : (
                 <Button
                     disableRipple
@@ -176,7 +175,7 @@ function SearchBar({ searchRef }) {
                     )}
                     <Box>
                         <span style={{ color: 'var(--text-color)', fontWeight: '500' }}>
-                            Games
+                            {t('games')}
                         </span>
                         {loading ? (
                             <Box sx={{ padding: '8px', textAlign: 'center' }}>
@@ -184,7 +183,7 @@ function SearchBar({ searchRef }) {
                             </Box>
                         ) : searchResults.games.length === 0 && !error ? (
                             <Box sx={{ padding: '8px', color: 'var(--text-color)' }}>
-                                No games found
+                                {t('noGamesFound')}
                             </Box>
                         ) : (
                             searchResults.games.map((game) => (
@@ -224,7 +223,7 @@ function SearchBar({ searchRef }) {
                     </Box>
                     <Box sx={{ marginTop: '10px' }}>
                         <span style={{ color: 'var(--text-color)', fontWeight: '500' }}>
-                            Users
+                            {t('users')}
                         </span>
                         {loading ? (
                             <Box sx={{ padding: '8px', textAlign: 'center' }}>
@@ -232,7 +231,7 @@ function SearchBar({ searchRef }) {
                             </Box>
                         ) : searchResults.users.length === 0 && !error ? (
                             <Box sx={{ padding: '8px', color: 'var(--text-color)' }}>
-                                No users found
+                                {t('noUsersFound')}
                             </Box>
                         ) : (
                             searchResults.users.map((user) => (

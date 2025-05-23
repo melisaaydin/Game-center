@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { Box, Typography, TextField, Button, Avatar, Paper } from "@mui/material";
+import { useTranslation } from 'react-i18next';
 
 const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJoined, handleSendMessage, handleTyping, mode, chatRef, userName }) => {
-
+    const { t } = useTranslation('chatSection');
 
     useEffect(() => {
         if (chatRef.current) {
@@ -13,7 +14,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
     return (
         <Paper className="lobby-card chat-card">
             <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <Typography variant="h6" className="section-title">Chat</Typography>
+                <Typography variant="h6" className="section-title">{t('chat')}</Typography>
                 <Box ref={chatRef} className="chat-messages">
                     {chatMessages.map((msg, index) => {
                         const isSystemMessage =
@@ -28,7 +29,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
                             return (
                                 <Box key={index} className="system-message">
                                     <Typography className="message-content" variant="body2">
-                                        {msg.content}
+                                        {t('systemMessage', { message: msg.content })}
                                     </Typography>
                                 </Box>
                             );
@@ -49,7 +50,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
                     })}
                 </Box>
                 {typingUser && (
-                    <Typography className="typing-indicator">{typingUser} is typing...</Typography>
+                    <Typography className="typing-indicator">{t('typingIndicator', { user: typingUser })}</Typography>
                 )}
                 {isJoined && (
                     <Box className="chat-input">
@@ -62,14 +63,14 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
                             onKeyPress={(e) => {
                                 if (e.key === "Enter") handleSendMessage();
                             }}
-                            placeholder="Message"
+                            placeholder={t('messagePlaceholder')}
                             fullWidth
                             size="small"
                             variant="outlined"
                             sx={{ bgcolor: mode === "dark" ? "#444" : "white" }}
                         />
                         <Button variant="contained" onClick={handleSendMessage}>
-                            Send
+                            {t('send')}
                         </Button>
                     </Box>
                 )}

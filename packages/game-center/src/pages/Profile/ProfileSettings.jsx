@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 import "./ProfileSetting.css";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { useUser } from "../../context/UserContext";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -20,13 +21,12 @@ import { useContext } from "react";
 import { ColorModeContext } from "../../context/ThemeContext";
 
 function ProfileSettings() {
-    //Get user data,setUser function,and loading state from the UserContext.
+    const { t } = useTranslation('profile');
     const { user, setUser, loading } = useUser();
     const navigate = useNavigate();
     const { mode } = useContext(ColorModeContext);
     const theme = useTheme();
 
-    // State to store user data like name, email, bio, and profile image.
     const [userData, setUserData] = useState({ name: "", email: "", bio: "", profileImage: "" });
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -39,26 +39,22 @@ function ProfileSettings() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-    // useEffect to fetch user data when the component mounts or user/loading state changes.
+
     useEffect(() => {
         if (loading) return;
-        // If no user is logged in, show an error and redirect to login.
         if (!user) {
-            setErrorMessage("Please log in to edit your profile.");
-            setSnackbarMessage("Please log in to edit your profile.");
+            setErrorMessage(t('loginToEditProfile'));
+            setSnackbarMessage(t('loginToEditProfile'));
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
             setTimeout(() => navigate("/login"), 2000);
             return;
         }
-        // Function to fetch user data from the backend.
         const fetchUserData = async () => {
             try {
-                // Make a GET request to fetch user profile details.
                 const response = await axios.get(`http://localhost:8081/users/user/${user.id}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
-                // Update userData state with the fetched data.
                 setUserData({
                     name: response.data.name || "",
                     email: response.data.email || "",
@@ -67,8 +63,8 @@ function ProfileSettings() {
                 });
             } catch (error) {
                 const errorMsg = error.response?.status === 401
-                    ? "Session expired. Please log in again."
-                    : "Failed to load user data.";
+                    ? t('sessionExpired')
+                    : t('failedToLoadUserData');
                 setErrorMessage(errorMsg);
                 setSnackbarMessage(errorMsg);
                 setSnackbarSeverity("error");
@@ -80,13 +76,13 @@ function ProfileSettings() {
         };
 
         fetchUserData();
-    }, [user, loading, navigate]);
-    // Handle file selection for profile image upload.
+    }, [user, loading, navigate, t]);
+
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file && !["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
-            setErrorMessage("Please select a valid image file (JPEG, PNG, or GIF).");
-            setSnackbarMessage("Invalid file type. Please select an image.");
+            setErrorMessage(t('invalidFileType'));
+            setSnackbarMessage(t('invalidFileType'));
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
             return;
@@ -94,12 +90,12 @@ function ProfileSettings() {
         setSelectedFile(file);
         setPreview(file ? URL.createObjectURL(file) : "");
     };
-    // Handle form submission to update the user profile.
+
     const handleUpdateProfile = async (event) => {
         event.preventDefault();
         if (newPassword && newPassword !== confirmNewPassword) {
-            setErrorMessage("New passwords do not match!");
-            setSnackbarMessage("New passwords do not match!");
+            setErrorMessage(t('passwordsDoNotMatch'));
+            setSnackbarMessage(t('passwordsDoNotMatch'));
             setSnackbarSeverity("error");
             setSnackbarOpen(true);
             return;
@@ -112,7 +108,6 @@ function ProfileSettings() {
             formData.append("oldPassword", currentPassword);
             formData.append("newPassword", newPassword);
         }
-        // Include the profile image if a new one is selected.
         if (selectedFile) {
             formData.append("avatar", selectedFile);
         }
@@ -125,7 +120,6 @@ function ProfileSettings() {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            // Update the user context with the new profile data.
             setUser((prev) => ({
                 ...prev,
                 name: response.data.user.name,
@@ -133,14 +127,14 @@ function ProfileSettings() {
                 bio: response.data.user.bio,
                 avatar_url: response.data.user.avatar_url,
             }));
-            setSnackbarMessage("Profile updated successfully!");
+            setSnackbarMessage(t('profileUpdated'));
             setSnackbarSeverity("success");
             setSnackbarOpen(true);
             setTimeout(() => navigate("/"), 2000);
         } catch (error) {
             const errorMsg = error.response?.status === 401
-                ? "Session expired. Please log in again."
-                : error.response?.data?.message || "Failed to update profile.";
+                ? t('sessionExpired')
+                : error.response?.data?.message || t('failedToUpdateProfile');
             setErrorMessage(errorMsg);
             setSnackbarMessage(errorMsg);
             setSnackbarSeverity("error");
@@ -157,13 +151,13 @@ function ProfileSettings() {
         setSnackbarOpen(false);
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div>{t('loading')}</div>;
 
     return (
         <div className="profile-container">
             <div className="form-container">
                 <div className="form-title">
-                    <span>Profile Settings</span>
+                    <span>{t('profileSettings')}</span>
                 </div>
                 <form onSubmit={handleUpdateProfile} encType="multipart/form-data">
                     <div className="avatar-upload">
@@ -184,13 +178,13 @@ function ProfileSettings() {
                             style={{ display: "none" }}
                         />
                         <label htmlFor="file-input" className="custom-file-label">
-                            Choose File
+                            {t('chooseFile')}
                         </label>
                     </div>
 
                     <div className="input-group">
                         <TextField
-                            label="Name"
+                            label={t('name')}
                             name="name"
                             value={userData.name}
                             onChange={(e) => setUserData({ ...userData, name: e.target.value })}
@@ -203,7 +197,7 @@ function ProfileSettings() {
 
                     <div className="input-group">
                         <TextField
-                            label="Email"
+                            label={t('email')}
                             name="email"
                             value={userData.email}
                             onChange={(e) => setUserData({ ...userData, email: e.target.value })}
@@ -215,7 +209,7 @@ function ProfileSettings() {
                     </div>
                     <div className="input-group">
                         <TextField
-                            label="Biography"
+                            label={t('bio')}
                             name="bio"
                             value={userData.bio}
                             onChange={(e) => setUserData({ ...userData, bio: e.target.value })}
@@ -229,7 +223,7 @@ function ProfileSettings() {
                     </div>
                     <div className="input-group">
                         <TextField
-                            label="Old Password"
+                            label={t('oldPassword')}
                             name="oldPassword"
                             type={showPassword ? "text" : "password"}
                             value={currentPassword}
@@ -256,7 +250,7 @@ function ProfileSettings() {
 
                     <div className="input-group">
                         <TextField
-                            label="New Password"
+                            label={t('newPassword')}
                             name="newPassword"
                             type={showPassword ? "text" : "password"}
                             value={newPassword}
@@ -283,7 +277,7 @@ function ProfileSettings() {
 
                     <div className="input-group">
                         <TextField
-                            label="Confirm New Password"
+                            label={t('confirmNewPassword')}
                             name="confirmNewPassword"
                             type={showPassword ? "text" : "password"}
                             value={confirmNewPassword}
@@ -326,7 +320,7 @@ function ProfileSettings() {
                                 },
                             }}
                         >
-                            Update Profile
+                            {t('updateProfile')}
                         </Button>
                     )}
                 </form>

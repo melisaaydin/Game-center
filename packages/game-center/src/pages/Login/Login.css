@@ -42,21 +42,11 @@
 
 .login-left {
     height: 100vh;
-    overflow: hidden;
     padding: 0;
     margin: 0;
     display: flex;
     justify-content: flex-start;
     align-items: center;
-
-}
-
-.login-left img {
-    height: auto;
-    max-height: 100vh;
-    object-fit: cover;
-    object-position: left;
-
 }
 
 
