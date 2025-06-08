@@ -3,27 +3,22 @@ import { LanguageContext } from '../context/LanguageContext';
 import enFlag from '../assets/en-flag.png';
 import trFlag from '../assets/tr-flag.png';
 import './LanguageSwitcher.css';
+import i18n from '../i18n';
 
+// Defining the LanguageSwitcher component for toggling languages
 const LanguageSwitcher = () => {
+    // Accessing language context for current language and change function
     const { language, changeLanguage } = useContext(LanguageContext);
-
-    const toggleLanguage = () => {
-        const newLanguage = language === 'en' ? 'tr' : 'en';
-        console.log('LanguageSwitcher: Changing to:', newLanguage);
-        changeLanguage(newLanguage);
-    };
-
-    const flagSrc = language === 'en' ? enFlag : trFlag;
-
+    const newLang = language === 'en' ? 'tr' : 'en';
     return (
-        <div className="language-switcher" onClick={toggleLanguage}>
+        <div className="language-switcher" onClick={() => changeLanguage(newLang)}>
             <img
-                src={flagSrc}
+                src={language === 'en' ? enFlag : trFlag}
                 alt={language === 'en' ? 'English' : 'Türkçe'}
-                onError={(e) => console.warn(`Flag failed to load: ${flagSrc}`)}
             />
         </div>
     );
 };
 
+// Exporting the LanguageSwitcher component as default
 export default LanguageSwitcher;

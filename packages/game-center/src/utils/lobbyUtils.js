@@ -1,10 +1,10 @@
 import axios from "axios";
 import io from "socket.io-client";
 
-// Initialize Socket.IO client with reconnection settings
-const socket = io("http://localhost:8081", {
+const socket = io('http://localhost:8081', {
     reconnection: true,
     reconnectionAttempts: 5,
+    transports: ['websocket', 'polling'],
 });
 
 // Generic API request helper function
@@ -93,7 +93,6 @@ const deleteLobby = async (lobbyId, setSnackbar, navigate, token) => {
         setSnackbar({ open: true, message: "Lobby deleted successfully!", severity: "success" });
         navigate("/");
     } else {
-        // Show error message
         setSnackbar({ open: true, message: "Could not delete lobby: " + (res.message || res.data.message), severity: "error" });
     }
 };

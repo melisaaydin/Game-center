@@ -11,41 +11,52 @@ import {
     List,
     ListItem,
     ListItemText,
-    Snackbar,
-    Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../../context/UserContext';
+import { toast } from 'react-toastify';
 import './ProfileView.css';
 
+// Main component for displaying a user's profile and recent games
 function ProfileView() {
+    // Get translation function for the 'profile' namespace and user ID from URL params
     const { t } = useTranslation('profile');
+    // Extract the userId from the route parameters
     const { userId } = useParams();
+    // Get current user data from the UserContext
     const { user } = useUser();
+    // State to store the profile data of the user being viewed
     const [profile, setProfile] = useState(null);
+    // State to store the user's recent games
     const [recentGames, setRecentGames] = useState([]);
+    // State to track loading status while fetching data
     const [loading, setLoading] = useState(true);
+    // State to store any error messages during data fetching
     const [error, setError] = useState(null);
+    // State to manage the text and action of the friend request button
     const [friendRequestStatus, setFriendRequestStatus] = useState(t('addFriend'));
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+    // Hook to navigate programmatically to other routes
     const navigate = useNavigate();
 
+    // Fetch profile data, friend request status, and recent games on component mount or when userId/user changes
     useEffect(() => {
         const fetchProfile = async () => {
             try {
+                // Request the profile data for the specified userId
                 const profileRes = await axios.get(`http://localhost:8081/users/user/${userId}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
+                // Update state with the fetched profile data
                 setProfile(profileRes.data);
 
+                // If the current user is not the profile owner, check friend request status
                 if (user && user.id !== userId) {
                     const statusRes = await axios.get(`http://localhost:8081/users/friend-requests/status/${userId}`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                     });
+                    // Update button text based on friend request status
                     if (statusRes.data.status === 'pending') {
                         setFriendRequestStatus(t('cancelRequest'));
                     } else if (statusRes.data.status === 'friends') {
@@ -55,30 +66,36 @@ function ProfileView() {
                     }
                 }
 
+                // Fetch the user's recent games
                 const gamesRes = await axios.get(`http://localhost:8081/users/user/${userId}/games`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
+                // Update state with the fetched games, defaulting to an empty array if none
                 setRecentGames(gamesRes.data.games || []);
 
+                // Set loading to false once all data is fetched
                 setLoading(false);
             } catch (err) {
+                // Handle errors by setting an error message and stopping loading
                 setError(t('failedToLoadProfile'));
                 setLoading(false);
             }
         };
+        // Call the fetch function
         fetchProfile();
     }, [userId, user, t]);
 
+    // Handle friend request actions: add, cancel, or remove a friend
     const handleFriendRequest = async () => {
+        // Check if the user is logged in; redirect to login if not
         if (!user) {
-            setSnackbarMessage(t('loginToManageFriends'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            toast.error(t('loginToManageFriends'));
             navigate('/login');
             return;
         }
 
         try {
+            // If the button says "Add Friend", send a friend request
             if (friendRequestStatus === t('addFriend')) {
                 await axios.post(
                     'http://localhost:8081/users/friend-requests',
@@ -86,8 +103,8 @@ function ProfileView() {
                     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
                 );
                 setFriendRequestStatus(t('cancelRequest'));
-                setSnackbarMessage(t('friendRequestSent'));
-                setSnackbarSeverity('success');
+                toast.success(t('friendRequestSent'));
+                // If the button says "Cancel Request", cancel the pending request
             } else if (friendRequestStatus === t('cancelRequest')) {
                 await axios.post(
                     `http://localhost:8081/users/friend-requests/${userId}/cancel`,
@@ -95,38 +112,35 @@ function ProfileView() {
                     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
                 );
                 setFriendRequestStatus(t('addFriend'));
-                setSnackbarMessage(t('friendRequestCanceled'));
-                setSnackbarSeverity('info');
+                toast.info(t('friendRequestCanceled'));
+                // If the button says "Remove Friend", delete the friendship
             } else if (friendRequestStatus === t('removeFriend')) {
                 await axios.delete(`http://localhost:8081/users/friends/${userId}`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 setFriendRequestStatus(t('addFriend'));
-                setSnackbarMessage(t('friendRemoved'));
-                setSnackbarSeverity('info');
+                toast.info(t('friendRemoved'));
             }
-            setSnackbarOpen(true);
         } catch (err) {
+            // Show an error message if the request fails
             const message = err.response?.data?.message || t('failedToLoadProfile');
-            setSnackbarMessage(message);
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            toast.error(message);
         }
     };
 
+    // Navigate to the edit profile page if the user is the profile owner
     const handleEditProfile = () => {
         navigate(`/profile/edit`);
     };
 
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === 'clickaway') return;
-        setSnackbarOpen(false);
-    };
-
+    // Show a loading spinner while data is being fetched
     if (loading) return <CircularProgress className="profile-loading" />;
+    // Display an error message if data fetching failed
     if (error) return <Typography className="profile-error">{error}</Typography>;
+    // Show a message if the profile data is not found
     if (!profile) return <Typography className="profile-not-found">{t('profileNotFound')}</Typography>;
 
+    // Render the profile view with user info, bio, and recent games
     return (
         <div className="main-content-profile-view">
             <Box className="profile-view-container">
@@ -146,10 +160,12 @@ function ProfileView() {
                             </Box>
                         </Box>
                         {user && user.id === profile.id ? (
+                            // Show edit button if the current user is the profile owner
                             <Button className="edit-profile-button" variant="contained" onClick={handleEditProfile}>
                                 {t('editProfile')}
                             </Button>
                         ) : (
+                            // Show friend request button with animation for other users
                             <motion.div
                                 whileTap={{ scale: 0.95 }}
                                 whileHover={{ scale: 1.05 }}
@@ -179,6 +195,7 @@ function ProfileView() {
                                 <CardContent className="games-card-content">
                                     <Typography className="card-title">{t('recentGames')}</Typography>
                                     {recentGames.length > 0 ? (
+                                        // List recent games if available, showing up to 3
                                         <List>
                                             {recentGames.slice(0, 3).map((game, index) => (
                                                 <ListItem key={index} className="game-list-item">
@@ -199,20 +216,6 @@ function ProfileView() {
                         </Box>
                     </Box>
                 </Box>
-                <Snackbar
-                    open={snackbarOpen}
-                    autoHideDuration={6000}
-                    onClose={handleSnackbarClose}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                >
-                    <Alert
-                        onClose={handleSnackbarClose}
-                        severity={snackbarSeverity}
-                        className="snackbar-alert"
-                    >
-                        {snackbarMessage}
-                    </Alert>
-                </Snackbar>
             </Box>
         </div>
     );

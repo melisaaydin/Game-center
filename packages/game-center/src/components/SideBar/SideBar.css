@@ -353,8 +353,7 @@
 
 .dark_mode {
     margin-top: -20px;
-    margin-left: 10px;
-    margin-right: 10px !important;
+    margin-right: 50px !important;
 }
 
 .dark_mode_label {
@@ -366,8 +365,7 @@
     display: block;
     background: var(--background-color);
     border-radius: 200px;
-    box-shadow: inset 0px 5px 15px var(--box-shadow),
-        inset 0px -5px 15px rgba(255, 255, 255, 0.4);
+
     cursor: pointer;
     transition: 0.3s;
 }
@@ -429,4 +427,9 @@
 
 .dark_mode_input:checked+.dark_mode_label svg.moon {
     fill: var(--button-hover-bg);
+}
+
+.mode-settings img {
+    width: 30px !important;
+    height: 30px !important;
 }

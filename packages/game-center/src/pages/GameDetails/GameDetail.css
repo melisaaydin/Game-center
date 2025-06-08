@@ -17,7 +17,6 @@
     gap: 4px;
     width: 80px;
     box-shadow: -2px 0 0px 0px var(--primary-color);
-
     border-top-left-radius: 20px !important;
     border-bottom-left-radius: 20px !important;
     border-bottom: none !important;
@@ -78,13 +77,11 @@
     font-size: 14px;
     font-weight: 500;
     text-transform: none;
-    box-shadow: 0 2px 4px var(--shadow-color);
     transition: all 0.3s ease;
 }
 
 .quick-action-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 8px var(--shadow-color);
     background-color: var(--accent-color);
     color: var(--button-hover-bg);
 }
@@ -130,7 +127,6 @@
     margin-left: 100px !important;
     margin: 90px 0 0 20px;
     display: block;
-    border-bottom: 2px solid var(--shadow-color);
     border-radius: 8px;
 }
 
@@ -149,7 +145,6 @@
 
 .sidebar-card:first-child {
     position: relative;
-    border-bottom: 2px solid var(--shadow-color);
     border-radius: 8px;
     margin-right: 120px;
 }
@@ -169,7 +164,6 @@
 
 .sidebar-card:last-child {
     position: relative;
-    border-bottom: 2px solid var(--shadow-color);
     border-radius: 8px;
     margin-right: 120px;
 }

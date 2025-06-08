@@ -1,12 +1,10 @@
 .lobby-details-container {
     display: flex;
     margin-left: 90px;
-
     flex-direction: column;
 }
 
 .lobby-header {
-
     border-radius: 16px;
     padding: 10px;
     text-align: left;
@@ -39,8 +37,10 @@
 .players-card {
     max-height: 300px;
     overflow-y: auto;
+    padding-left: 10px;
     background: var(--background-color);
     margin-top: 20px;
+    box-shadow: 0 2px 0 var(--primary-color) !important;
 }
 
 .chat-card {
@@ -49,9 +49,9 @@
     flex-direction: column;
     background: var(--background-color);
     padding: 16px;
-    margin-top: 100px;
-    max-height: calc(100vh - 195px);
-
+    margin-top: 20px;
+    height: 600px;
+    box-shadow: 0 2px 0 var(--primary-color) !important;
 }
 
 .chat-messages {

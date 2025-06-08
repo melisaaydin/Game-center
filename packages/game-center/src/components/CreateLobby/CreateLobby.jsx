@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Box, TextField, Button, Typography, Switch, FormControlLabel, Snackbar, Alert } from "@mui/material";
+import { Box, TextField, Button, Typography, Switch, FormControlLabel } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import axios from "axios";
 import { useTranslation } from 'react-i18next';
+import { toast } from "react-toastify";
 
 function CreateLobby({ gameId, onLobbyCreated }) {
     const { t } = useTranslation('createLobby');
@@ -18,9 +19,6 @@ function CreateLobby({ gameId, onLobbyCreated }) {
     });
     const [error, setError] = useState(null);
     const [lobbyLink, setLobbyLink] = useState(null);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
     // Handle changes in form inputs
     const handleChange = (e) => {
@@ -68,9 +66,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                 const link = `${window.location.origin}/lobbies/${lobbyId}`;
                 setLobbyLink(link);
                 onLobbyCreated();
-                setSnackbarMessage(t('lobbyCreated'));
-                setSnackbarSeverity("success");
-                setSnackbarOpen(true);
+                toast.success(t('lobbyCreated'));
             } else {
                 setError(t('failedToCreate', { message: res.data.message || 'Unknown error' }));
             }
@@ -83,14 +79,7 @@ function CreateLobby({ gameId, onLobbyCreated }) {
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(lobbyLink);
-        setSnackbarMessage(t('linkCopied'));
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-    };
-
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === "clickaway") return;
-        setSnackbarOpen(false);
+        toast.success(t('linkCopied'));
     };
 
     return (
@@ -193,16 +182,6 @@ function CreateLobby({ gameId, onLobbyCreated }) {
                     </Button>
                 </form>
             )}
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

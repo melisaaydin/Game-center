@@ -25,7 +25,6 @@ function SearchBar({ searchRef }) {
 
         setLoading(true);
         setError(null);
-        console.log('Initiating search for query:', searchQuery);
         try {
             const [games, users] = await Promise.all([
                 searchGames(searchQuery) || [],
@@ -74,8 +73,6 @@ function SearchBar({ searchRef }) {
                 setTimeout(() => {
                     inputRef.current.focus();
                 }, 300);
-            } else {
-                console.log('Search bar collapsed');
             }
         }
     };
@@ -135,7 +132,6 @@ function SearchBar({ searchRef }) {
                 value={searchQuery}
                 onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    console.log('Input changed, query:', e.target.value);
                 }}
                 onKeyDown={handleKeyDown}
                 ref={inputRef}

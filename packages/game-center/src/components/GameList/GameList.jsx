@@ -13,7 +13,6 @@ const GameList = () => {
         axios
             .get("http://localhost:8081/games")
             .then((res) => {
-                console.log("Games:", res.data);
                 setGames(res.data);
             })
             .catch((err) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { MenuItem, Typography, Box, Avatar, Button, IconButton } from '@mui/material';
 import { IoPersonAdd, IoNotifications } from 'react-icons/io5';
 import { MdCheck, MdClose, MdGroup } from 'react-icons/md';
@@ -197,7 +197,6 @@ function NotificationItem({
                                         disabled={processingInvites?.has(notification.content.invitationId)}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            console.log('Accepting lobby invite with invitationId:', notification.content.invitationId);
                                             handleAcceptLobbyInvite(notification.id, notification.content.invitationId);
                                         }}
                                         aria-label={t('joinLobby')}
@@ -213,7 +212,6 @@ function NotificationItem({
                                         disabled={processingInvites?.has(notification.content.invitationId)}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            console.log('Rejecting lobby invite with invitationId:', notification.content.invitationId);
                                             handleRejectLobbyInvite(notification.id, notification.content.invitationId);
                                         }}
                                         aria-label={t('decline')}

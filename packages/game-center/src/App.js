@@ -15,7 +15,7 @@ import GameDetail from './pages/GameDetails/GameDetail';
 import Friends from './pages/Friends/Friends';
 import Sidebar from './components/SideBar/SideBar';
 
-import { ToastContainer } from 'react-toastify';
+import { Bounce, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
@@ -49,7 +49,19 @@ const App = () => {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/forgotpassword" element={<ForgotPassword />} />
           </Routes>
-          <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} />
+          <ToastContainer
+            position="bottom-left"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick={false}
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+            transition={Bounce}
+          />
         </UserProvider>
       </LanguageProvider>
     </ThemeContextProvider>

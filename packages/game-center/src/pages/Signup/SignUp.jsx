@@ -57,7 +57,6 @@ function SignUp() {
                 navigate('/');
             } catch (err) {
                 setError(t('serverError'));
-                console.log(err);
             }
         } else {
             setError(t('validationError'));

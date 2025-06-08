@@ -15,20 +15,29 @@ import { jwtDecode } from "jwt-decode";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 
+// Defining the secret key for encryption from environment variables
 const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
 
 function Login() {
+    // Initializing translation hook for multilingual support
     const { t } = useTranslation('login');
+    // Managing form state for email, password, and rememberMe checkbox
     const [values, setValues] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
 
+    // Storing error messages for form validation
     const [error, setError] = useState("");
+    // Setting up navigation for redirecting after login
     const navigate = useNavigate();
+    // Accessing login function from user context
     const { login } = useUser();
+    // Toggling password visibility
     const [showPassword, setShowPassword] = useState(false);
+
+    // Checking for saved token and remembered user on component mount
     useEffect(() => {
         const savedUser = localStorage.getItem("rememberedUser");
         const token = localStorage.getItem("token");
@@ -39,7 +48,7 @@ function Login() {
                     email: decoded.email,
                     avatar: decoded.avatar,
                     id: decoded.userId,
-                    language: decoded.language || 'tr'
+                    language: decoded.language || 'en'
                 }, token);
                 navigate("/");
             } catch (err) {
@@ -58,16 +67,17 @@ function Login() {
         }
     }, [navigate, login]);
 
-
-
+    // Handling input changes for form fields
     const handleInput = (event) => {
         setValues(prev => ({ ...prev, [event.target.name]: event.target.value }));
     };
 
+    // Updating rememberMe state based on checkbox
     const handleRememberMe = (event) => {
         setValues({ ...values, rememberMe: event.target.checked });
     };
 
+    // Submitting login form and handling authentication
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError("");
@@ -98,7 +108,6 @@ function Login() {
 
                 const decoded = jwtDecode(token);
 
-
                 login({ email: decoded.email, avatar: decoded.avatar, id: decoded.userId }, token);
 
                 navigate("/");
@@ -110,9 +119,12 @@ function Login() {
         }
     };
 
+    // Toggling password visibility on icon click
     const handleClickShowPassword = () => {
         setShowPassword(!showPassword);
     };
+
+    // Rendering the login form and layout
     return (
         <div className='loginBody container-fluid p-0 loginWrapper'>
             <LanguageSwitcher />
@@ -152,7 +164,6 @@ function Login() {
                                 error={!!error}
                                 helperText={error && !values.email ? t('emailError') : ""}
                                 fontFamily={'Poppins'}
-
                             />
                             <TextField
                                 fontFamily={'Poppins'}
@@ -183,7 +194,6 @@ function Login() {
                                         </InputAdornment>
                                     ),
                                 }}
-
                             />
                         </div>
                         <div className='bottomSide'>
@@ -220,7 +230,6 @@ function Login() {
                             {t('noAccount')}
                         </MuiLink>
                     </div>
-
                 </div>
             </div>
         </div>
