@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconButton, Menu, MenuItem, Typography, Badge, CircularProgress, Alert, Snackbar, Box } from '@mui/material';
+import { IconButton, Menu, MenuItem, Typography, Badge, CircularProgress, Box } from '@mui/material';
 import { IoNotifications } from 'react-icons/io5';
 import { MdLogin } from 'react-icons/md';
 import { useUser } from '../../context/UserContext';
@@ -10,22 +10,22 @@ import './NotificationMenu.css';
 import { debounce } from 'lodash';
 import { useTranslation } from 'react-i18next';
 
+// Component for displaying a notification menu
 function NotificationMenu() {
+    // Get translation function for the 'notifications' namespace
     const { t } = useTranslation('notifications');
-    // Access the current user from the UserContext
+    // Get current user from UserContext
     const { user } = useUser();
-    // Hook to navigate to other routes
+    // Hook for programmatic navigation
     const navigate = useNavigate();
-    // State to manage the anchor element for the menu
+    // State for the menu's anchor element
     const [anchorEl, setAnchorEl] = useState(null);
 
+    // Use the notifications custom hook
     const {
         notifications,
         unreadCount,
         loading,
-        snackbarOpen,
-        snackbarMessage,
-        snackbarSeverity,
         fetchNotifications,
         markAsRead,
         acceptFriendRequest,
@@ -33,24 +33,25 @@ function NotificationMenu() {
         acceptLobbyInvite,
         rejectLobbyInvite,
         deleteNotification,
-        handleSnackbarClose,
         processingInvites,
         processingFriendRequests
     } = useNotifications();
 
-    // Debounce the fetchNotifications function to prevent excessive API calls
+    // Debounce fetchNotifications to prevent excessive API calls
     const debouncedFetchNotifications = debounce(fetchNotifications, 500);
 
-    // Handle clicking the notification icon to open the menu
+    // Open the notification menu
     const handleNotificationClick = (event) => {
         setAnchorEl(event.currentTarget);
         debouncedFetchNotifications();
     };
 
+    // Close the notification menu
     const handleClose = () => {
         setAnchorEl(null);
     };
 
+    // Navigate to login page
     const handleLogin = () => {
         navigate('/login');
         handleClose();
@@ -58,7 +59,7 @@ function NotificationMenu() {
 
     return (
         <>
-            {/* Notification icon with a badge showing the unread count */}
+            {/* Notification icon with badge showing unread count */}
             <IconButton
                 className="right-icon notification-icon"
                 disableRipple
@@ -70,7 +71,7 @@ function NotificationMenu() {
                 </Badge>
             </IconButton>
 
-            {/* Notification menu */}
+            {/* Notification dropdown menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -82,11 +83,13 @@ function NotificationMenu() {
                 }}
                 aria-live="polite"
             >
+                {/* Show login prompt if user is not authenticated */}
                 {!user && (
                     <MenuItem onClick={handleLogin} className="notification-login">
                         <MdLogin style={{ marginRight: 8 }} /> {t('loginToSeeNotifications')}
                     </MenuItem>
                 )}
+                {/* Show loading spinner while fetching notifications */}
                 {user && loading && (
                     <MenuItem className="notification-loading">
                         <CircularProgress size={24} />
@@ -95,11 +98,13 @@ function NotificationMenu() {
                         </Typography>
                     </MenuItem>
                 )}
+                {/* Show empty message if no notifications exist */}
                 {user && !loading && notifications.length === 0 && (
                     <MenuItem className="notification-empty">
                         <Typography variant="body2">{t('noNotifications')}</Typography>
                     </MenuItem>
                 )}
+                {/* Render notification items */}
                 {user &&
                     !loading &&
                     notifications.length > 0 &&
@@ -120,27 +125,6 @@ function NotificationMenu() {
                         />
                     ))}
             </Menu>
-
-            {/* Snackbar for displaying success or error messages */}
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                className="notification-snackbar"
-            >
-                <Alert
-                    onClose={handleSnackbarClose}
-                    severity={snackbarSeverity}
-                    className="snackbar-alert"
-                    sx={{
-                        bgcolor: snackbarSeverity === 'success' ? 'green' : snackbarSeverity === 'error' ? 'red' : 'blue',
-                        color: 'white',
-                    }}
-                >
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
         </>
     );
 }

@@ -14,8 +14,6 @@ import {
     DialogActions,
     MenuItem,
     Select,
-    Snackbar,
-    Alert,
 } from "@mui/material";
 import { Lock, Event } from "@mui/icons-material";
 import axios from "axios";
@@ -24,6 +22,7 @@ import CreateLobby from "../CreateLobby/CreateLobby";
 import "./LobbySection.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
 import { useTranslation } from 'react-i18next';
+import { toast } from "react-toastify";
 
 function LobbySection() {
     const { t } = useTranslation('lobbySection');
@@ -34,9 +33,6 @@ function LobbySection() {
     const [errorGames, setErrorGames] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedGameId, setSelectedGameId] = useState("");
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("");
     const { getTimeDisplay, eventLobbies, activeLobbies } = useLobbyUtils(lobbies);
     const navigate = useNavigate();
 
@@ -96,14 +92,7 @@ function LobbySection() {
         axios.get("http://localhost:8081/lobbies").then((res) => {
             if (res.data.success) setLobbies(res.data.lobbies || []);
         });
-        setSnackbarMessage(t('lobbyCreated'));
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-    };
-
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === "clickaway") return;
-        setSnackbarOpen(false);
+        toast.success(t('lobbyCreated'));
     };
 
     return (
@@ -223,20 +212,6 @@ function LobbySection() {
                     <Button onClick={() => setOpenDialog(false)}>{t('cancel')}</Button>
                 </DialogActions>
             </Dialog>
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{
-                    width: "100%",
-                    color: mode === "dark" ? "#fff" : "#000",
-                    bgcolor: mode === "dark" ? "grey.800" : undefined,
-                }}>
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

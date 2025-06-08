@@ -5,8 +5,6 @@ import {
     CardContent,
     Typography,
     IconButton,
-    Snackbar,
-    Alert,
     Avatar,
     Dialog,
     DialogTitle,
@@ -16,52 +14,52 @@ import {
 } from "@mui/material";
 import { Check, Close, Delete } from "@mui/icons-material";
 import axios from "axios";
-import { useUser } from "../../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import "moment/locale/en-gb";
 import "./Friends.css";
 import { useTranslation } from 'react-i18next';
+import { toast } from "react-toastify";
 
+// Defining the Friends component to manage friend requests and friends list
 function Friends() {
+    // Initializing translation hook for multilingual support
     const { t } = useTranslation('friends');
+    // Managing state for friend requests and friends list
     const [friendRequests, setFriendRequests] = useState([]);
     const [friends, setFriends] = useState([]);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+    // Controlling the delete confirmation dialog state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [friendToDelete, setFriendToDelete] = useState(null);
+    // Setting up navigation for profile redirects
     const navigate = useNavigate();
 
+    // Configuring moment.js to use British English locale
     moment.locale("en-gb");
 
+    // Fetching friend requests and friends list on component mount
     useEffect(() => {
         const fetchFriendData = async () => {
             const token = localStorage.getItem("token");
-            console.log("Frontend - Token:", token);
             try {
                 const reqRes = await axios.get("http://localhost:8081/users/friend-requests", {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
                 setFriendRequests(reqRes.data.requests || []);
-                console.log("Friend Requests:", JSON.stringify(reqRes.data.requests, null, 2));
 
                 const friendsRes = await axios.get("http://localhost:8081/users/friends", {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
                 setFriends(friendsRes.data.friends || []);
-                console.log("Friends:", JSON.stringify(friendsRes.data.friends, null, 2));
             } catch (err) {
-                setSnackbarMessage(t('friendDataLoadFailed'));
-                setSnackbarSeverity("error");
-                setSnackbarOpen(true);
+                toast.error(t('friendDataLoadFailed'));
             }
         };
 
         fetchFriendData();
     }, []);
 
+    // Handling the acceptance of a friend request
     const handleAcceptRequest = async (requestId) => {
         try {
             const res = await axios.post(
@@ -73,16 +71,13 @@ function Friends() {
             if (res.data.friend) {
                 setFriends((prev) => [...prev, res.data.friend]);
             }
-            setSnackbarMessage(t('friendRequestAccepted'));
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            toast.success(t('friendRequestAccepted'));
         } catch (err) {
-            setSnackbarMessage(t('friendRequestAcceptFailed'));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            toast.error(t('friendRequestAcceptFailed'));
         }
     };
 
+    // Handling the rejection of a friend request
     const handleRejectRequest = async (requestId) => {
         try {
             await axios.post(
@@ -91,55 +86,47 @@ function Friends() {
                 { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
             );
             setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
-            setSnackbarMessage(t('friendRequestRejected'));
-            setSnackbarSeverity("info");
-            setSnackbarOpen(true);
+            toast.info(t('friendRequestRejected'));
         } catch (err) {
-            setSnackbarMessage(t('friendRequestRejectFailed'));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            toast.error(t('friendRequestRejectFailed'));
         }
     };
 
+    // Removing a friend after confirmation
     const handleDeleteFriend = async () => {
         try {
             await axios.delete(`http://localhost:8081/users/friends/${friendToDelete.id}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
             });
             setFriends((prev) => prev.filter((friend) => friend.id !== friendToDelete.id));
-            setSnackbarMessage(t('friendRemoved'));
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            toast.success(t('friendRemoved'));
         } catch (err) {
             console.error("Error removing friend:", err);
-            setSnackbarMessage(t('friendRemoveFailed'));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            toast.error(t('friendRemoveFailed'));
         } finally {
             setDeleteDialogOpen(false);
             setFriendToDelete(null);
         }
     };
 
+    // Opening the delete confirmation dialog for a friend
     const handleOpenDeleteDialog = (friend) => {
         setFriendToDelete(friend);
         setDeleteDialogOpen(true);
     };
 
+    // Closing the delete confirmation dialog
     const handleCloseDeleteDialog = () => {
         setDeleteDialogOpen(false);
         setFriendToDelete(null);
     };
 
+    // Navigating to a user's profile on click
     const handleProfileClick = (userId) => {
         navigate(`/users/user/${userId}`);
     };
 
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === "clickaway") return;
-        setSnackbarOpen(false);
-    };
-
+    // Determining a friend's activity status based on last active time
     const getActivityStatus = (lastActive) => {
         if (!lastActive) return null;
         const now = moment();
@@ -154,6 +141,7 @@ function Friends() {
         return t('lastActive', { time: last.fromNow() });
     };
 
+    // Rendering the friends and friend requests sections
     return (
         <div className="main-content-friends">
             <Box className="friends-section">
@@ -278,21 +266,6 @@ function Friends() {
                         )}
                     </Box>
                 </Box>
-                <Snackbar
-                    open={snackbarOpen}
-                    autoHideDuration={3000}
-                    onClose={handleSnackbarClose}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                    className="animated-snackbar"
-                >
-                    <Alert
-                        onClose={handleSnackbarClose}
-                        severity={snackbarSeverity}
-                        sx={{ borderRadius: "8px", boxShadow: "0 2px 8px var(--shadow-color)" }}
-                    >
-                        {snackbarMessage}
-                    </Alert>
-                </Snackbar>
                 <Dialog
                     open={deleteDialogOpen}
                     onClose={handleCloseDeleteDialog}

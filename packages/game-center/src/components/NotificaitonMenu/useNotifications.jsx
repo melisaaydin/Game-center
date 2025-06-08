@@ -6,27 +6,50 @@ import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import io from 'socket.io-client';
 import { handleNotification } from '../../utils/notificationSound';
+import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 
+// Initialize Socket.IO client for real-time notifications
 const socket = io('http://localhost:8081', {
     reconnection: true,
     reconnectionAttempts: 5,
+    transports: ['websocket', 'polling'],
 });
 
+// Custom hook to manage notifications
 function useNotifications() {
+    // Get translation function for the 'notifications' namespace
     const { t } = useTranslation('notifications');
+    // Get current user from UserContext
     const { user } = useUser();
+    // Hook for programmatic navigation
     const navigate = useNavigate();
+    // State for storing notifications
     const [notifications, setNotifications] = useState([]);
+    // State for tracking unread notification count
     const [unreadCount, setUnreadCount] = useState(0);
+    // State for loading status
     const [loading, setLoading] = useState(false);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+    // State to track processing invites to prevent duplicate actions
     const [processingInvites, setProcessingInvites] = useState(new Set());
+    // State to track processing friend requests
     const [processingFriendRequests, setProcessingFriendRequests] = useState(new Set());
 
-    // Handle errors and display appropriate snackbar messages
+    // Utility function to display toast notifications
+    const showToast = (message, severity = 'info') => {
+        if (!document.hidden) {
+            toast[severity](message, {
+                position: "bottom-left",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+            });
+        }
+        handleNotification(message);
+    };
+
+    // Handle API errors with appropriate messages and actions
     const handleError = (err, defaultMessageKey, isAuthError) => {
         let message;
         if (err.response?.status === 401) {
@@ -38,9 +61,7 @@ function useNotifications() {
         } else {
             message = err.response?.data?.message || t(defaultMessageKey);
         }
-        setSnackbarMessage(message);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
+        showToast(message, 'error');
         if (err.response?.status === 401) {
             localStorage.removeItem('token');
             navigate('/login');
@@ -48,7 +69,7 @@ function useNotifications() {
         return message;
     };
 
-    // Fetch and process notifications from the server
+    // Fetch notifications from the server
     const fetchNotificationsHandler = async (isInitialFetch = false) => {
         if (!user) return;
         if (isInitialFetch) setLoading(true);
@@ -59,20 +80,16 @@ function useNotifications() {
                 setUnreadCount(0);
                 return;
             }
-            // Enrich notifications with additional data and formatting
+            // Enrich notifications with additional details
             const enrichedNotifications = data.map((notification) => {
                 const content = typeof notification.content === 'string' ? JSON.parse(notification.content) : notification.content || {};
-
                 return {
                     ...notification,
                     sender_id: notification.sender_id || content.senderId || null,
                     sender_name: notification.sender_name || (notification.type === 'friend_request' ? 'Unknown User' : 'System'),
                     sender_avatar_url: notification.sender_avatar_url || null,
                     message: content.message || t('messageNotProvided', { ns: 'common' }) || 'Message not provided!',
-                    invitation_id:
-                        notification.type === 'lobby_invite'
-                            ? notification.invitation_id || content.invitationId || null
-                            : null,
+                    invitation_id: notification.type === 'lobby_invite' ? notification.invitation_id || content.invitationId || null : null,
                     request_id: notification.type === 'friend_request' ? notification.request_id || content.requestId : null,
                     isNew: !notifications.some((n) => n.id === notification.id),
                     timeAgo: moment(notification.created_at).fromNow(),
@@ -84,7 +101,7 @@ function useNotifications() {
                     },
                 };
             });
-            // Update notifications state, preserving existing notifications where applicable
+            // Update notifications state, merging with existing ones
             setNotifications((prev) => {
                 const updatedNotifications = enrichedNotifications.map((newNotif) => {
                     const existing = prev.find((n) => n.id === newNotif.id);
@@ -118,14 +135,10 @@ function useNotifications() {
     // Accept a friend request
     const acceptFriendRequest = async (notificationId, requestId) => {
         if (!requestId) {
-            setSnackbarMessage(t('invalidFriendRequestId'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showToast(t('invalidFriendRequestId'), 'error');
             return;
         }
-        if (processingFriendRequests.has(requestId)) {
-            return;
-        }
+        if (processingFriendRequests.has(requestId)) return;
         setProcessingFriendRequests((prev) => new Set(prev).add(requestId));
         try {
             await axios.post(
@@ -140,9 +153,7 @@ function useNotifications() {
                         : n
                 )
             );
-            setSnackbarMessage(t('friendRequestAccepted'));
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
+            showToast(t('friendRequestAccepted'), 'success');
             await fetchNotificationsHandler(false);
         } catch (err) {
             handleError(err, 'failedToAcceptFriendRequest', true);
@@ -158,14 +169,10 @@ function useNotifications() {
     // Reject a friend request
     const rejectFriendRequest = async (notificationId, requestId) => {
         if (!requestId) {
-            setSnackbarMessage(t('invalidFriendRequestId'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showToast(t('invalidFriendRequestId'), 'error');
             return;
         }
-        if (processingFriendRequests.has(requestId)) {
-            return;
-        }
+        if (processingFriendRequests.has(requestId)) return;
         setProcessingFriendRequests((prev) => new Set(prev).add(requestId));
         try {
             await axios.post(
@@ -180,9 +187,7 @@ function useNotifications() {
                         : n
                 )
             );
-            setSnackbarMessage(t('friendRequestRejected'));
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            showToast(t('friendRequestRejected'), 'info');
             await fetchNotificationsHandler(false);
         } catch (err) {
             handleError(err, 'failedToRejectFriendRequest', true);
@@ -198,25 +203,18 @@ function useNotifications() {
     // Accept a lobby invitation
     const acceptLobbyInvite = async (notificationId, invitationId) => {
         if (!invitationId) {
-            setSnackbarMessage(t('invalidLobbyInviteId'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showToast(t('invalidLobbyInviteId'), 'error');
             return;
         }
-        if (processingInvites.has(invitationId)) {
-            return;
-        }
+        if (processingInvites.has(invitationId)) return;
         setProcessingInvites((prev) => new Set(prev).add(invitationId));
         try {
             const response = await axios.post(
                 `http://localhost:8081/lobbies/invitations/${invitationId}/accept`,
                 {},
-                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+                { headers: { Authorization: `Banner ${localStorage.getItem('token')}` } }
             );
             const lobbyId = response.data.lobbyId;
-            if (!lobbyId) {
-                console.warn('No lobbyId returned in acceptLobbyInvite response');
-            }
             setNotifications((prev) => {
                 const updatedNotifications = prev.map((n) =>
                     n.id === notificationId
@@ -236,9 +234,7 @@ function useNotifications() {
                 return [...updatedNotifications];
             });
             setUnreadCount((prev) => Math.max(prev - 1, 0));
-            setSnackbarMessage(t('lobbyInviteAccepted'));
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
+            showToast(t('lobbyInviteAccepted'), 'success');
             await fetchNotificationsHandler(false);
         } catch (err) {
             handleError(err, 'failedToAcceptLobbyInvite', true);
@@ -254,14 +250,10 @@ function useNotifications() {
     // Reject a lobby invitation
     const rejectLobbyInvite = async (notificationId, invitationId) => {
         if (!invitationId) {
-            setSnackbarMessage(t('invalidLobbyInviteId'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showToast(t('invalidLobbyInviteId'), 'error');
             return;
         }
-        if (processingInvites.has(invitationId)) {
-            return;
-        }
+        if (processingInvites.has(invitationId)) return;
         setProcessingInvites((prev) => new Set(prev).add(invitationId));
         try {
             await axios.post(
@@ -285,9 +277,7 @@ function useNotifications() {
                         : n
                 )
             );
-            setSnackbarMessage(t('lobbyInviteRejected'));
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            showToast(t('lobbyInviteRejected'), 'info');
             await fetchNotificationsHandler(false);
         } catch (err) {
             console.error('Reject lobby invite error:', err.response?.data || err.message);
@@ -301,11 +291,10 @@ function useNotifications() {
         }
     };
 
+    // Delete a notification
     const deleteNotificationHandler = async (notificationId) => {
         if (!notificationId || isNaN(notificationId)) {
-            setSnackbarMessage(t('invalidNotificationId'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            showToast(t('invalidNotificationId'), 'error');
             return;
         }
         try {
@@ -315,21 +304,14 @@ function useNotifications() {
                 const deletedNotification = notifications.find((n) => n.id === notificationId);
                 return deletedNotification && !deletedNotification.is_read ? Math.max(prev - 1, 0) : prev;
             });
-            setSnackbarMessage(t('notificationDeleted'));
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            showToast(t('notificationDeleted'), 'info');
             await fetchNotificationsHandler(false);
         } catch (err) {
             handleError(err, 'failedToDeleteNotification', true);
         }
     };
 
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === 'clickaway') return;
-        setSnackbarOpen(false);
-    };
-
-    // Fetch notifications on mount and periodically
+    // Fetch notifications on mount and set up periodic refresh
     useEffect(() => {
         if (!user) {
             setNotifications([]);
@@ -341,65 +323,59 @@ function useNotifications() {
         return () => clearInterval(interval);
     }, [user, navigate]);
 
-    // Set up socket listeners for real-time notifications
+    // Set up Socket.IO event listeners for real-time notifications
     useEffect(() => {
         if (!user) return;
 
         socket.on('lobby_invite', ({ lobbyId, lobbyName, senderId, senderName, invitationId }) => {
             const message = t('lobbyInviteMessage', { senderName });
-            setSnackbarMessage(message);
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            showToast(message, 'info');
             fetchNotificationsHandler(false);
-            handleNotification(message);
         });
 
         socket.on('lobby_invite_accepted', ({ lobbyId, lobbyName, receiverId, receiverName }) => {
             const message = t('lobbyJoinedMessage', { senderName: receiverName });
-            setSnackbarMessage(message);
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
+            showToast(message, 'success');
             fetchNotificationsHandler(false);
-            handleNotification(message);
         });
 
         socket.on('lobby_invite_rejected', ({ lobbyId, lobbyName, receiverId, receiverName }) => {
             const message = t('lobbyInviteRejected', { senderName: receiverName });
-            setSnackbarMessage(message);
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            showToast(message, 'info');
             fetchNotificationsHandler(false);
-            handleNotification(message);
         });
 
         socket.on('friend_request', ({ senderId, senderName, requestId }) => {
             const message = t('friendRequestMessage', { senderName });
-            setSnackbarMessage(message);
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            showToast(message, 'info');
             fetchNotificationsHandler(false);
-            handleNotification(message);
         });
 
         socket.on('friend_accepted', ({ senderId, senderName }) => {
             const message = t('friendAcceptedMessage', { senderName });
-            setSnackbarMessage(message);
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
+            showToast(message, 'success');
             fetchNotificationsHandler(false);
-            handleNotification(message);
         });
 
         socket.on('lobby_joined', ({ lobbyId, lobbyName, userId, userName }) => {
             const message = t('lobbyJoinedMessage', { senderName: userName });
-            setSnackbarMessage(message);
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
+            showToast(message, 'success');
             fetchNotificationsHandler(false);
-            handleNotification(message);
         });
 
-        // Clean up socket listeners on unmount
+        socket.on('event_started', ({ lobbyId }) => {
+            const message = t('eventStartedMessage');
+            showToast(message, 'info');
+            fetchNotificationsHandler(false);
+        });
+
+        socket.on('turn_based', ({ gameId, userId: targetUserId }) => {
+            if (user.id === targetUserId) {
+                const message = t('yourTurnMessage');
+                showToast(message, 'info');
+            }
+        });
+
         return () => {
             socket.off('lobby_invite');
             socket.off('lobby_invite_accepted');
@@ -407,17 +383,15 @@ function useNotifications() {
             socket.off('friend_request');
             socket.off('friend_accepted');
             socket.off('lobby_joined');
+            socket.off('event_started');
+            socket.off('turn_based');
         };
     }, [user, fetchNotificationsHandler]);
 
-    // Return hook values and functions
     return {
         notifications,
         unreadCount,
         loading,
-        snackbarOpen,
-        snackbarMessage,
-        snackbarSeverity,
         fetchNotifications: fetchNotificationsHandler,
         markAsRead,
         acceptFriendRequest,
@@ -425,7 +399,6 @@ function useNotifications() {
         acceptLobbyInvite,
         rejectLobbyInvite,
         deleteNotification: deleteNotificationHandler,
-        handleSnackbarClose,
         processingInvites,
         processingFriendRequests
     };

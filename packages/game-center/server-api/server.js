@@ -6,141 +6,153 @@ const { Server } = require('socket.io');
 const db = require('./models/db');
 require('dotenv').config();
 
+// Initialize Express server and Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { origin: ['http://localhost:3000', 'http://localhost:3001'], methods: ['GET', 'POST'], credentials: true },
+    transports: ['websocket', 'polling'],
 });
 
+// Middleware setup
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001'], credentials: true }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Attach the Socket.IO instance to every request for easy access
+// Attach Socket.IO instance to request object
 app.use((req, res, next) => {
     req.io = io;
     next();
 });
 
-// Set up routes for different functionalities
+// API routes
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/games', require('./routes/gameRoutes'));
 app.use('/lobbies', require('./routes/lobbyRoutes'));
 app.use('/users', require('./routes/userRoute'));
 app.use('/notifications', require('./routes/notificationRoutes'));
 
-
+// Root route
 app.get('/', (req, res) => {
     res.send('Game Lobby API is running!');
 });
 
+// Handle 404 errors
 app.use((req, res) => {
     res.status(404).json({ message: 'Endpoint not found' });
 });
 
-const gameRooms = {}; // Store active game rooms
-const playerSockets = {}; // Track player socket connections
+// Game room and player management
+const gameRooms = {};
+const playerSockets = {};
+const colors = ['darkcyan', 'yellow', 'pink', 'green', 'peru'];
 
-const colors = ['blue', 'yellow', 'pink', 'green', 'purple']; // Available colors for players
-
-// Generate a random bingo board with 15 numbers
+// Generate a random bingo board
 const generateRandomBoard = () => {
-    const numbers = new Set(); // Use a Set to ensure unique numbers
-    while (numbers.size < 15) { // We need exactly 15 numbers
-        numbers.add(Math.floor(Math.random() * 90) + 1); // Add a random number between 1 and 90
+    const numbers = new Set();
+    while (numbers.size < 15) {
+        numbers.add(Math.floor(Math.random() * 90) + 1);
     }
-    const board = Array(27).fill(null); // Create a 3x9 board, initially empty
-    const allNumbers = Array.from(numbers); // Convert Set to Array for easier access
-
-    // Fill each row with 5 numbers in random columns
+    const board = Array(27).fill(null);
+    const allNumbers = Array.from(numbers);
     for (let row = 0; row < 3; row++) {
         const indices = [row * 9, row * 9 + 1, row * 9 + 2, row * 9 + 3, row * 9 + 4, row * 9 + 5, row * 9 + 6, row * 9 + 7, row * 9 + 8]
-            .sort(() => Math.random() - 0.5) // Shuffle the indices
-            .slice(0, 5); // Take 5 random columns
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 5);
         indices.forEach((i, index) => {
-            board[i] = allNumbers[row * 5 + index]; // Place numbers in the selected columns
+            board[i] = allNumbers[row * 5 + index];
         });
     }
-
-    // Verify that the board has exactly 15 numbers
     const nonNullCount = board.filter(cell => cell !== null).length;
     if (nonNullCount !== 15) {
-        return generateRandomBoard(); // Retry if the board is invalid
+        return generateRandomBoard();
     }
     return board;
 };
 
-// Pick a random color for a player
+// Get a random color for a player
 const getRandomColor = () => {
-    return colors[Math.floor(Math.random() * colors.length)]; // Select a random color from the list
+    return colors[Math.floor(Math.random() * colors.length)];
 };
 
-// Close expired lobbies 
+// Periodically close expired lobbies
 const closeExpiredLobbies = async () => {
     try {
-        // Close event lobbies that have expired
+        // Close event lobbies that have ended
         const eventLobbiesResult = await db.query(
             `UPDATE lobbies SET lobby_status = 'closed' WHERE is_event = true AND end_time < NOW() AND lobby_status = 'active' RETURNING id`
         );
         if (eventLobbiesResult.rows.length > 0) {
             eventLobbiesResult.rows.forEach((lobby) => {
-                io.to(lobby.id).emit('lobby_closed', { lobbyId: lobby.id }); // Notify players in the lobby
+                io.to(lobby.id).emit('lobby_closed', { lobbyId: lobby.id });
             });
         }
-
-        // Close normal lobbies that have been inactive for 8 hours and have no creator present
+        // Close inactive normal lobbies
         const normalLobbiesResult = await db.query(
             `UPDATE lobbies SET lobby_status = 'closed' WHERE is_event = false AND lobby_status = 'active' AND updated_at < NOW() - INTERVAL '8 hours' AND NOT EXISTS (SELECT 1 FROM lobby_players lp JOIN lobbies l ON lp.lobby_id = l.id WHERE lp.lobby_id = lobbies.id AND lp.user_id = l.created_by) RETURNING id`
         );
         if (normalLobbiesResult.rows.length > 0) {
             for (const lobby of normalLobbiesResult.rows) {
-                await db.query('DELETE FROM lobby_players WHERE lobby_id = $1', [lobby.id]); // Remove players from the lobby
+                await db.query('DELETE FROM lobby_players WHERE lobby_id = $1', [lobby.id]);
             }
         }
     } catch (err) {
         console.error('Error while closing expired lobbies:', err);
     }
 };
-// Run the cleanup function every 10 minutes
 setInterval(closeExpiredLobbies, 10 * 60 * 1000);
 
-// Define winning patterns for bingo 
+// Winning patterns for bingo
 const winPatterns = [
-    ['00', '01', '02', '03', '04'], // First row
-    ['10', '11', '12', '13', '14'], // Second row
-    ['20', '21', '22', '23', '24'], // Third row
+    ['00', '01', '02', '03', '04'],
+    ['10', '11', '12', '13', '14'],
+    ['20', '21', '22', '23', '24'],
 ];
 
-// Handle Socket.IO connections
+// Filter active players' boards
+const filterActiveBoards = (game) => {
+    if (!game.started) {
+        return {};
+    }
+    const activeBoards = {};
+    for (const player of game.players) {
+        if (player.isActive && player.socketId && game.boards[player.id]) {
+            activeBoards[player.id] = game.boards[player.id];
+        }
+    }
+    return activeBoards;
+};
+
+// Socket.IO connection handling
 io.on('connection', (socket) => {
-    // When a player creates a new game room
+    // Create a new game room
     socket.on('create_game_room', async ({ gameId, roomId, userId }) => {
-        // Initialize the game room if it doesn't exist
         if (!gameRooms[roomId]) {
             gameRooms[roomId] = {
                 gameId,
                 boards: {},
                 playerColors: {},
                 selectedCells: {},
-                cingoCount: {}, // Track bingo completions per player
+                cingoCount: {},
                 turn: null,
                 started: false,
                 winner: null,
                 players: [],
                 currentNumber: 1,
                 drawnNumbers: [],
+                isDrawing: false,
             };
         }
-        socket.join(roomId); // Add the socket to the room
-        const userResult = await db.query('SELECT name FROM users WHERE id = $1', [userId]);
-        const username = userResult.rows[0]?.name || socket.username || 'Anonymous'; // Get the player's username
-        gameRooms[roomId].players.push({ id: userId, name: username, socketId: socket.id }); // Add player to the room
-        gameRooms[roomId].boards[userId] = generateRandomBoard(); // Generate a board for the player
-        gameRooms[roomId].playerColors[userId] = getRandomColor(); // Assign a random color
-        gameRooms[roomId].cingoCount[userId] = 0; // Initialize bingo count
-        if (!gameRooms[roomId].selectedCells[userId]) gameRooms[roomId].selectedCells[userId] = []; // Initialize selected cells
-        playerSockets[userId] = socket.id; // Track the player's socket
-        io.to(roomId).emit('player_joined', { playerName: username }); // Notify others in the room
-        // Send the game state to the player
+        socket.join(roomId);
+        const userResult = await db.query('SELECT id, name, avatar_url FROM users WHERE id = $1', [userId]);
+        const username = userResult.rows[0]?.name || socket.username || 'Anonymous';
+        const avatarUrl = userResult.rows[0]?.avatar_url || null;
+        gameRooms[roomId].players.push({ id: userId, name: username, socketId: socket.id, avatar_url: avatarUrl });
+        gameRooms[roomId].boards[userId] = generateRandomBoard();
+        gameRooms[roomId].playerColors[userId] = getRandomColor();
+        gameRooms[roomId].cingoCount[userId] = 0;
+        if (!gameRooms[roomId].selectedCells[userId]) gameRooms[roomId].selectedCells[userId] = [];
+        playerSockets[userId] = socket.id;
+        io.to(roomId).emit('player_joined', { playerName: username });
         socket.emit('game_state', {
             board: gameRooms[roomId].boards[userId],
             playerColor: gameRooms[roomId].playerColors[userId],
@@ -152,27 +164,35 @@ io.on('connection', (socket) => {
             winner: gameRooms[roomId].winner,
             currentNumber: gameRooms[roomId].currentNumber,
             drawnNumbers: gameRooms[roomId].drawnNumbers,
+            allBoards: gameRooms[roomId].boards,
+            allSelectedCells: gameRooms[roomId].selectedCells,
         });
     });
 
-    // When a player joins an existing game
+    // Join an existing game
     socket.on('join_game', async ({ gameName, id, userId }) => {
         try {
-            socket.join(id); // Add the socket to the game room
-            const userResult = await db.query('SELECT name FROM users WHERE id = $1', [userId]);
+            socket.join(id);
+            const userResult = await db.query('SELECT id, name, avatar_url FROM users WHERE id = $1', [userId]);
             if (userResult.rows.length === 0) {
                 socket.emit('error', { message: 'User not found.' });
                 return;
             }
-            const username = userResult.rows[0].name || 'Anonymous'; // Get the player's username
+            const username = userResult.rows[0].name || 'Anonymous';
+            const avatarUrl = userResult.rows[0]?.avatar_url || null;
 
-            // Initialize the game room if it doesn't exist
             if (!gameRooms[id]) {
                 const playersResult = await db.query(
-                    'SELECT u.id, u.name FROM lobby_players lp JOIN users u ON lp.user_id = u.id WHERE lp.lobby_id = $1',
+                    'SELECT u.id, u.name, u.avatar_url FROM lobby_players lp JOIN users u ON lp.user_id = u.id WHERE lp.lobby_id = $1',
                     [id]
                 );
-                const players = playersResult.rows.map(p => ({ id: p.id, name: p.name, socketId: null }));
+                const players = playersResult.rows.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    socketId: null,
+                    avatar_url: p.avatar_url,
+                    isActive: false
+                }));
                 gameRooms[id] = {
                     gameId: gameName,
                     boards: {},
@@ -185,50 +205,32 @@ io.on('connection', (socket) => {
                     players,
                     currentNumber: 1,
                     drawnNumbers: [],
+                    isDrawing: false,
                 };
-                // Generate boards for all players in the lobby
                 for (const player of players) {
-                    const newBoard = generateRandomBoard();
-                    if (!newBoard || newBoard.every(cell => cell === null)) {
-                        socket.emit('error', { message: `Failed to create board for: ${player.id}` });
-                        return;
-                    }
-                    gameRooms[id].boards[player.id] = newBoard;
+                    gameRooms[id].boards[player.id] = generateRandomBoard();
                     gameRooms[id].playerColors[player.id] = getRandomColor();
                     gameRooms[id].cingoCount[player.id] = 0;
                     gameRooms[id].selectedCells[player.id] = [];
                 }
-            } else {
-                // Add the player to the existing room or update their socket
-                if (!gameRooms[id].players.some(p => p.id === userId)) {
-                    gameRooms[id].players.push({ id: userId, name: username, socketId: socket.id });
-                } else {
-                    gameRooms[id].players = gameRooms[id].players.map(p =>
-                        p.id === userId ? { ...p, socketId: socket.id } : p
-                    );
-                }
-                // Generate a board if the player doesn't have one
-                if (!gameRooms[id].boards[userId]) {
-                    const newBoard = generateRandomBoard();
-                    if (!newBoard || newBoard.every(cell => cell === null)) {
-                        socket.emit('error', { message: `Failed to create board for: ${userId}` });
-                        return;
-                    }
-                    gameRooms[id].boards[userId] = newBoard;
-                    gameRooms[id].playerColors[userId] = getRandomColor();
-                    gameRooms[id].cingoCount[userId] = 0;
-                    gameRooms[id].selectedCells[userId] = [];
-                }
             }
 
-            playerSockets[userId] = socket.id; // Track the player's socket
+            const existingPlayer = gameRooms[id].players.find(p => p.id === userId);
+            if (existingPlayer) {
+                existingPlayer.socketId = socket.id;
+                existingPlayer.isActive = true;
+            }
+
+            if (!gameRooms[id].boards[userId]) {
+                gameRooms[id].boards[userId] = generateRandomBoard();
+                gameRooms[id].playerColors[userId] = getRandomColor();
+                gameRooms[id].cingoCount[userId] = 0;
+                gameRooms[id].selectedCells[userId] = [];
+            }
+
+            playerSockets[userId] = socket.id;
             const board = gameRooms[id].boards[userId];
-            if (!board || board.every(cell => cell === null)) {
-                socket.emit('error', { message: 'Invalid board received.' });
-                return;
-            }
-
-            // Send the game state to the player
+            const filteredBoards = filterActiveBoards(gameRooms[id]);
             socket.emit('game_state', {
                 board: board,
                 playerColor: gameRooms[id].playerColors[userId],
@@ -240,35 +242,34 @@ io.on('connection', (socket) => {
                 winner: gameRooms[id].winner,
                 currentNumber: gameRooms[id].currentNumber,
                 drawnNumbers: gameRooms[id].drawnNumbers,
+                allBoards: filteredBoards,
+                allSelectedCells: gameRooms[id].selectedCells,
+                allPlayerColors: gameRooms[id].playerColors,
             });
-            socket.to(id).emit('player_joined', { playerName: username }); // Notify other players
-
         } catch (err) {
-
+            console.error('Server: Error in join_game:', err);
             socket.emit('error', { message: 'An error occurred while loading the game.' });
         }
     });
 
-    // When a player starts the game
+    // Start a game
     socket.on('start_game', ({ gameName, id, userId }) => {
         if (!gameRooms[id]) {
             socket.emit('error', { message: 'Game room not found.' });
             return;
         }
 
-        // Ensure all players have valid boards
         for (const player of gameRooms[id].players) {
             const board = gameRooms[id].boards[player.id];
             if (!board || !Array.isArray(board) || board.every(cell => cell === null)) {
-
                 gameRooms[id].boards[player.id] = generateRandomBoard();
             }
+            player.isActive = player.id === userId || (player.socketId && io.sockets.sockets.get(player.socketId) !== undefined);
         }
 
-        gameRooms[id].started = true; // Mark the game as started
-        gameRooms[id].turn = gameRooms[id].players[0]?.name || 'Anonymous'; // Set the first player's turn
+        gameRooms[id].started = true;
+        gameRooms[id].turn = gameRooms[id].players.find(p => p.id === userId)?.name || 'Anonymous';
 
-        // Update all players with the new game state
         for (const player of gameRooms[id].players) {
             if (player.socketId) {
                 io.to(player.socketId).emit('game_state', {
@@ -282,28 +283,47 @@ io.on('connection', (socket) => {
                     winner: gameRooms[id].winner,
                     currentNumber: gameRooms[id].currentNumber,
                     drawnNumbers: gameRooms[id].drawnNumbers,
+                    allBoards: filterActiveBoards(gameRooms[id]),
+                    allSelectedCells: gameRooms[id].selectedCells,
+                    allPlayerColors: gameRooms[id].playerColors,
                 });
             }
         }
-
     });
 
-    // When a player draws a number
+    // Handle drawing a number in the game
     socket.on('draw_number', ({ id, userId }) => {
         const game = gameRooms[id];
-        if (!game || !game.started || game.winner) {
-
+        if (!game) {
+            socket.emit('error', { message: 'Oyun odası bulunamadı.' });
             return;
         }
 
-        // Check if all numbers have been drawn 
+        if (!game.started || game.winner) {
+            socket.emit('error', { message: 'Oyun başlamadı veya bitti.' });
+            return;
+        }
+
+        if (game.isDrawing) {
+            socket.emit('error', { message: 'Bir çekim işlemi zaten devam ediyor.' });
+            return;
+        }
+
+        const currentPlayer = game.players.find(p => p.id === parseInt(userId));
+        if (!currentPlayer || game.turn !== currentPlayer.name || !currentPlayer.isActive) {
+            socket.emit('error', { message: 'Sıra sende değil veya aktif değilsin.' });
+            return;
+        }
+
+        game.isDrawing = true;
+
         if (game.drawnNumbers.length >= 90) {
-            game.winner = 'Draw'; // If all numbers are drawn, it's a draw
-            io.to(id).emit('game_won', { winner: 'Draw' });
+            game.winner = 'Berabere';
+            io.to(id).emit('game_won', { winner: 'Berabere' });
+            game.isDrawing = false;
             return;
         }
 
-        // Draw a unique random number
         let number;
         do {
             number = Math.floor(Math.random() * 90) + 1;
@@ -311,19 +331,28 @@ io.on('connection', (socket) => {
         game.drawnNumbers.push(number);
         game.currentNumber = number;
 
-        // Rotate turns if there are multiple players
-        if (game.players.length > 1) {
-            const currentPlayerIndex = game.players.findIndex(p => p.id === userId);
-            const nextPlayerIndex = (currentPlayerIndex + 1) % game.players.length;
-            game.turn = game.players[nextPlayerIndex]?.name || game.players[0]?.name;
+        const activePlayers = game.players.filter(p => p.isActive && p.socketId);
+
+        if (activePlayers.length > 1) {
+            const currentPlayerIndex = activePlayers.findIndex(p => p.id === parseInt(userId));
+            if (currentPlayerIndex === -1) {
+                socket.emit('error', { message: 'Could not found an active player.' });
+                return;
+            }
+            const nextPlayerIndex = (currentPlayerIndex + 1) % activePlayers.length;
+            game.turn = activePlayers[nextPlayerIndex]?.name || activePlayers[0]?.name;
+        } else if (activePlayers.length === 1) {
+            game.turn = activePlayers[0]?.name;
         } else {
-            game.turn = game.players[0]?.name;
+            console.error(`draw_number: Aktif oyuncu yok, id: ${id}`);
+            game.isDrawing = false;
+            socket.emit('error', { message: 'Aktif oyuncu bulunamadı.' });
+            return;
         }
 
-        // Notify all players of the drawn number
         io.to(id).emit('draw_number', { number, drawnNumbers: game.drawnNumbers });
 
-        // Update all players with the new game state
+        const filteredBoards = filterActiveBoards(game);
         for (const player of game.players) {
             if (player.socketId) {
                 io.to(player.socketId).emit('game_state', {
@@ -337,13 +366,17 @@ io.on('connection', (socket) => {
                     winner: game.winner,
                     currentNumber: game.currentNumber,
                     drawnNumbers: game.drawnNumbers,
+                    allBoards: filteredBoards,
+                    allSelectedCells: game.selectedCells,
+                    allPlayerColors: game.playerColors,
                 });
             }
         }
 
+        game.isDrawing = false;
     });
 
-    // When a player makes a move 
+    // Handle player moves
     socket.on('make_move', ({ id, cellId, userId }) => {
         const game = gameRooms[id];
         if (!game || !game.started || game.winner) {
@@ -357,20 +390,17 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (!game.selectedCells[userId]) game.selectedCells[userId] = []; // Initialize selected cells if not present
+        if (!game.selectedCells[userId]) game.selectedCells[userId] = [];
 
         const row = parseInt(cellId[0], 10);
         const col = parseInt(cellId[1], 10);
         const index = row * 9 + col;
         const playerBoard = game.boards[userId];
 
-
-        // Validate the move
         if (index >= 0 && index < 27 && playerBoard[index] !== null && playerBoard[index] !== undefined) {
             const boardValue = playerBoard[index];
             if (!game.selectedCells[userId].includes(cellId) && game.drawnNumbers.includes(boardValue)) {
-                game.selectedCells[userId].push(cellId); // Mark the cell
-                // Update the player's game state
+                game.selectedCells[userId].push(cellId);
                 socket.emit('game_state', {
                     board: game.boards[userId],
                     playerColor: game.playerColors[userId],
@@ -382,8 +412,10 @@ io.on('connection', (socket) => {
                     winner: game.winner,
                     currentNumber: game.currentNumber,
                     drawnNumbers: game.drawnNumbers,
+                    allBoards: filterActiveBoards(game),
+                    allSelectedCells: game.selectedCells,
+                    allPlayerColors: game.playerColors,
                 });
-                // Update other players with minimal state
                 socket.to(id).emit('game_state', {
                     players: game.players,
                     turn: game.turn,
@@ -391,6 +423,9 @@ io.on('connection', (socket) => {
                     winner: game.winner,
                     currentNumber: game.currentNumber,
                     drawnNumbers: game.drawnNumbers,
+                    allBoards: filterActiveBoards(game),
+                    allSelectedCells: game.selectedCells,
+                    allPlayerColors: game.playerColors,
                 });
             } else {
                 let errorMessage = 'Marking failed: ';
@@ -400,7 +435,6 @@ io.on('connection', (socket) => {
                     errorMessage += 'Number not in drawn numbers.';
                 }
                 socket.emit('error', { message: errorMessage });
-
                 return;
             }
         } else {
@@ -408,13 +442,11 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Check for bingo
         const selectedCells = game.selectedCells[userId] || [];
         let patternCount = 0;
         const boardNumbers = game.boards[userId];
 
         for (let row = 0; row < 3; row++) {
-            // Find valid cells in the row
             const startIndex = row * 9;
             const endIndex = startIndex + 9;
             const rowNumbers = boardNumbers.slice(startIndex, endIndex);
@@ -427,7 +459,6 @@ io.on('connection', (socket) => {
                 }
             }
 
-            // Check if all 5 valid cells in the row are marked
             const isCingo = validCells.length === 5 && validCells.every(cellId => selectedCells.includes(cellId));
 
             if (isCingo) {
@@ -435,13 +466,11 @@ io.on('connection', (socket) => {
             }
         }
 
-
-        // Update bingo count if a new bingo is achieved
         if (patternCount > game.cingoCount[userId]) {
             game.cingoCount[userId] = patternCount;
             io.to(id).emit('cingo_updated', { userId, cingoCount: game.cingoCount[userId] });
+            socket.to(id).emit('cingo_notification', { userId, cingoCount: game.cingoCount[userId], playerName: player.name });
 
-            // Check for a win 
             if (game.cingoCount[userId] >= 3) {
                 game.winner = player.name;
                 io.to(id).emit('game_won', { winner: player.name });
@@ -449,18 +478,18 @@ io.on('connection', (socket) => {
         }
     });
 
-    // When a player resets the game
+    // Reset the game
     socket.on('reset_game', ({ id }) => {
         if (gameRooms[id]) {
             const newBoards = {};
             const newPlayerColors = {};
             const newCingoCount = {};
             gameRooms[id].players.forEach(player => {
-                newBoards[player.id] = generateRandomBoard(); // Generate new boards
-                newPlayerColors[player.id] = getRandomColor(); // Assign new colors
-                newCingoCount[player.id] = 0; // Reset bingo counts
+                newBoards[player.id] = generateRandomBoard();
+                newPlayerColors[player.id] = getRandomColor();
+                newCingoCount[player.id] = 0;
+                player.isActive = false;
             });
-            // Reset the game room state
             gameRooms[id] = {
                 gameId: gameRooms[id].gameId,
                 boards: newBoards,
@@ -474,7 +503,6 @@ io.on('connection', (socket) => {
                 currentNumber: 1,
                 drawnNumbers: [],
             };
-            // Update all players with the new state
             for (const player of gameRooms[id].players) {
                 if (player.socketId) {
                     io.to(player.socketId).emit('game_state', {
@@ -488,18 +516,21 @@ io.on('connection', (socket) => {
                         winner: gameRooms[id].winner,
                         currentNumber: gameRooms[id].currentNumber,
                         drawnNumbers: gameRooms[id].drawnNumbers,
+                        allBoards: filterActiveBoards(gameRooms[id]),
+                        allSelectedCells: gameRooms[id].selectedCells,
+                        allPlayerColors: gameRooms[id].playerColors,
                     });
                 }
             }
         }
     });
 
-    // Set a username for the socket
+    // Set username for the socket
     socket.on('set_username', (username) => {
         socket.username = username;
     });
 
-    // Handle chat messages
+    // Send a global message
     socket.on('sendMessage', (content) => {
         io.emit('newMessage', {
             username: socket.username || 'Anonymous',
@@ -508,9 +539,9 @@ io.on('connection', (socket) => {
         });
     });
 
-    // When a player joins a lobby
+    // Join a lobby
     socket.on('join_lobby', async ({ lobbyId, userId, silent }) => {
-        socket.join(lobbyId); // Add the socket to the lobby
+        socket.join(lobbyId);
         if (!silent) {
             const userResult = await db.query('SELECT name FROM users WHERE id = $1', [userId]);
             const username = userResult.rows[0]?.name || socket.username || 'A user';
@@ -521,12 +552,12 @@ io.on('connection', (socket) => {
                 isSystem: true,
             };
             await db.query('INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)', [lobbyId, null, joinMessage.content]);
-            io.to(lobbyId).emit('receive_message', joinMessage); // Notify lobby members
-            io.to(lobbyId).emit('lobby_joined', { userId }); // Update lobby state
+            io.to(lobbyId).emit('receive_message', joinMessage);
+            io.to(lobbyId).emit('lobby_joined', { userId });
         }
     });
 
-    // When a player sends a message in the lobby
+    // Send a message in a lobby
     socket.on('send_message', async ({ lobbyId, userId, content }) => {
         const message = {
             user: socket.username || 'Anonymous',
@@ -535,15 +566,15 @@ io.on('connection', (socket) => {
         };
         try {
             await db.query('INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)', [lobbyId, userId, content]);
-            io.to(lobbyId).emit('receive_message', message); // Broadcast the message
+            io.to(lobbyId).emit('receive_message', message);
         } catch (err) {
             console.error('Error saving message:', err);
         }
     });
 
-    // When a player leaves the lobby
+    // Leave a lobby
     socket.on('leave_lobby', async ({ lobbyId, userId }) => {
-        socket.leave(lobbyId); // Remove the socket from the lobby
+        socket.leave(lobbyId);
         const leaveMessage = {
             user: 'System',
             content: `${socket.username || 'A user'} left the lobby!`,
@@ -556,14 +587,14 @@ io.on('connection', (socket) => {
             );
             if (existingMessage.rows.length === 0) {
                 await db.query('INSERT INTO lobby_messages (lobby_id, user_id, message) VALUES ($1, $2, $3)', [lobbyId, userId || null, leaveMessage.content]);
-                io.to(lobbyId).emit('receive_message', leaveMessage); // Notify remaining players
+                io.to(lobbyId).emit('receive_message', leaveMessage);
             }
         } catch (err) {
             console.error('Error handling leave_lobby:', err);
         }
     });
 
-    // Handle lobby invitations
+    // Send a lobby invitation
     socket.on('lobby_invite', async ({ lobbyId, userId, invitedUserId, lobbyName, invitationId }) => {
         try {
             socket.to(invitedUserId).emit('lobby_invite', {
@@ -577,7 +608,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // When a lobby invite is accepted
+    // Handle accepted lobby invitation
     socket.on('lobby_invite_accepted', async ({ lobbyId, receiverId, lobbyName }) => {
         try {
             socket.to(lobbyId).emit('lobby_joined', { userId: receiverId });
@@ -586,7 +617,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // When a lobby invite is rejected
+    // Handle rejected lobby invitation
     socket.on('lobby_invite_rejected', async ({ lobbyId, receiverId, lobbyName, receiverName }) => {
         try {
             socket.to(lobbyId).emit('lobby_invite_rejected', { receiverId, receiverName, lobbyName });
@@ -595,7 +626,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Handle game invitations
+    // Send a game invitation
     socket.on('game_invite', async ({ lobbyId, userId, invitedUserId }) => {
         try {
             await db.query('INSERT INTO notifications (user_id, type, content) VALUES ($1, \'game_invite\', $2)', [invitedUserId, JSON.stringify({ lobbyId, senderId: userId })]);
@@ -605,61 +636,104 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Send a friend request
     socket.on('friend_request', async ({ senderId, receiverId }) => {
         socket.to(receiverId).emit('friend_request', { senderId });
     });
 
+    // Handle accepted friend request
     socket.on('friend_accepted', async ({ senderId, receiverId }) => {
         socket.to(senderId).emit('friend_accepted', { receiverId });
     });
 
-    // Handle turn-based game events
+    // Notify turn-based game action
     socket.on('turn_based', async ({ gameId, userId }) => {
         socket.to(userId).emit('turn_based', { gameId });
     });
 
+    // Handle friend removal
     socket.on('friend_removed', async ({ userId, friendId }) => {
         socket.to(friendId).emit('friend_removed', { userId });
     });
 
+    // Notify event start
     socket.on('event_started', async ({ lobbyId }) => {
         socket.to(lobbyId).emit('event_started', { lobbyId });
     });
 
-    // Handle socket disconnections
+    // Handle player leaving a game
+    socket.on('leave_game', ({ id, userId }) => {
+        handlePlayerLeave(userId, socket.id, id);
+        socket.leave(id);
+    });
+
+    // Handle socket disconnection
     socket.on('disconnect', () => {
-        for (const roomId in gameRooms) {
-            gameRooms[roomId].players = gameRooms[roomId].players.filter(p => p.socketId !== socket.id); // Remove the player from the room
-            if (gameRooms[roomId].players.length === 0) {
-                delete gameRooms[roomId]; // Delete the room if no players remain
-            } else {
-                // Update remaining players with the new state
-                for (const player of gameRooms[roomId].players) {
-                    if (player.socketId) {
-                        io.to(player.socketId).emit('game_state', {
-                            board: gameRooms[roomId].boards[player.id],
-                            playerColor: gameRooms[roomId].playerColors[player.id],
-                            selectedCells: gameRooms[roomId].selectedCells[player.id],
-                            cingoCount: gameRooms[roomId].cingoCount[player.id],
-                            players: gameRooms[roomId].players,
-                            turn: gameRooms[roomId].turn,
-                            started: gameRooms[roomId].started,
-                            winner: gameRooms[roomId].winner,
-                            currentNumber: gameRooms[roomId].currentNumber,
-                            drawnNumbers: gameRooms[roomId].drawnNumbers,
-                        });
-                    }
-                }
-            }
-        }
-        // Remove the player from the socket tracking
-        for (const userId in playerSockets) {
-            if (playerSockets[userId] === socket.id) {
-                delete playerSockets[userId];
-            }
+        const userId = Object.keys(playerSockets).find(key => playerSockets[key] === socket.id);
+        if (userId) {
+            handlePlayerLeave(userId, socket.id);
         }
     });
+
+    // Handle player leave logic
+    const handlePlayerLeave = (userId, socketId, gameId = null) => {
+        let game;
+        if (gameId) {
+            game = gameRooms[gameId];
+        } else {
+            game = Object.values(gameRooms).find(g => g.players.some(p => p.id === parseInt(userId)));
+        }
+
+        if (!game) {
+            return;
+        }
+
+        const player = game.players.find(p => p.id === parseInt(userId));
+        if (!player) {
+            return;
+        }
+
+        player.isActive = false;
+        player.socketId = null;
+
+        const activePlayers = game.players.filter(p => p.isActive && p.socketId);
+
+        if (game.turn === player.name && activePlayers.length > 0) {
+            game.turn = activePlayers[0].name;
+        } else if (activePlayers.length === 0) {
+            game.started = false;
+            game.turn = null;
+            game.winner = null;
+            game.drawnNumbers = [];
+            game.currentNumber = 1;
+            game.isDrawing = false;
+            delete gameRooms[gameId];
+        }
+
+        const filteredBoards = filterActiveBoards(game);
+        const roomId = gameId || Object.keys(gameRooms).find(key => gameRooms[key] === game);
+        for (const p of game.players) {
+            if (p.socketId) {
+                io.to(p.socketId).emit('game_state', {
+                    board: game.boards[p.id] || Array(27).fill(null),
+                    playerColor: game.playerColors[p.id] || 'blue',
+                    selectedCells: game.selectedCells[p.id] || [],
+                    cingoCount: game.cingoCount[p.id] || 0,
+                    players: game.players,
+                    turn: game.turn,
+                    started: game.started,
+                    winner: game.winner,
+                    currentNumber: game.currentNumber,
+                    drawnNumbers: game.drawnNumbers,
+                    allBoards: filteredBoards,
+                    allSelectedCells: game.selectedCells,
+                    allPlayerColors: game.playerColors,
+                });
+            }
+        }
+        io.to(roomId).emit('player_left', { playerName: player.name });
+    };
 });
 
-const PORT = 8081; // Define the port for the server
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`)); // Start the server
+const PORT = 8081;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

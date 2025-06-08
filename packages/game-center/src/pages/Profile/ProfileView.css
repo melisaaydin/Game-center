@@ -1,4 +1,3 @@
-/* === Profile Main Layout === */
 .main-content-profile-view {
     margin: 100px 0 40px 120px;
 }
@@ -15,7 +14,7 @@
     max-width: 800px;
     background: var(--background-color);
     border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 0 var(--primary-color);
     padding: 32px;
     margin-bottom: 50px;
     height: 600px;
@@ -52,7 +51,7 @@
 .profile-name {
     color: var(--text-color);
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1.2;
 }
 
@@ -133,14 +132,13 @@
     margin-top: 24px;
     background: var(--background-color);
     border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .about-card:hover,
 .games-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+
 }
 
 .about-card-content,
@@ -206,12 +204,6 @@
 }
 
 
-.snackbar-alert {
-    font-size: 1rem;
-    font-weight: 500;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
 
 @media (max-width: 900px) {
     .main-content-profile-view {

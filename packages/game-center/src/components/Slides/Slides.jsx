@@ -14,12 +14,12 @@ import F from "../../assets/5.png";
 import { useTranslation } from 'react-i18next';
 
 const slides = [
-    { id: 1, img: C, alt: "slide1", path: "/slide1" },
-    { id: 2, img: A, alt: "slide2", path: "/slide2" },
-    { id: 3, img: B, alt: "slide3", path: "/slide3" },
-    { id: 4, img: F, alt: "slide4", path: "/slide4" },
-    { id: 5, img: E, alt: "slide5", path: "/slide5" },
-    { id: 6, img: D, alt: "slide6", path: "/slide6" },
+    { id: 1, img: C, alt: "slide1" },
+    { id: 2, img: A, alt: "slide2" },
+    { id: 3, img: B, alt: "slide3" },
+    { id: 4, img: F, alt: "slide4" },
+    { id: 5, img: E, alt: "slide5" },
+    { id: 6, img: D, alt: "slide6" },
 ];
 
 const FeaturedGamesSlider = () => {

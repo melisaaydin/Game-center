@@ -1,109 +1,120 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Typography, Button, Snackbar, Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, IconButton, Menu, MenuItem } from "@mui/material";
+import { Box, Typography, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, IconButton, Menu, MenuItem } from "@mui/material";
 import { Lock, MoreVert } from "@mui/icons-material";
 import { useUser } from "../../context/UserContext";
 import { ColorModeContext } from "../../context/ThemeContext";
 import ChatSection from "../../components/LobbyDetails/ChatSection";
 import PlayersSection from "../../components/LobbyDetails/PlayersSection";
 import InviteDialog from "../../components/LobbyDetails/InviteDialog";
-// Import utility functions for lobby operations and socket communication
 import { socket, fetchLobbyDetails, leaveLobby, deleteLobby, inviteFriend, apiRequest } from "../../utils/lobbyUtils";
 import "./LobbyDetail.css";
-import Copy from "../../assets/copy.png"
-import Invitation from "../../assets/invitation.png"
-import JoyStick from "../../assets/joystick.png"
-import LogOut from "../../assets/log-out.png"
-import Pencil from "../../assets/pencil.png"
-import Trash from "../../assets/trash-bin.png"
+import Copy from "../../assets/copy.png";
+import Invitation from "../../assets/invitation.png";
+import JoyStick from "../../assets/joystick.png";
+import LogOut from "../../assets/log-out.png";
+import Pencil from "../../assets/pencil.png";
+import Trash from "../../assets/trash-bin.png";
 import { useTranslation } from 'react-i18next';
-// LobbyDetails component displays detailed information about a specific lobby
+import { toast } from 'react-toastify';
+
 const LobbyDetails = () => {
     const { t } = useTranslation('lobby');
     const { id } = useParams();
-    const navigate = useNavigate(); // Hook to navigate between routes
-    const { user } = useUser(); // Get user data from context
-    const { mode } = useContext(ColorModeContext); // Get current theme mode
-    const [lobby, setLobby] = useState(null); // State to hold lobby data
+    const navigate = useNavigate();
+    const { user } = useUser();
+    const { mode } = useContext(ColorModeContext);
+    const [lobby, setLobby] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isJoined, setIsJoined] = useState(false); // Track if user is joined
+    const [isJoined, setIsJoined] = useState(false);
     const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
     const [password, setPassword] = useState("");
-    const [chatMessages, setChatMessages] = useState([]); // Store chat messages
-    const [newMessage, setNewMessage] = useState(""); // New message input
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" }); // Snackbar state for notifications
+    const [chatMessages, setChatMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState("");
     const [creatorName, setCreatorName] = useState("");
     const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [friends, setFriends] = useState([]);
     const [friendsLoading, setFriendsLoading] = useState(false);
-    const [invitedUsers, setInvitedUsers] = useState(new Set()); // Track invited users
-    const [typingUser, setTypingUser] = useState(null); // Track who is typing
-    const [editDialogOpen, setEditDialogOpen] = useState(false); // Control edit dialog visibility
-    const [editForm, setEditForm] = useState({}); // Form data for editing lobby
+    const [invitedUsers, setInvitedUsers] = useState(new Set());
+    const [typingUser, setTypingUser] = useState(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editForm, setEditForm] = useState({});
     const chatRef = useRef(null);
-    const lastMessageRef = useRef(null); // Reference to last message for deduplication
-    const [anchorEl, setAnchorEl] = useState(null); // Anchor for the menu
+    const lastMessageRef = useRef(null);
+    const [anchorEl, setAnchorEl] = useState(null);
 
-    // Fetch lobby details when the component mounts
+    // Fetch lobby details and chat messages on component mount or when ID/user changes
     useEffect(() => {
         const loadLobby = async () => {
             setLoading(true);
-            // Fetch lobby data and messages from the backend
-            const messages = await fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
-            setChatMessages(messages); // Update chat messages
-            setLoading(false); // Stop loading
+            // Fetch lobby details and initial chat messages
+            const messages = await fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, (message, severity) => {
+                if (severity === "success") toast.success(message);
+                else if (severity === "error") toast.error(message);
+                else if (severity === "info") toast.info(message);
+                else if (severity === "warning") toast.warning(message);
+            }, navigate);
+            setChatMessages(messages);
+            setLoading(false);
         };
         loadLobby();
     }, [id, user, navigate]);
 
-    // Set up socket connections and handle real-time events
+    // Set up socket events for real-time lobby and chat updates
     useEffect(() => {
-        if (!user) return; // Exit if no user is logged in
-        // Handle socket connection
+        if (!user) return;
+        // Handle socket connection and join the lobby if already a member
         const handleSocketConnect = () => {
-            socket.emit("set_username", user.name); // Set the user's name for socket
-            // Join the lobby if the user is already in it
+            socket.emit("set_username", user.name);
             if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             }
         };
-        socket.on("connect", handleSocketConnect); // Listen for socket connection
+        socket.on("connect", handleSocketConnect);
+        // Receive and display new chat messages, keeping only the last 15
         socket.on("receive_message", (message) => {
             const lastMessage = lastMessageRef.current;
-            const newMessageString = `${message.user}:${message.content}:${message.timestamp}`; // Unique identifier for deduplication
-            // Add the message to the chat if it's new
+            const newMessageString = `${message.user}:${message.content}:${message.timestamp}`;
             if (lastMessage !== newMessageString) {
-                setChatMessages((prev) => [...prev, { user: message.user, content: message.content, avatar_url: message.avatar_url }]);
+                setChatMessages((prev) => [...prev, { user: message.user, content: message.content, avatar_url: message.avatar_url }].slice(-15));
                 lastMessageRef.current = newMessageString;
             }
         });
+        // Notify when a user receives a lobby invite
         socket.on("lobby_invite", ({ lobbyId, lobbyName, senderId, senderName }) => {
-            setSnackbar({ open: true, message: `${senderName} invited you to join ${lobbyName}`, severity: "info" });
+            toast.info(t("lobbyInviteMessage", { senderName, lobbyName }));
         });
+        // Update lobby when an invite is accepted
         socket.on("lobby_invite_accepted", ({ lobbyId, lobbyName, receiverId, receiverName }) => {
-            setSnackbar({ open: true, message: `${receiverName} joined ${lobbyName}!`, severity: "success" });
-            if (lobbyId === id) fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate);
+            toast.success(t("lobbyInviteAccepted", { receiverName, lobbyName }));
+            if (lobbyId === id) fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, (message, severity) => {
+                if (severity === "success") toast.success(message);
+                else if (severity === "error") toast.error(message);
+                else if (severity === "info") toast.info(message);
+                else if (severity === "warning") toast.warning(message);
+            }, navigate);
         });
+        // Notify when an invite is rejected
         socket.on("lobby_invite_rejected", ({ lobbyId, lobbyName, receiverId, receiverName }) => {
-            setSnackbar({ open: true, message: `${receiverName} rejected the invitation to ${lobbyName}.`, severity: "info" });
+            toast.info(t("lobbyInviteRejected", { receiverName, lobbyName }));
         });
-        socket.on("disconnect", () => setSnackbar({ open: true, message: "Connection lost, reconnecting...", severity: "warning" }));
-        socket.on("reconnect", () => {
-            setSnackbar({ open: true, message: "Reconnected successfully!", severity: "success" });
-            if (isJoined && socket.connected && (!socket.rooms || !new Set(socket.rooms).has(id))) {
-                socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
-            }
-        });
-        socket.on("typing", ({ userName }) => setTypingUser(userName)); // Update typing user
-        socket.on("stop_typing", () => setTypingUser(null)); // Clear typing user
+        // Warn on socket disconnection
+        socket.on("disconnect", () => toast.warning(t("connectionLost")));
+        // Confirm successful reconnection
+        socket.on("reconnect", () => toast.success(t("reconnectSuccess")));
+        // Show when a user is typing in the chat
+        socket.on("typing", ({ userName }) => setTypingUser(userName));
+        // Clear typing indicator when a user stops
+        socket.on("stop_typing", () => setTypingUser(null));
 
-        if (socket.connected) handleSocketConnect(); // Initial connection handling
+        if (socket.connected) handleSocketConnect();
 
+        // Clean up socket event listeners on component unmount
         return () => {
-            socket.off("connect", handleSocketConnect); // Clean up listeners on unmount
+            socket.off("connect", handleSocketConnect);
             socket.off("receive_message");
             socket.off("lobby_invite");
             socket.off("lobby_invite_accepted");
@@ -113,43 +124,43 @@ const LobbyDetails = () => {
             socket.off("typing");
             socket.off("stop_typing");
         };
-    }, [id, user, isJoined]);
+    }, [id, user, isJoined, t]);
 
-    // Handle joining the lobby
+    // Handle joining the lobby, prompting for a password if needed
     const handleJoinLobby = async () => {
         if (!user) {
-            setSnackbar({ open: true, message: "Please log in!", severity: "error" });
+            toast.error(t("pleaseLogin"));
             return;
         }
         if (lobby.password && !isJoined) {
-            setPasswordDialogOpen(true); // Open password dialog for locked lobbies
+            setPasswordDialogOpen(true);
             return;
         }
         const token = localStorage.getItem("token");
         const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id }, token);
         if (res.success) {
             if (res.data.alreadyJoined) {
-                setSnackbar({ open: true, message: "You are already in this lobby!", severity: "info" });
+                toast.info(t("alreadyInLobby"));
                 setIsJoined(true);
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             } else {
                 setIsJoined(true);
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id });
                 setLobby((prev) => ({ ...prev, current_players: prev.current_players + 1 }));
-                setSnackbar({ open: true, message: "You have joined the lobby!", severity: "success" });
+                toast.success(t("joinedLobby"));
             }
         } else {
-            setSnackbar({ open: true, message: "Could not join the lobby: " + res.message, severity: "error" });
+            toast.error(t("joinLobbyFailed", { message: res.message }));
         }
     };
 
-    // Handle submitting the password for a locked lobby
+    // Submit the password to join a protected lobby
     const handlePasswordSubmit = async () => {
         const token = localStorage.getItem("token");
         const res = await apiRequest("post", `http://localhost:8081/lobbies/${id}/join`, { userId: user.id, password }, token);
         if (res.success) {
             if (res.data.alreadyJoined) {
-                setSnackbar({ open: true, message: "You are already in this lobby!", severity: "info" });
+                toast.info(t("alreadyInLobby"));
                 setIsJoined(true);
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id, silent: true });
             } else {
@@ -157,78 +168,82 @@ const LobbyDetails = () => {
                 socket.emit("join_lobby", { lobbyId: id, userId: user.id });
                 const lobbyRes = await apiRequest("get", `http://localhost:8081/lobbies/${id}`, null, token);
                 if (lobbyRes.success) setLobby(lobbyRes.data);
-                setSnackbar({ open: true, message: "You have joined the lobby!", severity: "success" });
+                toast.success(t("joinedLobby"));
             }
-            setPasswordDialogOpen(false); // Close the dialog
+            setPasswordDialogOpen(false);
         } else {
-            setSnackbar({ open: true, message: res.message || "Incorrect password or an error occurred!", severity: "error" });
+            toast.error(t("invalidPassword"));
         }
     };
 
-    // Handle playing the game associated with the lobby
+    // Open the game in a new tab if the user is logged in
     const handlePlayGame = () => {
         if (!user) {
-            setSnackbar({ open: true, message: 'Please log in!', severity: 'error' });
+            toast.error(t("pleaseLogin"));
             navigate('/login');
             return;
         }
         if (lobby && lobby.game_id) {
             const token = localStorage.getItem('token');
             const gameUrl = `http://localhost:3001/games/${lobby.game_id}/lobby/${id}?token=${token}`;
-            window.open(gameUrl, '_blank'); // Open game in a new tab
-            setSnackbar({ open: true, message: `${lobby.game_id} game is starting for lobby ${id}...`, severity: 'info' });
+            window.open(gameUrl, '_blank');
+            toast.info(t("bingoGameStarting", { lobbyName: lobby.name }));
             socket.emit('join_game', { gameName: lobby.game_id, id, userId: user.id });
         } else {
-            setSnackbar({ open: true, message: 'Game not available yet!', severity: 'warning' });
+            toast.warning(t("gameNotAvailable"));
         }
     };
 
     // Copy the lobby link to the clipboard
     const handleCopyLink = () => {
-        const link = `${window.location.origin}/lobbies/${id}`; // Construct the lobby URL
-        navigator.clipboard.writeText(link); // Copy to clipboard
-        setSnackbar({ open: true, message: "Lobby link copied to clipboard!", severity: "success" });
+        const link = `${window.location.origin}/lobbies/${id}`;
+        navigator.clipboard.writeText(link);
+        toast.success(t("linkCopied"));
     };
 
-    // Handle sending a chat message
+    // Send a chat message to the lobby
     const handleSendMessage = () => {
         if (newMessage.trim()) {
             socket.emit("send_message", { lobbyId: id, userId: user.id, content: newMessage, avatar_url: user.avatar_url });
-            socket.emit("stop_typing", { lobbyId: id }); // Notify others typing has stopped
-            setNewMessage(""); // Clear input
+            socket.emit("stop_typing", { lobbyId: id });
+            setNewMessage("");
         }
     };
 
-    // Handle typing events in the chat
+    // Emit typing or stop typing events based on message input
     const handleTyping = () => {
-        if (newMessage.trim()) socket.emit("typing", { lobbyId: id, userName: user.name }); // Notify others of typing
-        else socket.emit("stop_typing", { lobbyId: id }); // Notify stop if input is empty
+        if (newMessage.trim()) socket.emit("typing", { lobbyId: id, userName: user.name });
+        else socket.emit("stop_typing", { lobbyId: id });
     };
 
-    // Open the invite friends dialog and load the friends list
+    // Open the invite dialog and fetch the user’s friends list
     const handleOpenInviteDialog = async () => {
-        setInviteDialogOpen(true); // Open the invite dialog
-        setFriendsLoading(true); // Start loading friends
+        setInviteDialogOpen(true);
+        setFriendsLoading(true);
         const token = localStorage.getItem("token");
         const res = await apiRequest("get", `http://localhost:8081/lobbies/${id}/friends`, null, token);
         if (res.success) {
-            setFriends(res.data.friends || []); // Update friends list
-            setInvitedUsers(new Set()); // Reset invited users
+            setFriends(res.data.friends || []);
+            setInvitedUsers(new Set());
         } else {
-            setSnackbar({ open: true, message: "Failed to load friends: " + res.message, severity: "error" });
+            toast.error(t("failedToLoadFriends", { message: res.message }));
         }
-        setFriendsLoading(false); // Stop loading
+        setFriendsLoading(false);
     };
 
     // Invite a friend to the lobby
     const handleInviteFriend = (friendId) => {
         const token = localStorage.getItem("token");
-        inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, setSnackbar, token); // Send invite request
+        inviteFriend(id, friendId, user.id, lobby.name, setInvitedUsers, (message, severity) => {
+            if (severity === "success") toast.success(message);
+            else if (severity === "error") toast.error(message);
+            else if (severity === "info") toast.info(message);
+            else if (severity === "warning") toast.warning(message);
+        }, token);
     };
 
-    // Show the full date if the event is more than 24 hours away
+    // Open the edit dialog with current lobby data
     const handleEditClick = () => {
-        // Initialize editForm with current lobby data
         setEditForm({
             name: lobby.name,
             max_players: lobby.max_players,
@@ -237,13 +252,13 @@ const LobbyDetails = () => {
             end_time: lobby.end_time ? new Date(lobby.end_time).toISOString().slice(0, 16) : "",
             is_event: lobby.is_event,
         });
-        setEditDialogOpen(true); // Open edit dialog
-        setAnchorEl(null); // Close the menu
+        setEditDialogOpen(true);
+        setAnchorEl(null);
     };
 
+    // Save changes to the lobby after editing
     const handleEditLobby = async () => {
         const token = localStorage.getItem("token");
-
         const updatedData = {
             name: editForm.name,
             max_players: parseInt(editForm.max_players, 10),
@@ -254,25 +269,36 @@ const LobbyDetails = () => {
         };
         const res = await apiRequest("put", `http://localhost:8081/lobbies/${id}`, updatedData, token);
         if (res.success) {
-            fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, setSnackbar, navigate); // Refresh lobby data
-            setSnackbar({ open: true, message: "Lobby updated successfully!", severity: "success" });
-            setEditDialogOpen(false); // Close dialog
+            fetchLobbyDetails(id, user, setLobby, setCreatorName, setIsJoined, setError, (message, severity) => {
+                if (severity === "success") toast.success(message);
+                else if (severity === "error") toast.error(message);
+                else if (severity === "info") toast.info(message);
+                else if (severity === "warning") toast.warning(message);
+            }, navigate);
+            toast.success(t("lobbyUpdated"));
+            setEditDialogOpen(false);
         } else {
-            setSnackbar({ open: true, message: "Failed to update lobby: " + res.message, severity: "error" });
+            toast.error(t("lobbyUpdateFailed", { message: res.message }));
         }
     };
 
+    // Open the menu for lobby actions
     const handleMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget); // Open the menu
+        setAnchorEl(event.currentTarget);
     };
+    // Close the menu for lobby actions
     const handleMenuClose = () => {
-        setAnchorEl(null); // Close the menu
+        setAnchorEl(null);
     };
 
-    if (loading) return <Typography>Loading...</Typography>; // Show loading state
-    if (error) return <Typography color="error">{error}</Typography>; // Show error if any
-    if (!lobby || !user) return <Typography>Lobby or user data not found.</Typography>; // Fallback if data is missing
+    // Show a loading message while fetching lobby data
+    if (loading) return <Typography>{t("loading")}</Typography>;
+    // Display an error message if something goes wrong
+    if (error) return <Typography color="error">{error}</Typography>;
+    // Show a message if the lobby or user data is not found
+    if (!lobby || !user) return <Typography>{t("lobbyOrUserNotFound")}</Typography>;
 
+    // Render the lobby details, including header, players, and chat
     return (
         <div className="lobby-details-container">
             <Box className="lobby-content">
@@ -285,6 +311,7 @@ const LobbyDetails = () => {
                         {lobby.password && <Lock fontSize="small" sx={{ verticalAlign: "middle", ml: 1 }} />}
                         <Box className="lobby-actions">
                             {!isJoined ? (
+                                // Show join button if the user hasn’t joined yet
                                 <Button
                                     variant="contained"
                                     color="primary"
@@ -385,7 +412,12 @@ const LobbyDetails = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setLeaveConfirmOpen(false)} color="primary">{t('no')}</Button>
-                    <Button onClick={() => leaveLobby(id, user.id, setIsJoined, setLobby, setSnackbar, localStorage.getItem("token"), setLeaveConfirmOpen)} color="secondary" variant="contained">
+                    <Button onClick={() => leaveLobby(id, user.id, setIsJoined, setLobby, (message, severity) => {
+                        if (severity === "success") toast.success(message);
+                        else if (severity === "error") toast.error(message);
+                        else if (severity === "info") toast.info(message);
+                        else if (severity === "warning") toast.warning(message);
+                    }, localStorage.getItem("token"), setLeaveConfirmOpen)} color="secondary" variant="contained">
                         {t('yes')}
                     </Button>
                 </DialogActions>
@@ -397,7 +429,12 @@ const LobbyDetails = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDeleteConfirmOpen(false)} color="primary">{t('no')}</Button>
-                    <Button onClick={() => deleteLobby(id, setSnackbar, navigate, localStorage.getItem("token"))} color="error" variant="contained">
+                    <Button onClick={() => deleteLobby(id, (message, severity) => {
+                        if (severity === "success") toast.success(message);
+                        else if (severity === "error") toast.error(message);
+                        else if (severity === "info") toast.info(message);
+                        else if (severity === "warning") toast.warning(message);
+                    }, navigate, localStorage.getItem("token"))} color="error" variant="contained">
                         {t('yes')}
                     </Button>
                 </DialogActions>
@@ -468,24 +505,6 @@ const LobbyDetails = () => {
                     <Button onClick={handleEditLobby} variant="contained" color="primary">{t('save')}</Button>
                 </DialogActions>
             </Dialog>
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={(e, reason) => reason !== "clickaway" && setSnackbar({ ...snackbar, open: false })}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={(e, reason) => {
-                        if (reason !== "clickaway") {
-                            setSnackbar({ ...snackbar, open: false });
-                        }
-                    }}
-                    severity={snackbar.severity}
-                    sx={{ width: "100%", bgcolor: snackbar.severity === "success" ? "green" : snackbar.severity === "error" ? "red" : "blue", color: "white" }}
-                >
-                    {t(snackbar.message, { ns: 'lobby', defaultValue: snackbar.message })}
-                </Alert>
-            </Snackbar>
         </div>
     );
 };

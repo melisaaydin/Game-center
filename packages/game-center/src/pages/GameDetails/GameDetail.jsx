@@ -8,8 +8,6 @@ import {
     CardContent,
     Fade,
     Grid,
-    Snackbar,
-    Alert,
     Button,
     Dialog,
     DialogTitle,
@@ -28,6 +26,7 @@ import LobbyList from "../../components/LobbyList";
 import "./GameDetail.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
 import { useTranslation } from 'react-i18next';
+import { toast } from "react-toastify";
 
 function GameDetail() {
     const { t } = useTranslation('gameDetail');
@@ -39,9 +38,6 @@ function GameDetail() {
     const [game, setGame] = useState(null);
     const [lobbies, setLobbies] = useState([]);
     const [totalPlayers, setTotalPlayers] = useState(0);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(null);
     const [editDialogOpen, setEditDialogOpen] = useState(null);
     const [editForm, setEditForm] = useState({});
@@ -107,23 +103,14 @@ function GameDetail() {
         setActiveTab(newValue);
     };
 
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === "clickaway") return;
-        setSnackbarOpen(false);
-    };
-
     const handlePlayGame = async () => {
         if (!user) {
-            setSnackbarMessage(t('pleaseLogin'));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            toast.error(t('pleaseLogin'));
             navigate('/login');
             return;
         }
         if (!game || !gameId) {
-            setSnackbarMessage(t('gameNotAvailable'));
-            setSnackbarSeverity('warning');
-            setSnackbarOpen(true);
+            toast.warning(t('gameNotAvailable'));
             return;
         }
         const activeLobby = lobbies.find(
@@ -133,9 +120,7 @@ function GameDetail() {
         if (activeLobby) {
             const gameUrl = `http://localhost:3001/games/${gameId}/lobby/${activeLobby.id}`;
             window.open(gameUrl, '_blank');
-            setSnackbarMessage(t('gameStarting', { gameId, lobbyId: activeLobby.id }));
-            setSnackbarSeverity('info');
-            setSnackbarOpen(true);
+            toast.info(t('gameStarting', { gameId, lobbyId: activeLobby.id }));
             return;
         }
 
@@ -163,19 +148,13 @@ function GameDetail() {
                 );
                 const gameUrl = `http://localhost:3001/games/${gameId}/lobby/${newLobby.id}`;
                 window.open(gameUrl, '_blank');
-                setSnackbarMessage(t('lobbyCreated'));
-                setSnackbarSeverity('success');
-                setSnackbarOpen(true);
+                toast.success(t('lobbyCreated'));
                 fetchLobbies();
             } else {
-                setSnackbarMessage(t('lobbyCreateFailed', { message: res.data.message }));
-                setSnackbarSeverity('error');
-                setSnackbarOpen(true);
+                toast.error(t('lobbyCreateFailed', { message: res.data.message }));
             }
         } catch (err) {
-            setSnackbarMessage(t('lobbyCreateFailed', { message: '' }));
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
+            toast.error(t('lobbyCreateFailed', { message: '' }));
         }
     };
 
@@ -191,19 +170,13 @@ function GameDetail() {
             });
             if (res.data.success) {
                 fetchLobbies();
-                setSnackbarMessage(t('lobbyDeleted'));
-                setSnackbarSeverity("success");
-                setSnackbarOpen(true);
+                toast.success(t('lobbyDeleted'));
                 setDeleteConfirmOpen(null);
             } else {
-                setSnackbarMessage(t('lobbyDeleteFailed', { message: res.data.message }));
-                setSnackbarSeverity("error");
-                setSnackbarOpen(true);
+                toast.error(t('lobbyDeleteFailed', { message: res.data.message }));
             }
         } catch (err) {
-            setSnackbarMessage(t('lobbyDeleteFailed'));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            toast.error(t('lobbyDeleteFailed'));
         }
     };
 
@@ -238,14 +211,10 @@ function GameDetail() {
         const res = await updateLobby(editDialogOpen, updatedData, token);
         if (res.success) {
             fetchLobbies();
-            setSnackbarMessage(t('lobbyUpdated'));
-            setSnackbarSeverity("success");
-            setSnackbarOpen(true);
+            toast.success(t('lobbyUpdated'));
             setEditDialogOpen(null);
         } else {
-            setSnackbarMessage(t('lobbyUpdateFailed', { message: res.message }));
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
+            toast.error(t('lobbyUpdateFailed', { message: res.message }));
         }
     };
 
@@ -257,6 +226,97 @@ function GameDetail() {
     if (!gameId) return <div className="error">{t('gameIdMissing')}</div>;
     if (!game) return <div className="loading">{t('loadingGame')}</div>;
 
+
+    const getGameDescription = () => {
+        switch (gameId) {
+            case 'bingo':
+                return (
+                    <>
+                        <Typography className="section-text">
+                            {t('bingoDescription')}
+                        </Typography>
+                        {game.image_url && (
+                            <img
+                                src={`http://localhost:8081${game.image_url}`}
+                                alt={game.title}
+                                className="game-image"
+                            />
+                        )}
+                    </>
+                );
+            default:
+                return (
+                    <>
+                        <Typography className="section-text">
+                            {game.description || t('noDescription')}
+                        </Typography>
+                        {game.image_url && (
+                            <img
+                                src={`http://localhost:8081${game.image_url}`}
+                                alt={game.title}
+                                className="game-image"
+                            />
+                        )}
+                    </>
+
+
+
+                );
+        }
+    };
+
+    const HowToPlayContent = () => (
+        <Box sx={{ p: 3 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
+                {t('howToPlay')}
+            </Typography>
+            {gameId === 'bingo' ? (
+                <>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoWelcome')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        {t('bingoStep1Title')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoStep1Description')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        {t('bingoStep2Title')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoStep2Description')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        {t('bingoStep3Title')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoStep3Description')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        {t('bingoStep4Title')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoStep4Description')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        {t('bingoStep5Title')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoStep5Description')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                        {t('bingoTips')}
+                    </Typography>
+                </>
+            ) : (
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                    {t('howToPlayNotDefined')}
+                </Typography>
+            )}
+        </Box>
+    );
+
     return (
         <Box className="game-detail-container">
             <Fade in={true} timeout={500}>
@@ -267,14 +327,7 @@ function GameDetail() {
                                 {activeTab === 0 && (
                                     <Box>
                                         <Typography variant="h5" className="section-title">{t('aboutGame')}</Typography>
-                                        <Typography className="section-text">{game.description}</Typography>
-                                        {game.image_url && (
-                                            <img
-                                                src={`http://localhost:8081${game.image_url}`}
-                                                alt={game.title}
-                                                className="game-image"
-                                            />
-                                        )}
+                                        {getGameDescription()}
                                     </Box>
                                 )}
                                 {activeTab === 1 && (
@@ -282,9 +335,7 @@ function GameDetail() {
                                         gameId={gameId}
                                         onLobbyCreated={() => {
                                             fetchLobbies();
-                                            setSnackbarMessage(t('lobbyCreated'));
-                                            setSnackbarSeverity("success");
-                                            setSnackbarOpen(true);
+                                            toast.success(t('lobbyCreated'));
                                         }}
                                     />
                                 )}
@@ -301,9 +352,6 @@ function GameDetail() {
                                         onEditClick={handleEditClick}
                                         onViewDetails={(lobbyId) => {
                                             navigate(`/lobbies/${lobbyId}`);
-                                            setSnackbarMessage(t('navigatingToLobby'));
-                                            setSnackbarSeverity("info");
-                                            setSnackbarOpen(true);
                                         }}
                                     />
                                 )}
@@ -313,12 +361,7 @@ function GameDetail() {
                                         <Typography className="section-text">{t('noGameHistory')}</Typography>
                                     </Box>
                                 )}
-                                {activeTab === 4 && (
-                                    <Box>
-                                        <Typography variant="h5" className="section-title">{t('howToPlay')}</Typography>
-                                        <Typography component="ul" className="section-text how-to-play-list">{t('howToPlayNotDefined')}</Typography>
-                                    </Box>
-                                )}
+                                {activeTab === 4 && <HowToPlayContent />}
                                 {activeTab === 5 && (
                                     <Box>
                                         <Typography variant="h5" className="section-title">{t('gameSettings')}</Typography>
@@ -375,7 +418,7 @@ function GameDetail() {
                                 onChange={handleTabChange}
                                 className="game-tabs"
                                 orientation="vertical"
-                                variant="scrollable"
+                                variant="standard"
                             >
                                 <Tab label={t('navOverview')} icon={<Info />} className="game-tab" sx={{ textTransform: "initial" }} />
                                 <Tab label={t('navCreateLobby')} icon={<Add />} className="game-tab" sx={{ textTransform: "initial" }} />
@@ -473,25 +516,6 @@ function GameDetail() {
                     <Button onClick={handleEditLobby} variant="contained" color="primary">{t('save')}</Button>
                 </DialogActions>
             </Dialog>
-
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={handleSnackbarClose}
-                    severity={snackbarSeverity}
-                    sx={{
-                        width: "100%",
-                        color: mode === "dark" ? "#fff" : "#000",
-                        bgcolor: mode === "dark" ? "grey.800" : undefined,
-                    }}
-                >
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

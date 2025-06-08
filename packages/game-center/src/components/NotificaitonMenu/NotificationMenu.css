@@ -134,10 +134,7 @@
     cursor: pointer;
 }
 
-.notification-snackbar .snackbar-alert {
-    background-color: var(--background-color);
-    color: var(--text-color);
-}
+
 
 .join-lobby {
     font-weight: bold;
