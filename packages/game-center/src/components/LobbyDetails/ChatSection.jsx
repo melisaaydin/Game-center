@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, TextField, Button, Avatar, Paper, IconButton } from "@mui/material";
+import { Box, Typography, TextField, Avatar, Paper, IconButton } from "@mui/material";
 import { useTranslation } from 'react-i18next';
 import Picker from 'emoji-picker-react';
 import { EmojiEmotions, Send } from '@mui/icons-material';
@@ -18,6 +18,8 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
         }
     }, [chatMessages, chatRef]);
 
+
+
     // Handle emoji selection
     const onEmojiClick = (emojiObject) => {
         setNewMessage((prev) => prev + emojiObject.emoji);
@@ -30,7 +32,7 @@ const ChatSection = ({ chatMessages, newMessage, setNewMessage, typingUser, isJo
                 <Typography variant="h6" className="section-title">{t('chat')}</Typography>
                 <Box ref={chatRef} className="chat-messages">
                     {chatMessages.map((msg, index) => {
-                        // Identify system messages (e.g., join/leave notifications)
+                        // Identify system messages 
                         const isSystemMessage =
                             msg.content.includes("left the lobby") ||
                             msg.content.includes("joined the lobby") || msg.is_system;
