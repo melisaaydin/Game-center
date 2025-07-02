@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { TextField, Button, Link as MuiLink, IconButton, InputAdornment } from '@mui/material';
 import { useUser } from '../../context/UserContext';
-import 'animate.css';
 import CryptoJS from "crypto-js";
 import AuthLayout from "../../layouts/AuthLayout";
 import { Link } from 'react-router-dom';

@@ -68,7 +68,6 @@ const sendFriendRequest = async (req, res) => {
             senderName,
             requestId,
         });
-        // Send a success response to the sender
         res.json({ success: true, message: "Friend request sent", requestId });
     } catch (err) {
         handleError(res, err, "Failed to send friend request");

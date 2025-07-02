@@ -369,10 +369,6 @@ body {
   color: var(--secondary-color);
 }
 
-.sideBar .link,
-.sideBar .span {
-  color: var(--text-color);
-}
 
 .col-md-6 {
   padding: 0 !important;

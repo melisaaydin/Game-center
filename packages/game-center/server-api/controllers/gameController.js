@@ -42,5 +42,4 @@ const searchGames = async (req, res) => {
     }
 };
 
-// Export controller functions
 module.exports = { getAllGames, getGameDetails, searchGames };

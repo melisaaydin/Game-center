@@ -104,6 +104,7 @@ function UserMenu() {
                     type='checkbox'
                     id='darkmode-toggle'
                     onChange={toggleColorMode}
+                    checked={mode === 'dark'}
                 />
                 <label className='dark_mode_label' htmlFor='darkmode-toggle'>
                     <Sun />

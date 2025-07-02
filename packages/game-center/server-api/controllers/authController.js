@@ -10,7 +10,7 @@ const signup = async (req, res) => {
 
     // Check if all fields are provided
     if (!name || !email || !password) {
-        return res.status(400).json({ success: false, message: "Please fill in all fields!" }); // Translated from Turkish
+        return res.status(400).json({ success: false, message: "Please fill in all fields!" });
     }
 
     try {
@@ -25,7 +25,6 @@ const signup = async (req, res) => {
         // Send success response with user data
         res.json({ success: true, user: result.rows[0] });
     } catch (err) {
-        // Catch any database errors
         res.status(500).json({ success: false, message: "Database error", error: err.message });
     }
 };

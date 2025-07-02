@@ -1,10 +1,8 @@
 import { createContext, useState, useEffect } from 'react';
 import i18n from '../i18n';
 
-// Creating a context for language management
 export const LanguageContext = createContext();
 
-// Defining the LanguageProvider component to manage language state
 export const LanguageProvider = ({ children }) => {
     // Storing the current language, defaulting to i18n's language or 'en'
     const [language, setLanguage] = useState(i18n.language || 'en');

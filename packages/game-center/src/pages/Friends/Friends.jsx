@@ -34,9 +34,6 @@ function Friends() {
     // Setting up navigation for profile redirects
     const navigate = useNavigate();
 
-    // Configuring moment.js to use British English locale
-    moment.locale("en-gb");
-
     // Fetching friend requests and friends list on component mount
     useEffect(() => {
         const fetchFriendData = async () => {

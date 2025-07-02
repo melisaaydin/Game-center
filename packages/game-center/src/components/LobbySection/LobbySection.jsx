@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { Lock, Event } from "@mui/icons-material";
 import axios from "axios";
-import { ColorModeContext } from "../../context/ThemeContext";
 import CreateLobby from "../CreateLobby/CreateLobby";
 import "./LobbySection.css";
 import useLobbyUtils from "../../hooks/useLobbyUtils";
@@ -26,7 +25,7 @@ import { toast } from "react-toastify";
 
 function LobbySection() {
     const { t } = useTranslation('lobbySection');
-    const { mode } = useContext(ColorModeContext);
+
     const [lobbies, setLobbies] = useState([]);
     const [games, setGames] = useState([]);
     const [loadingGames, setLoadingGames] = useState(true);

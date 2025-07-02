@@ -1,7 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-// Import translation files for English and Turkish
 import enRaw from './locales/en/translation.json';
 import trRaw from './locales/tr/translation.json';
 
@@ -35,24 +34,24 @@ i18n
     .use(initReactI18next) // Bind i18next to React for easy use in components
     .init({
         resources, // Load the translation resources we defined
-        lng: 'en', // Default language is English
-        fallbackLng: 'en', // Fallback to English if a translation is missing
-        supportedLngs: ['en', 'tr'], // Only support English and Turkish
-        load: 'languageOnly', // Load only the language code (e.g., 'en' instead of 'en-US')
-        ns: namespaces, // List of namespaces to use
+        lng: 'en',
+        fallbackLng: 'en',
+        supportedLngs: ['en', 'tr'],
+        load: 'languageOnly',
+        ns: namespaces,
         defaultNS: 'common', // Default namespace for translations
         detection: {
-            order: ['localStorage', 'navigator', 'htmlTag'], // Check language in this order
+            order: ['localStorage', 'navigator', 'htmlTag'],
             caches: ['localStorage'], // Save the detected language to localStorage
             lookupLocalStorage: 'i18nextLng', // Key to use in localStorage
         },
         interpolation: {
             escapeValue: false, // React already escapes values, so no need for i18next to do it
         },
-        debug: false, // Disable debug logs in production
+        debug: false,
     });
 
-// Function to change the app's language and notify components
+
 export const setUserLanguage = (language) => {
     // Check if the language is valid and different from the current one
     if (language && ['en', 'tr'].includes(language) && language !== i18n.language) {
@@ -66,10 +65,8 @@ export const setUserLanguage = (language) => {
     }
 };
 
-// Log when i18next is fully initialized
 i18n.on('initialized', () => {
     console.log('[i18n] Initialized. Current language:', i18n.language);
 });
 
-// Export the i18n instance for use throughout the app
 export default i18n;

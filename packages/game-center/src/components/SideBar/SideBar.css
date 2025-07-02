@@ -256,14 +256,13 @@
 }
 
 .sideBar .icon {
-
     font-size: 27px;
     color: var(--accent-color);
 }
 
 .sideBar .link {
     display: flex;
-    margin-top: 30px;
+    margin-top: 35px;
     flex-direction: column;
     align-items: center;
     text-decoration: none;
@@ -276,7 +275,7 @@
 .sideBar .link .span {
     opacity: 0;
     position: absolute;
-    left: 70px;
+    top: 35px;
     background: var(--background-color);
     padding: 4px 8px;
     border-radius: 8px;
