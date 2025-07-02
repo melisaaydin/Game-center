@@ -72,6 +72,9 @@ Bu sayede backend tarafında kod okunabilirliği ve yönetimi çok daha verimli 
 
 ![Ekran görüntüsü 2025-04-24 204251](https://github.com/user-attachments/assets/a2b85058-c518-4ddd-b7b6-5ebe475695c4)
 
+![Ekran görüntüsü 2025-06-05 172638](https://github.com/user-attachments/assets/73d92745-f11a-4a79-a772-7ee5a4216d4e)
+
+
 
 ## 📚 Git ve Sürüm Kontrolü
 
